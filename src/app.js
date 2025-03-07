@@ -43,7 +43,11 @@ app.get("/", async (req, reply) => {
 });
 app.post("/g/:font", async (req, res) => {
     //根據前端需要的字集，產生字型檔
-    gemFont(req.params.font);
+    try {
+        genFont(req, res);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
 });
 // GitHub OAuth login redirect
 app.get("/login", async (req, reply) => {
