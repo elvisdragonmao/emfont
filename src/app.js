@@ -49,6 +49,19 @@ app.post("/g/:font", async (req, res) => {
         res.status(500).send(error.message);
     }
 });
+//測試資料庫路由
+app.get('/testq', async (request, reply) => {
+    try {
+      // 執行 SELECT 查詢
+      const res = await db.query('SELECT * FROM font_requests');
+      
+      // 使用 EJS 顯示結果
+      return reply.view('/src/views/pages/font_requests', { data: res.rows });
+    } catch (err) {
+      console.error('Error executing query', err.stack);
+      reply.status(500).send('Database query failed');
+    }
+  });
 // GitHub OAuth login redirect
 app.get("/login", async (req, reply) => {
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`;
