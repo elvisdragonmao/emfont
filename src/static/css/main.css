@@ -825,6 +825,7 @@ input:checked + .checkbox > div:last-child::after {
     }
     #nav:checked ~ .nav-right.logged {
         height: 24rem;
+        height: 15.7rem;
     }
     .nav-right a img {
         height: 1rem;

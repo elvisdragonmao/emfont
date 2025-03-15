@@ -6,7 +6,8 @@
     "main": "src/app.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "nodemon src/app.js"
+        "dev": "nodemon src/app.js",
+        "front": "nodemon src/front.js"
     },
     "keywords": [],
     "repository": "https://github.com/Edit-Mr/emfont.git",

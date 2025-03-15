@@ -146,9 +146,9 @@ section {
     backdrop-filter: blur(4em);
     max-width: var(--max-width);
     margin: 0 auto 7rem;
-    padding: 6rem;
+    padding: min(6rem, 10vw);
     text-align: center;
-    font-size: 1.5rem;
+    font-size: clamp(1.2rem, 1.5vw, 1.5rem);
 }
 #intro p {
     max-width: 50rem;
@@ -319,7 +319,7 @@ section h2 {
 
 #usage p,
 #youRule p {
-    font-size: min(1.875rem, 4.5vw);
+    font-size: 1.2rem;
     font-weight: 700;
     color: #3c5068;
 }
