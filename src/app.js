@@ -48,6 +48,9 @@ app.post("/g/:font", async (req, res) => {
     } catch (error) {
         res.status(500).send(error.message);
     }
+    console.log("請求字型：",req.params);  // { font: 'ZhuQueFangSong' }
+    console.log("word set is :",req.body);    // { words: '軟語伴茶' }
+    res.send({ success: true });
 });
 //測試資料庫路由
 app.get('/testq', async (request, reply) => {

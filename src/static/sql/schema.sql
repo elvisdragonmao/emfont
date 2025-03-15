@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS font_types ( -- 收錄字型類型
     id SERIAL PRIMARY KEY,
     font_name VARCHAR(255) UNIQUE NOT NULL
 );
-
+INSERT INTO font_types VALUES (1, 'ZhuQueFangSong');
 -- 創建表格
 CREATE TABLE IF NOT EXISTS font_requests(
     hash_index CHAR(10) PRIMARY KEY,  -- 原始hash的前10碼

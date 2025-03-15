@@ -1,5 +1,5 @@
 import { check } from "drizzle-orm/gel-core";
-
+import { db } from "./database.js";
 async function hashString(str) {
     const encoder = new TextEncoder();
     const data = encoder.encode(str);
@@ -15,23 +15,41 @@ async function hashString(str) {
 //   })();
   
 ///g/:font 路由 呼叫的函式。會根據前端需要的字集，回傳字型檔
-function checkFormat(words) {
-    if (!words) {
-        throw new Error("Words are required");  // 使用 throw 讓 genFont 捕捉
+//靜態字型檔 solution
+async function checkFormat(WORD_SET,FONT_NAME) {
+    if (!WORD_SET) {
+        throw new Error("words_set are required");  // 使用 throw 讓 genFont 捕捉
     }
-    //查詢請求的字分別散落在哪些字型包中
 
+    const result = await db.query('SELECT id FROM font_types WHERE font_name = $1', [FONT_NAME]);
+    if (result.rowCount === 0) {
+        throw new Error("Font not found");
+    }
+
+    const font_id = result.rows[0].id; // Extracting the id value
+    console.log(FONT_NAME,"id is",font_id);
+    return font_id; // 如果沒問題，就回傳字型編號
+}
+function find_static_font(font_tag){
+    // 回傳要用到的字型包編號，東西還沒寫，先填 null 應急用
+    //查詢請求的字分別散落在哪些字型包中
+    //查詢請求的字型包是否存在
     // 回傳要用到的字型包編號，東西還沒寫，先填 null 應急用
     return NULL; // 如果沒問題，就回傳原始值
 }
-export const genFont = (req,res) => {
+export const genFont = async(req,res) => {
     //檢查字集格式
     try{
-        checkFormat(req.body.words);
+        //req.body.word 是使用者請求的字集
+        const req_word = req.body.words;
+        //font tag 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
+        const font_tag = req.params.font;
+        console.log("執行到這了",req_word,font_tag);
+        await checkFormat(req_word,font_tag);
     }catch(err){
+        console.log("gentFont() error in gen_font.js:",err.stack);
         return res.status(400).send(error.message);
     }
-    //font ID 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
-    var fontID = req.params.font;
-    //
+    //測試一下
+
 }
