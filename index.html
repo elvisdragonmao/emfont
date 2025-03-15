@@ -1,9 +1,33 @@
 <!-- @format -->
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
     <head>
-        <%- include('../partials/head') %>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="author" content="毛哥EM" />
+        <meta name="keywords" content="emfont, webfont, 中文字體, 免費, 開源" />
+        <meta property="og:type" content="website" />
+        <meta name="theme-color" content="#111" />
+        <meta property="og:site_name" content="emfont" />
+        <meta property="og:locale" content="zh-TW" />
+        <link rel="stylesheet" href="/static/css/main.css" />
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script
+            async=""
+            src="https://www.googletagmanager.com/gtag/js?id=G-H69XEEC798"
+        ></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag("js", new Date());
+
+            gtag("config", "G-H69XEEC798");
+        </script>
+        <meta name="description" content="免費中文 Webfont 服務" />
+        <meta property="og:description" content="免費中文 Webfont 服務" />
+        <script src="/static/js/main.js"></script>
         <title>emfont - 免費中文字體 Webfont 服務</title>
         <meta
             property="og:title"
@@ -12,8 +36,49 @@
         <link rel="stylesheet" href="/static/css/home.css" />
     </head>
     <body class="emfont-NotoSansTC">
+        <div class="maintain">
+            <h2>網站目前維護中</h2>
+            <p>
+                由於伺服器供應商的硬碟爆掉了，emfont
+                暫時無法提供服務。我們正在努力修復中。<br />
+                好消息是全新的 emfont 2025 即將上線，敬請期待！
+            </p>
+            <button
+                onclick='document.querySelector(".maintain").style.display=`none`'
+            >
+                了解
+            </button>
+            <style>
+                body{
+                    overflow-x: hidden;
+                }
+                .maintain{
+                    text-align: center;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 9999;
+                }
+                .maintain button{
+                    padding: 10px 20px;
+                    background-color: #111;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin-top: 20px;
+                }
+            </style>
+        </div>
         <div class="body-container">
-            <%- include('../partials/nav') %>
             <header class="fader">
                 <div class="circle">
                     <div class="spaghetti"><div id="spaghetti"></div></div>
@@ -198,7 +263,63 @@
                     </div>
                 </section>
             </main>
-            <%- include('../partials/footer') %>
+
+            <footer>
+                <h2>emfont 背後的力量</h2>
+                <p>
+                    emfont 能夠提供穩定且高品質的 webfont 服務，必須要感謝
+                    <a href="https://zeabur.com/" target="_blank">Zeabur</a>
+                    以及
+                    <a href="https://sponsor.ncse.tw/" target="_blank"
+                        >國雲網路</a
+                    >
+                    提供台灣高速穩定的運算資源。
+                    最重要的是，感謝每一位使用者。能夠讓每一位設計師不再被中文字體以及金錢綁架，綻放腦中的想法，是我們最大的榮幸。
+                </p>
+                <p>
+                    如果你喜歡這個開源專案，歡迎在
+                    <a href="https://github.com/emfont/emfont">GitHub</a>
+                    留下一顆星星。
+                    而如果你有任何問題或有興趣協助開發，不要吝嗇在我們的
+                    <a href="">Discord 伺服器</a> 中提出。
+                </p>
+                <div class="links">
+                    <div class="sponsors">
+                        <a href="https://zeabur.com/" target="_blank"
+                            ><img
+                                src="/static/img/deployed-on-zeabur-dark.svg"
+                                class="zeabur"
+                                alt="zeabur logo"
+                        /></a>
+                        <a href="https://sponsor.ncse.tw/" target="_blank"
+                            ><img
+                                src="/static/img/ncse.webp"
+                                class="ncse"
+                                alt="國雲網路 logo"
+                        /></a>
+                        <!-- <img src="/static/img/Cloudflare.svg" class="cloudflare" alt="" /> -->
+                    </div>
+                    <div class="socials">
+                        <a href="https://github.com/edit-Mr/emfont"
+                            ><img
+                                src="/static/img/GitHub-gray.svg"
+                                alt="GitHub"
+                        /></a>
+                        <a href="https://discord.gg/W8r9x4PwUE"
+                            ><img
+                                src="/static/img/Discord-gray.svg"
+                                alt="Discord"
+                        /></a>
+                        <a href="https://t.me/emfont"
+                            ><img
+                                src="/static/img/Telegram-gray.svg"
+                                alt="Telegram"
+                        /></a>
+                    </div>
+                </div>
+                <div class="credits">emfont 2025</div>
+            </footer>
+
             <script>
                 const marqueeText = document.getElementById("spaghetti");
                 const baseSpeed = 20; // Initial animation duration in seconds
