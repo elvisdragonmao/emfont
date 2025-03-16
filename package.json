@@ -28,6 +28,7 @@
         "drizzle-orm": "^0.40.0",
         "ejs": "^3.1.10",
         "fastify": "^5.2.1",
+        "fontmin": "^2.0.0",
         "ioredis": "^5.5.0",
         "jsonwebtoken": "^9.0.2",
         "pg": "^8.13.3"

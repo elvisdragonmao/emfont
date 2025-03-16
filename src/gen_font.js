@@ -1,5 +1,7 @@
 import { check } from "drizzle-orm/gel-core";
 import { db } from "./database.js";
+import Fontmin from 'fontmin';
+import path from "path";
 async function hashString(str) {
     const encoder = new TextEncoder();
     const data = encoder.encode(str);
@@ -9,7 +11,33 @@ async function hashString(str) {
     // 截取前 10 個字元作為縮短的哈希值
   return fullHash.substring(0, 10);
   }
-  
+// Function to generate font file with specified words
+async function generateFont(originalFontPath, words, fileName) {
+    const fontmin = new Fontmin()
+        .src(path.join(__dirname, "fonts", "original", originalFontPath))
+        .use(
+            Fontmin.glyph({
+                text: words,
+                hinting: false, // keep ttf hint info (fpgm, prep, cvt). default = true
+            })
+        )
+        .use(
+            Fontmin.ttf2woff({
+                deflate: true, // deflate woff. default = false
+            })
+        )
+        .dest(path.join(__dirname, "fonts", "generated", fileName));
+
+    return new Promise((resolve, reject) => {
+        fontmin.run(function (err, files) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(files);
+            }
+        });
+    });
+}
 // hashString 呼叫範例。必須使用 async function 。重要！！
 //   (async () => {
 //     const str = '你好';
@@ -23,7 +51,6 @@ async function checkFormat(WORD_SET,FONT_NAME) {
     if (!WORD_SET) {
         throw new Error("words_set are required");  // 使用 throw 讓 genFont 捕捉
     }
-
     const result = await db.query('SELECT id FROM font_types WHERE font_name = $1', [FONT_NAME]);
     if (result.rowCount === 0) {
         throw new Error("Font not found");
@@ -75,26 +102,32 @@ export const genFont = async(req,res) => {
         //req.body.word 是使用者請求的字集
         const req_word_set = req.body.words;
         //req.body.min 是否使用專用壓縮字型
-        const min_flag = req.body.min;
+        const min_flag = req.body.min=="true"?true:false;
         //請求字重
         const font_weight = req.body.weight;
         //req_word_set,min_flag,font_weight 有可能是 undefined
         // const req_source = req.host;//請求網域
         //font tag 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
         const font_tag = req.params.font;
-        console.log("執行到這了",req_word_set,font_tag);
         const font_id = await checkFormat(req_word_set,font_tag);
 
         //待處理：傳入字集都不是中文的情況
 
         // two condictions: 1.字型包是靜態的 2.字型包是動態的
-        //請求動態字型
-        await hashString(req_word_set).then((hash)=>{
-            console.log("hash is",hash);
-            finde_dynamic_font(hash,font_id);
-        });
-        //請求靜態字型
-        await find_static_font(req_word_set,font_tag);
+        if (min_flag){
+            //請求靜態字型
+            console.log("min_flag is true");
+            await find_static_font(req_word_set,font_tag);
+        }
+        else{
+            //請求動態字型
+            console.log("min_flag is FLASE. generate dynamic font");
+            await hashString(req_word_set).then((hash)=>{
+                console.log("hash is",hash);
+                finde_dynamic_font(hash,font_id);
+            });
+            
+        }
 
         return res.status(200).send("Font generated");
     }catch(err){
