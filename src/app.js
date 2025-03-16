@@ -52,13 +52,18 @@ app.get("/fonts", async (req, reply) => {
 app.post("/g/:font", async (req, res) => {
     //根據前端需要的字集，產生字型檔
     try {
-        genFont(req, res);
+        if (req.params.font === "") {
+            //return 404
+            return res.status(404).send("Font not found");
+        }
+        await genFont(req, res);
+        console.log("請求字型：",req.params);  // { font: 'ZhuQueFangSong' }
+        console.log("word set is :",req.body);    // { words: '軟語伴茶' }
+        
     } catch (error) {
+        console.log(":g/font error in app.js:", error.stack);
         res.status(500).send(error.message);
     }
-    console.log("請求字型：",req.params);  // { font: 'ZhuQueFangSong' }
-    console.log("word set is :",req.body);    // { words: '軟語伴茶' }
-    res.send({ success: true });
 });
 //測試資料庫路由
 app.get('/testq', async (request, reply) => {

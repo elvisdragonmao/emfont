@@ -57,7 +57,7 @@ async function finde_dynamic_font(word_hash,font_id,
         //+回傳字型檔
         //更新使用狀態
         // const op_result = await db.query('UPDATE dynamic_fonts SET last_use = NOW() WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);//表格好像目前沒有上次使用時間，但我覺得應該要有 byiach
-        const op_result = await db.query('UPDATE use_count SET use_count = use_count+1 WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);
+        const op_result = await db.query('UPDATE dynamic_fonts SET use_count = use_count+1 WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);
     }
     //如果不存在，則生成字型檔
     else {
@@ -74,6 +74,12 @@ export const genFont = async(req,res) => {
     try{
         //req.body.word 是使用者請求的字集
         const req_word_set = req.body.words;
+        //req.body.min 是否使用專用壓縮字型
+        const min_flag = req.body.min;
+        //請求字重
+        const font_weight = req.body.weight;
+        //req_word_set,min_flag,font_weight 有可能是 undefined
+        // const req_source = req.host;//請求網域
         //font tag 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
         const font_tag = req.params.font;
         console.log("執行到這了",req_word_set,font_tag);
@@ -83,12 +89,14 @@ export const genFont = async(req,res) => {
 
         // two condictions: 1.字型包是靜態的 2.字型包是動態的
         //請求動態字型
-        hashString(req_word_set).then((hash)=>{
+        await hashString(req_word_set).then((hash)=>{
             console.log("hash is",hash);
             finde_dynamic_font(hash,font_id);
         });
         //請求靜態字型
-        find_static_font(req_word_set,font_tag);
+        await find_static_font(req_word_set,font_tag);
+
+        return res.status(200).send("Font generated");
     }catch(err){
         console.log("gentFont() error in gen_font.js:",err.stack);
         return res.status(400).send(error.message);
