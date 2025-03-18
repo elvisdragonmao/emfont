@@ -2,6 +2,9 @@ import { check } from "drizzle-orm/gel-core";
 import { db } from "./database.js";
 import Fontmin from 'fontmin';
 import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+
 async function hashString(str) {
     const encoder = new TextEncoder();
     const data = encoder.encode(str);
@@ -11,33 +14,51 @@ async function hashString(str) {
     // 截取前 10 個字元作為縮短的哈希值
   return fullHash.substring(0, 10);
   }
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const __Font_storge_path_base = path.join(__dirname, "static","fonts");//root/src/static/fonts/
+
 // Function to generate font file with specified words
-async function generateFont(originalFontPath, words, fileName) {
+// Convert __dirname to work with ES modules
+async function generateFont(originalFontFamily, fontVariant, words, fileName) {
+    // Construct the full path to the font file based on the family and variant
+    const fontFilePath = path.join(__Font_storge_path_base ,originalFontFamily, fontVariant);
+
+    // Check if the font file exists before proceeding
+    if (!fs.existsSync(fontFilePath)) {
+        console.error("Font file not found:", fontFilePath);
+        throw new Error("Font file not found");
+    }
+
+    // Initialize Fontmin with the selected font file
     const fontmin = new Fontmin()
-        .src(path.join(__dirname, "fonts", "original", originalFontPath))
+        .src(fontFilePath)
         .use(
             Fontmin.glyph({
                 text: words,
-                hinting: false, // keep ttf hint info (fpgm, prep, cvt). default = true
+                hinting: false,
             })
         )
         .use(
             Fontmin.ttf2woff({
-                deflate: true, // deflate woff. default = false
+                deflate: true,
             })
         )
-        .dest(path.join(__dirname, "fonts", "generated", fileName));
+        .dest(path.join(__dirname, "generated", fileName)); // Save to static/fonts/generated/
 
     return new Promise((resolve, reject) => {
         fontmin.run(function (err, files) {
             if (err) {
                 reject(err);
             } else {
+                // Log the generated font files' paths
+                console.log("Generated font files:", files);
                 resolve(files);
             }
         });
     });
 }
+
 // hashString 呼叫範例。必須使用 async function 。重要！！
 //   (async () => {
 //     const str = '你好';
@@ -122,6 +143,14 @@ export const genFont = async(req,res) => {
         else{
             //請求動態字型
             console.log("min_flag is FLASE. generate dynamic font");
+            await generateFont(font_tag, "normal-400.ttf", req_word_set, "outputFont.woff")
+            .then(files => {
+                console.log("Font generation successful. Files:", files);
+            })
+            .catch(err => {
+                console.error("Error during font generation:", err);
+            });
+
             await hashString(req_word_set).then((hash)=>{
                 console.log("hash is",hash);
                 finde_dynamic_font(hash,font_id);
