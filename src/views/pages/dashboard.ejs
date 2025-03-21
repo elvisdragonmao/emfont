@@ -13,62 +13,6 @@
         <main class="fader">
             <h1>儀錶板</h1>
             <div class="hr"></div>
-
-            <div class="new-container">
-                <h2>專案列表</h2>
-                <button
-                    class="button-cute"
-                    onclick="document.querySelector('main').classList.add('pop')"
-                >
-                    <img src="/static/img/plus.svg" alt="" />
-                </button>
-            </div>
-            <% if (!!locals.projects) { %> <% projects.forEach(project => { %>
-            <a href="/p/<%= project.project_id %>">
-                <div class="m3-stroke project">
-                    <div class="m3-content">
-                        <div class="volcano">
-                            <img src="<%= project.profile_image %>" alt="" />
-                        </div>
-                        <div class="project-title">
-                            <h3><%= project.project_name %></h3>
-                            <p>上次編輯：<%= project.last_updated %></p>
-                        </div>
-                        <div class="project-data">
-                            <div>
-                                <img src="/static/img/a-stroke.svg" alt="" />
-                                <div class="carve-text">
-                                    <%= project.fonts_count %>
-                                </div>
-                            </div>
-                            <div>
-                                <img
-                                    src="/static/img/global-stroke.svg"
-                                    alt=""
-                                />
-                                <div class="carve-text">
-                                    <%= project.domains_count %>
-                                </div>
-                            </div>
-                            <div>
-                                <img
-                                    src="/static/img/analytics-stroke.svg"
-                                    alt=""
-                                />
-                                <div class="carve-text">
-                                    <%= project.files_count %>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div></a
-            >
-            <% }); %> <% if (projects.length === 0) { %>
-            <p>你還沒有專案喔</p>
-            <% } else { %>
-            <p>專案載入失敗。重新載入試試?</p>
-            <% } %> <% } %>
-
             <div class="new-container">
                 <h2>我的網域</h2>
                 <button

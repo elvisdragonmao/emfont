@@ -161,7 +161,7 @@ nav a {
 }
 
 nav img {
-    height: 1.25rem;
+    width: 1.4rem;
 }
 
 .box {
@@ -346,7 +346,21 @@ p.slideIn {
     border: none;
     outline: transparent;
     cursor: pointer;
+    transition: all 0.3s ease-in-out;
 }
+
+a.btn:hover {
+    background: #d9e5f1;
+    box-shadow: -4px -2px 16px 0px #fff,
+        4px 2px 16px 0px rgba(99, 129, 156, 0.54);
+}
+
+
+
+a.btn::after{
+    display: none;
+}
+
 .btn img {
     width: 1.8rem;
 }
@@ -733,7 +747,7 @@ input:checked + .checkbox > div:last-child::after {
 .friends {
     display: flex;
     justify-content: center;
-    gap: 4rem;
+    gap: 2rem;
     position: relative;
     transform: translate(4px, 4rem);
 }

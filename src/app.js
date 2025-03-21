@@ -46,7 +46,14 @@ app.get("/fonts", async (req, reply) => {
     return reply.view("/src/views/pages/fonts.ejs", { user });
 });
 
-
+app.get("/dashboard", async (req, reply) => {
+    // check if user is logged in
+    const user = req.cookies.token;
+    if (!user) {
+        return reply.redirect("/login");
+    }
+    return reply.view("/src/views/pages/dashboard.ejs", { user });
+});
 
 
 app.post("/g/:font", async (req, res) => {
@@ -78,10 +85,15 @@ app.get('/testq', async (request, reply) => {
     }
   });
 // GitHub OAuth login redirect
-// app.get("/login", async (req, reply) => {
-//     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`;
-//     reply.redirect(githubAuthUrl);
-// });
+
+app.get("/login", async (req, reply) => {
+    return reply.view("/src/views/pages/login.ejs", { user });
+});
+
+app.get("/auth/github", async (req, reply) => {
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`;
+    reply.redirect(githubAuthUrl);
+});
 
 // GitHub OAuth callback
 // app.get("/callback", async (req, reply) => {
@@ -119,11 +131,11 @@ app.get('/testq', async (request, reply) => {
 //     }
 // });
 
-// // Logout
-// app.get("/logout", (req, reply) => {
-//     reply.clearCookie("token");
-//     reply.redirect("/");
-// });
+// Logout
+app.get("/logout", (req, reply) => {
+    reply.clearCookie("token");
+    reply.redirect("/");
+});
 
 // Start server
 const start = async () => {
