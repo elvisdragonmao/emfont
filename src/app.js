@@ -42,6 +42,14 @@ app.get("/", async (req, reply) => {
     return reply.view("/src/views/pages/home.ejs", { user }); // 確保 return
 });
 
+app.get("/emfont.js", async (req, reply) => {
+    return reply.sendFile("/src/static/js/main.js");
+});
+
+app.get("/emfont.min.js", async (req, reply) => {
+    return reply.sendFile("/src/static/js/main.js");
+});
+
 app.get("/fonts", async (req, reply) => {
     return reply.view("/src/views/pages/fonts.ejs", { user });
 });
@@ -71,6 +79,7 @@ app.post("/g/:font", async (req, res) => {
         res.status(500).send(error.message);
     }
 });
+
 //測試資料庫路由
 app.get('/testq', async (request, reply) => {
     try {

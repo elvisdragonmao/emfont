@@ -1,8 +1,9 @@
-/** @format */
-/* eslint-disable no-unused-vars */
 const emfont = (function () {
     // Function to get all elements with class starting with .emfont and load the custom font
-    function loadCustomFonts(callback) {
+    const loadCustomFonts = (config = {
+        
+    }, callback) => {
+    }
         const elements = document.querySelectorAll("[class*='emfont']");
         let fonts = {};
         let promises = [];
@@ -59,8 +60,8 @@ const emfont = (function () {
     }
 
     return {
-        init: function (callback) {
-            loadCustomFonts(callback);
+        init: (config, callback) => {
+            loadCustomFonts(config, callback);
         },
     };
 })();
