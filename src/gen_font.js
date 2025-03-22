@@ -3,7 +3,10 @@ import { db } from "./database.js";
 import Fontmin from 'fontmin';
 import path from "path";
 import { fileURLToPath } from "url";
+import rename from "gulp-rename";
+import { uploadToR2 } from "./r2.js";
 import fs from "fs";
+import { Console } from "console";
 
 async function hashString(str) {
     const encoder = new TextEncoder();
@@ -43,15 +46,16 @@ async function generateFont(originalFontFamily, fontVariant, words, fileName) {
                 deflate: true,
             })
         )
-        .dest(path.join(__dirname, "generated", fileName)); // Save to static/fonts/generated/
-
+        .use(rename(`${fileName}.woff`))
+        .dest(path.join(__dirname, "generated"));
+        // Save to static/fonts/generated/
     return new Promise((resolve, reject) => {
         fontmin.run(function (err, files) {
             if (err) {
                 reject(err);
             } else {
                 // Log the generated font files' paths
-                console.log("Generated font files:", files);
+                console.log("Generated font files!");
                 resolve(files);
             }
         });
@@ -113,9 +117,14 @@ async function finde_dynamic_font(word_hash,font_id,font_family,font_weight,font
             await db.query('INSERT INTO dynamic_fonts (hash_index, font_type_id,create_domain) VALUES ($1, $2, $3)', [word_hash, font_id, req_source]).then((result)=>
             {
                 //+生成字型檔
-                generateFont(font_family, `${font_mode}-${font_weight}.ttf`, original_word_set, `${word_hash}.woff`)
+                generateFont(font_family, `${font_mode}-${font_weight}.ttf`, original_word_set, word_hash)
                 .then(files => {
-                    console.log("Font generation successful. Files:", files);
+                    const localFontPath = path.join(__dirname, "generated", `${word_hash}.woff`);
+                    //+放到雲端硬碟
+                    //+回傳字型檔
+                    const r2Url =uploadToR2(localFontPath, `${word_hash}.woff2`);
+                    return r2Url;
+
                 })
                 .catch(err => {
                     console.error("Error during font generation:", err);
@@ -124,8 +133,6 @@ async function finde_dynamic_font(word_hash,font_id,font_family,font_weight,font
 
         }
         );
-        //+放到雲端硬碟
-        //+回傳字型檔
     }
 }
 export const genFont = async(req,res) => {
@@ -156,11 +163,12 @@ export const genFont = async(req,res) => {
         else{
             //請求動態字型
             
+            console.log("min_flag is FLASE. generate dynamic font");
             await hashString(req_word_set).then((hash)=>{
                 console.log("hash is",hash);
-                finde_dynamic_font(hash,font_id,font_family_name,font_weight,font_mode, req_word_set);
+                const file_path = finde_dynamic_font(hash,font_id,font_family_name,font_weight,font_mode, req_word_set);
+                console.log("file path is",file_path);
             });
-            console.log("min_flag is FLASE. generate dynamic font");
             
         }
 

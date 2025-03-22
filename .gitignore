@@ -133,3 +133,4 @@ dist
 src/static/fonts/**/*.ttf
 src/static/fonts/**/*.woff
 src/static/fonts/*.zip
+generated/
