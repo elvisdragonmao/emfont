@@ -11,6 +11,42 @@ class Emfont {
         }
     ) {
         this.config = config;
+
+        // Check browser support
+        if (!this._checkBrowserSupport()) {
+            console.warn("emfont: Your browser may not support all required features. Some functionality may be limited.");
+            // Fallback to WOFF if WOFF2 is not supported
+            if (this.config.format === "woff2" && !this._hasWoff2Support()) {
+                this.config.format = "woff";
+            }
+        }
+    }
+
+    _checkBrowserSupport() {
+        return (
+            typeof FontFace === "function" &&
+            "fonts" in document &&
+            typeof Promise === "function" &&
+            typeof class {} === "function" &&
+            (() => {}).constructor === Function &&
+            Object.entries &&
+            Array.prototype.includes
+        );
+    }
+
+    _hasWoff2Support() {
+        try {
+            const testFont = new FontFace(
+                "t",
+                'url("data:font/woff2;base64,d09GMgABAAAAAADcAAoAAAAAAggAAACWAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABk4ALAoUNAE2AiQDCAsGAAQgBSAHIBtvAcieB3aD8wURQ+TZazbRE9HvF5vde4KCYGhiCgq/NKPF0i6UIsZynbP+Xi9Ng+XLbNlmNz/xIBBqq61FIQRJhC/+QA/08PJQJ3sK") format("woff2")'
+            );
+            return testFont
+                .load()
+                .then(() => true)
+                .catch(() => false);
+        } catch (e) {
+            return false;
+        }
     }
 
     // a object to store fonts already loaded
