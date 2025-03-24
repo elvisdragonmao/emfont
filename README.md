@@ -1,13 +1,18 @@
 
 <div align=center>
 
+<img src=src/static/img/logo/emfont-logo-light.svg#gh-dark-mode-only height=48px>
+<img src=src/static/img/logo/emfont-logo-dark.svg#gh-light-mode-only height=48px>
+
+<div style=display:none>
+
 # [emfont](https://font.emtech.cc)
+
+</div>
 
 免費中文 webfont 服務。
 
 [![Discord](https://img.shields.io/badge/-Discord-7289DA?style=flat-square&logo=Discord&logoColor=white)](https://dc.elvismao.com) [![Telegram](https://img.shields.io/badge/-Telegram-169BD7?style=flat-square&logo=Telegram&logoColor=white)](https://t.me/emfont) 
-
-![og](/src/static/img/og.webp)
 
 </div>
 
@@ -27,19 +32,30 @@
 <p class="emfont-jfopenhuninn">
   這個段落使用了 jf-openhuninn-2.0 字型。
 </p>
-<script src="https://font.emtech.cc/emfont.min.js"></script>
+<script src="https://font.emtech.cc/emfont.js"></script>
 <script>
   emfont.init();
 </script>
 ```
 
+完整使用說明請參考 [emfont說明文件](https://font.emtech.cc/docs)
+
 ## 開發與部屬
 
-請先安裝 [Yarn](https://yarnpkg.com)、[Node.js](https://nodejs.org)、[Git](https://git-scm.com/)。
+請先安裝 [pnpm](https://pnpm.io/zh-TW/)、[Node.js](https://nodejs.org)、[Git](https://git-scm.com/)。
+
 ```bash
 git clone https://github.com/Edit-Mr/emfont.git
 pnpm install
-pnpm dev
 ```
 
-**環境變數：**複製 `.env.example` 並命名為 `.env`，然後根據需要修改其中的變數。
+然後請你自己架設 [minIO](https://min.io/) ([S3](https://aws.amazon.com/tw/pm/serv-s3/), [R2](https://www.cloudflare.com/zh-tw/developer-platform/products/r2/))、[Redis](https://redis.io/)[、PostgreSQL](https://www.postgresql.org/)。
+
+也可以順便自己架設 [說明文件](https://github.com/emfont/doc)、[caddy](https://zeabur.com/zh-TW/templates/FFDLWU)
+
+**環境變數：** 複製 `.env.example` 並命名為 `.env`，然後根據需要修改其中的變數。
+
+
+```bash
+pnpm start
+```

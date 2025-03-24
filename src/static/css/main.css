@@ -88,6 +88,7 @@ nav > div > div {
     justify-content: center;
     transition: all 0.3s ease-in-out;
     padding-block: 0rem;
+    padding-inline: 2rem;
 }
 
 .nav-left.open {
@@ -144,9 +145,22 @@ nav > div > div {
 }
 
 .logo {
-    font-size: 1.25rem;
+   height: 1.5rem;
+   width: unset;
     font-weight: 700;
     transition: margin 0.3s ease-in-out;
+}
+
+
+a:has(.logo)::after{
+  display: none;
+}
+a:has(.logo){
+    transition: scale .3s;
+}
+
+a:has(.logo):hover{
+    scale: 1.1;
 }
 nav a {
     display: flex;
