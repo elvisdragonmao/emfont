@@ -111,7 +111,13 @@ async function finde_dynamic_font(word_hash,font_id,font_family,font_weight,font
         //+回傳字型檔
         //更新使用狀態
         // const op_result = await db.query('UPDATE dynamic_fonts SET last_use = NOW() WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);//表格好像目前沒有上次使用時間，但我覺得應該要有 byiach
-        const op_result = await db.query('UPDATE dynamic_fonts SET use_count = use_count+1,last_us = NOW()  WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);
+        try
+        {
+            const op_result = await db.query('UPDATE dynamic_fonts SET use_count = use_count+1,last_us = NOW()  WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);
+        }
+        catch(err){
+            console.error("❌rror during update font record:", err);
+        }
         return file_exist;//if file exist, return checkFileExists return file path
     }
     //如果不存在，則生成字型檔
@@ -121,7 +127,7 @@ async function finde_dynamic_font(word_hash,font_id,font_family,font_weight,font
             await db.query('INSERT INTO dynamic_fonts (hash_index, font_type_id,create_domain) VALUES ($1, $2, $3)', [word_hash, font_id, req_source])
         }
         catch(err){
-            console.warn("❌rror during insert new font record:", err);
+            console.error("❌rror during insert new font record:", err);
             console.warn(`可能是資料庫已經有這筆資料，但R2上沒有字型檔${file_exist}。已重新生成，下次不會再有這個錯誤，若重複出現同一個字型檔報錯，請檢查資料庫`);
         }
             console.log("word set is 不存在過去的生成資料庫紀錄");
@@ -154,7 +160,8 @@ export const genFont = async(req,res) => {
         //請求模式（normal or mono）
         const font_mode = req.body.mode;
         //req_word_set,min_flag,font_weight 有可能是 undefined
-        // const req_source = req.host;//請求網域
+        const req_source = req.headers.host;//請求網域
+
         //font tag 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
         const font_family_name = req.params.font;
         const font_id = await checkFormat(req_word_set,font_family_name);
@@ -173,7 +180,7 @@ export const genFont = async(req,res) => {
             console.log("min_flag is FLASE. generate dynamic font");
             const hash = await hashString(req_word_set);
             console.log("hash is", hash);
-            const file_path = await finde_dynamic_font(hash, font_id, font_family_name, font_weight, font_mode, req_word_set);
+            const file_path = await finde_dynamic_font(hash, font_id, font_family_name, font_weight, font_mode, req_word_set,req_source);
             // 確保 file_path 存在並且有效
             if (!file_path) {
                 return res.status(404).json({ error: "File not found" });
@@ -190,7 +197,7 @@ export const genFont = async(req,res) => {
             
         }
 
-        return res.status(200).send("Font generated");
+        // return res.status(200).send("Font generated");
     }catch(err){
         console.log("gentFont() error in gen_font.js:",err.stack);
         return res.status(400).send(error.message);

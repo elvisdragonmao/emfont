@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts(
     font_type_id INT NOT NULL, -- 字型id，對應到另一張表格
     weight INT, -- font weight
     create_domain VARCHAR(255) NOT NULL,
-    use_count INT NOT NULL DEFAULT 0,
+    use_count INT NOT NULL DEFAULT 1,
     last_us TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (font_type_id) REFERENCES font_types(id)
