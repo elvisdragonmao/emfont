@@ -11,10 +11,10 @@ dotenv.config(); // 讀取 .env 變數
 const bucketName = process.env.MINIO_BUCKET;
 const s3Client = new S3Client({
     region: "auto",
-    endpoint: process.env.R2_ENDPOINT,
+    endpoint: process.env.MINIO_ENDPOINT,
     credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.MINIO_USERNAME,
+        secretAccessKey: process.env.MINIO_PASSWORD,
     },
     forcePathStyle: true, 
 });
