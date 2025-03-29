@@ -29,7 +29,7 @@ async function listBuckets() {
 }
 
 async function downloadAllFilesInFonts() {
-const prefix = "fonts"; // Directory name in minio
+  const prefix = "fonts"; // Directory name in minio
   try {
     // List all files in the fonts/ directory
     const listCommand = new ListObjectsV2Command({
@@ -44,41 +44,48 @@ const prefix = "fonts"; // Directory name in minio
       return;
     }
 
-    // Iterate over each file in the list
-    console.log(`Found ${listResponse.Contents.length} files in the fonts/ directory.`);
-    for (const file of listResponse.Contents) {
-      const fileKey = file.Key;
+    console.log(`🔄 Found ${listResponse.Contents.length} 個字體文件，開始下載...`);
 
-      // Skip if no file key
-      if (!fileKey) continue;
+    await Promise.all(
+      listResponse.Contents.map(async (file) => {
+        const fileKey = file.Key;
+        if (!fileKey) return; // Skip if no file key
 
-      console.log(`Downloading: ${fileKey}`);
+        console.log(`⬇️ 下載中: ${fileKey}`);
 
-      // Get file from S3
-      const getCommand = new GetObjectCommand({
-        Bucket: bucketName,
-        Key: fileKey
-      });
+        // Get file from S3
+        const getCommand = new GetObjectCommand({
+          Bucket: bucketName,
+          Key: fileKey
+        });
 
-      const data = await s3Client.send(getCommand);
+        const data = await s3Client.send(getCommand);
 
-      // Create local directory if it doesn't exist
-      const localPath = path.join("src", "static", fileKey); // Create path based on fileKey
-      const localDir = path.dirname(localPath);
-      fs.mkdirSync(localDir, { recursive: true });
+        // 建立本地檔案路徑
+        const localPath = path.join("src", "static", fileKey);// Create path based on fileKey
+        const localDir = path.dirname(localPath);
+        fs.mkdirSync(localDir, { recursive: true });
 
-      // Pipe the stream from S3 to the local file
-      const fileStream = fs.createWriteStream(localPath);
-      data.Body.pipe(fileStream);
+        // **使用 Promise 等待檔案寫入完成**
+        await new Promise((resolve, reject) => {
+          //Pipe the stream from S3 to the local file
+          const fileStream = fs.createWriteStream(localPath);
+          data.Body.pipe(fileStream);
 
-      fileStream.on("finish", () => {
-        console.log(`✅ 文件已下載: ${fileKey}`);
-      });
+          fileStream.on("finish", () => {
+            console.log(`✅ 文件已下載: ${fileKey}`);
+            resolve();
+          });
 
-      fileStream.on("error", (err) => {
-        console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
-      });
-    }
+          fileStream.on("error", (err) => {
+            console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
+            reject(err);
+          });
+        });
+      })
+    );
+
+    console.log("✅ 所有字體下載完成");
   } catch (err) {
     console.error("❌ 下載檔案失敗:", err);
   }
@@ -135,23 +142,28 @@ async function insertFontTypes() {
       console.error("Error inserting font types:", error);
     }
   }
-async function fech_mino()//從本地mino空間抓檔案
-{
-  //刪除本地src/static/fonts/裡面的所有東西
-  const all_files_in_folder = await readdir(fontsDir);
-  //刪除所有檔案
-  for (const item of all_files_in_folder) {
-    const itemPath = path.join(fontsDir, item);
-    const stats = await stat(itemPath);
-    if (stats.isDirectory()) {
-      fs.rmSync(itemPath, { recursive: true });
-    } else {
-      fs.unlinkSync(itemPath);
+  //從本地mino空間抓檔案
+  async function fech_mino() {
+    //刪除本地src/static/fonts/裡面的所有東西
+    const all_files_in_folder = await readdir(fontsDir);
+  
+    // 刪除所有檔案
+    for (const item of all_files_in_folder) {
+      const itemPath = path.join(fontsDir, item);
+      const stats = await stat(itemPath);
+      if (stats.isDirectory()) {
+        await fs.promises.rm(itemPath, { recursive: true, force: true });
+      } else {
+        await fs.promises.unlink(itemPath);
+      }
     }
+  
+    console.log("✅ 本地字體檔案已清除");
+  
+    // 從 MinIO 抓取檔案，確保下載完成
+    await downloadAllFilesInFonts();
+    console.log("✅ 所有字體文件已成功下載");
   }
-  //從minio抓檔案
-  await downloadAllFilesInFonts();
-}
 async function initCheck()
 {
     try
