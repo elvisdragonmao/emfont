@@ -16,10 +16,20 @@ const s3Client = new S3Client({
         accessKeyId: process.env.R2_ACCESS_KEY_ID,
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
     },
+    forcePathStyle: true, 
 });
 
+async function listBuckets() {
+  try {
+    const data = await s3Client.send(new ListBucketsCommand({}));
+    console.log("Buckets:", data.Buckets.map(b => b.Name));
+  } catch (err) {
+    console.error("Error listing buckets:", err);
+  }
+}
+
 async function downloadAllFilesInFonts() {
-const prefix = "fonts"; // Directory name in nino
+const prefix = "fonts"; // Directory name in minio
   try {
     // List all files in the fonts/ directory
     const listCommand = new ListObjectsV2Command({
@@ -134,7 +144,7 @@ async function fech_mino()//從本地mino空間抓檔案
     const itemPath = path.join(fontsDir, item);
     const stats = await stat(itemPath);
     if (stats.isDirectory()) {
-      fs.rmdirSync(itemPath, { recursive: true });
+      fs.rmSync(itemPath, { recursive: true });
     } else {
       fs.unlinkSync(itemPath);
     }
@@ -148,6 +158,8 @@ async function initCheck()
     {
       if (process.env.local_test != "true")
       {
+          console.log("initCheck: local_test is false");
+          await listBuckets();
           await fech_mino();
       }
         const schemaFilePath = path.resolve("src/static/sql/schema.sql");
