@@ -165,6 +165,7 @@ async function initCheck()
 {
     try
     {
+      //判斷是不是在 zeabur 是才找 minio
       if (process.env.local_test != "true")
       {
           console.log("initCheck: local_test is false");
@@ -174,7 +175,6 @@ async function initCheck()
         const schemaFilePath = path.resolve("src/static/sql/schema.sql");
         await executeSQLFile(schemaFilePath);
         await insertFontTypes();
-        //判斷是不是在 zeabur 是才找 minio
         console.log("init success");
         return true;
     }
