@@ -10,10 +10,10 @@ import { db } from "./database.js";
 //import { users } from "./schema.js";
 import { genFont } from "./gen_font.js";
 import {initCheck} from "./init.js";
-import "dotenv/config";
+import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path from "path";
-
+dotenv.config(); // 讀取 .env 變數
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
