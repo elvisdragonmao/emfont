@@ -154,7 +154,7 @@ app.ready().then(initCheck);
 const start = async () => {
     try {
         const run_port = process.env.PORT || 3000;
-        app.listen({port:run_port}, () => {
+        app.listen({port:run_port,host: "0.0.0.0"},() => {
             console.log(`Server running at http://localhost:${run_port}`);
           });
     } catch (err) {
