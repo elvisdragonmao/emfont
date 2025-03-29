@@ -3,7 +3,7 @@ import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
 import { db } from "./database.js"; // 匯入 db.js 中的資料庫連線模組
-import { S3Client,  ListObjectsV2Command,GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client,  ListObjectsV2Command,GetObjectCommand ,ListBucketsCommand} from "@aws-sdk/client-s3";
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
