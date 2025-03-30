@@ -3,8 +3,8 @@
 import Fastify from "fastify";
 import fastifyView from "@fastify/view";
 import ejs from "ejs";
-import fastifyCookie from "@fastify/cookie";
-import fastifyJwt from "@fastify/jwt";
+//import fastifyCookie from "@fastify/cookie";
+//import fastifyJwt from "@fastify/jwt";
 //import axios from "axios";
 import { db } from "./database.js";
 //import { users } from "./schema.js";
@@ -17,10 +17,10 @@ dotenv.config(); // 讀取 .env 變數
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
+const user = {};
 const app = Fastify({ logger: true });
-app.register(fastifyCookie);
-app.register(fastifyJwt, { secret: process.env.JWT_SECRET });
+//app.register(fastifyCookie);
+//app.register(fastifyJwt, { secret: process.env.JWT_SECRET });
 app.register(fastifyView, { engine: { ejs: ejs } });
 
 app.register(import("@fastify/static"), {
