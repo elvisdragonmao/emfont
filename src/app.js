@@ -1,6 +1,7 @@
 /** @format */
 
 import Fastify from "fastify";
+import cors from '@fastify/cors';
 import fastifyView from "@fastify/view";
 import ejs from "ejs";
 //import fastifyCookie from "@fastify/cookie";
@@ -26,6 +27,13 @@ app.register(fastifyView, { engine: { ejs: ejs } });
 app.register(import("@fastify/static"), {
     root: path.join(__dirname, "static"), // 修正路徑問題
     prefix: "/static/",
+});
+
+app.register(cors, {
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
 });
 
 // Pages routes
