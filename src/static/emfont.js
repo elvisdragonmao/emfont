@@ -2,7 +2,6 @@ class Emfont {
     constructor(
         config = {
             caseSensitive: false,
-            weightSensitive: false,
             weight: 400,
             format: "woff2", // woff2, woff, ttf, eot
             autoApply: true,
@@ -21,6 +20,10 @@ class Emfont {
             if (this.config.format === "woff2" && !this._hasWoff2Support()) {
                 this.config.format = "woff";
             }
+        } else {
+            console.log(
+                "This website uses emfont: a free Chinese webfont service."
+            );
         }
     }
 
@@ -74,17 +77,16 @@ class Emfont {
                 fontNames.forEach((fontName) => {
                     if (fontName && words) {
                         // check if there are -500, -500, -900, etc. in class name, must start with -
-                        const weight = fontName.match(/^(-?\d+)/)?.[0];
-                        const realWeight = this.config.weightSensitive
-                            ? weight
-                                ? parseInt(weight)
-                                : this.config.weight
-                            : this.config.weight;
-                        const fontClassName =
-                            fontName.replace(weight, "") + realWeight;
-                        fonts[fontClassName] =
-                            (fonts[fontClassName] ? fonts[fontClassName] : "") +
-                            words;
+                        const settedWeight = !!fontName.match(/-(\d+)/);
+                        if (!settedWeight)
+                            fontName +=
+                                "-" +
+                                (element.style.fontWeight ||
+                                    this.config.weight);
+
+                        console.log("realWeight:", fontName);
+                        fonts[fontName] =
+                            (fonts[fontName] ? fonts[fontName] : "") + words;
                     }
                 });
             });
@@ -103,9 +105,10 @@ class Emfont {
                     // check if fontName contains -min
                     const min = fontName.match(/-min/)?.[0];
                     if (min) postFontName = fontName.replace(min, "");
-                    const weight = fontName.match(/-[0-9]+/)?.[0];
-                    if (weight) postFontName = fontName.replace(weight, "");
-                    return fetch("https://font.emtech.cc/g/" + postFontName, {
+                    const weight = fontName.match(/-(\d+)/)[1];
+                    if (weight)
+                        postFontName = fontName.replace("-" + weight, "");
+                    return fetch("https://🖋️.emtech.cc/g/" + postFontName, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"
