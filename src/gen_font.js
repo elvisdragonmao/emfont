@@ -26,7 +26,6 @@ const __Font_storge_path_base = path.join(__dirname, "static", "fonts"); //root/
 // Convert __dirname to work with ES modules
 async function generateFont(
     originalFontFamily,
-    font_mode,
     font_weight,
     words,
     output_name
@@ -35,7 +34,7 @@ async function generateFont(
     const fontFilePath = path.join(
         __Font_storge_path_base,
         originalFontFamily,
-        `${font_mode}-${font_weight}.ttf`
+        `${font_weight}.ttf`
     );
     // Check if the font file exists before proceeding
     if (!fs.existsSync(fontFilePath)) {
@@ -116,7 +115,6 @@ async function finde_dynamic_font(
     font_id,
     font_family,
     font_weight,
-    font_mode,
     original_word_set,
     req_source = "https://font.emfont.cc/" //不可能在這裡指定，應該從前端的 body 封包一起請求（或是有其他方法）
 ) {
@@ -126,9 +124,9 @@ async function finde_dynamic_font(
     // //如果存在，回傳字型檔
     // console.log("@@I search:",exist);
     const file_exist = await checkFileExists(
-        `${word_hash}-${font_family}-${font_mode}${font_weight}.woff`
+        `${word_hash}-${font_family}-${font_weight}.woff`
     ); //return false or file path
-    const little_font_package = `${word_hash}-${font_family}-${font_mode}${font_weight}.woff`;
+    const little_font_package = `${word_hash}-${font_family}-${font_weight}.woff`;
     if (file_exist) {
         console.log("word set is aleardy exist!");
         //+回傳字型檔
@@ -162,7 +160,6 @@ async function finde_dynamic_font(
             //+生成字型檔
             await generateFont(
                 font_family,
-                font_mode,
                 font_weight,
                 original_word_set,
                 little_font_package
@@ -173,7 +170,7 @@ async function finde_dynamic_font(
                 little_font_package
             );
             //+放到雲端硬碟
-            //+回傳字型檔`${word_hash}-${font_mode}-${font_weight}.woff`
+            //+回傳字型檔`${word_hash}-${font_weight}.woff`
             // 上傳到 R2
             const r2Url = await uploadToR2(localFontPath, little_font_package);
             console.log("✅ R2 URL:", r2Url);
@@ -192,8 +189,6 @@ export const genFont = async (req, res) => {
         const min_flag = req.body.min == "true" ? true : false;
         //請求字重
         const font_weight = req.body.weight;
-        //請求模式（normal or mono）
-        const font_mode = req.body.mode;
         //req_word_set,min_flag,font_weight 有可能是 undefined
         const req_source = req.headers.host; //請求網域
 
@@ -214,7 +209,6 @@ export const genFont = async (req, res) => {
                 font_id,
                 font_family_name,
                 font_weight,
-                font_mode,
                 req_word_set,
                 req_source
             );
@@ -240,6 +234,6 @@ export const genFont = async (req, res) => {
         // return res.status(200).send("Font generated");
     } catch (err) {
         console.log("gentFont() error in gen_font.js:", err.stack);
-        return res.status(400).send(error.message);
+        return res.status(400).send(err.message);
     }
 };
