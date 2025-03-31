@@ -83,7 +83,7 @@ app.post("/g/:font", async (req, res) => {
         await genFont(req, res);
     } catch (error) {
         console.log(":g/font error in app.js:", error.stack);
-        res.status(500).send(error.message);
+        res.status(500).send({ status: "failed", message: error.message });
     }
 });
 

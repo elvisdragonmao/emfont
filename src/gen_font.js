@@ -214,16 +214,18 @@ export const genFont = async (req, res) => {
             );
             // 確保 file_path 存在並且有效
             if (!file_path) {
-                return res.status(404).json({ error: "File not found" });
+                return res
+                    .status(404)
+                    .json({ status: "failed", message: "File not found" });
             }
 
             // 讓瀏覽器下載該檔案
             console.log("📥 傳送檔案:", file_path);
             return res.send({
-                url: file_path,
-                font: font_family_name,
-                style: "lorem",
-                weight: font_weight
+                status: "success",
+                message: "",
+                location: [file_path],
+                name: font_family_name,
             });
         } else {
             //請求靜態字型
@@ -234,6 +236,10 @@ export const genFont = async (req, res) => {
         // return res.status(200).send("Font generated");
     } catch (err) {
         console.log("gentFont() error in gen_font.js:", err.stack);
-        return res.status(400).send(err.message);
+
+        return res.status(400).send({
+            status: "failed",
+            message: `error generating font: ${err.message}`
+        });
     }
 };
