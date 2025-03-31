@@ -135,5 +135,5 @@ dist
 # emfont static file(you have to download by yourself)
 src/static/fonts/**/*.ttf
 src/static/fonts/**/*.woff
-src/static/fonts/*.zip
+src/static/fonts/**
 generated/
