@@ -39,7 +39,10 @@ async function generateFont(
     // Check if the font file exists before proceeding
     if (!fs.existsSync(fontFilePath)) {
         console.error("Font file not found:", fontFilePath);
-        throw new Error("Font file not found");
+        return res.status(404).json({
+            status: "failed",
+            message: `Font not found for ${font_family_name}`
+        });
     }
 
     // Initialize Fontmin with the selected font file
@@ -91,7 +94,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
         [FONT_NAME]
     );
     if (result.rowCount === 0) {
-        throw new Error("Font not found");
+        return false;
     }
     const font_id = result.rows[0].id; // Extracting the id value
     console.log(FONT_NAME, "id is", font_id);
@@ -110,7 +113,7 @@ async function find_static_font(word_set, font_family_name) {
     //查詢請求的字型包是否存在
     return 1; // 如果沒問題，就回傳原始值
 }
-async function finde_dynamic_font(
+async function find_dynamic_font(
     word_hash,
     font_id,
     font_family,
@@ -183,18 +186,30 @@ async function finde_dynamic_font(
 export const genFont = async (req, res) => {
     //檢查字集格式
     try {
+        if (!req.body || !req.body.words) {
+            return res
+                .status(400)
+                .json({ status: "failed", message: "Missing words parameter" });
+        }
         //req.body.word 是使用者請求的字集
         const req_word_set = req.body.words;
         //req.body.min 是否使用專用壓縮字型
         const min_flag = req.body.min == "true" ? true : false;
         //請求字重
-        const font_weight = req.body.weight;
+        const font_weight = req.body.weight || 400;
         //req_word_set,min_flag,font_weight 有可能是 undefined
-        const req_source = req.headers.host; //請求網域
+        const req_source =
+            req.headers.referer || req.headers.origin || "unknown"; //請求網域
 
         //font tag 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
         const font_family_name = req.params.font;
         const font_id = await checkFormat(req_word_set, font_family_name);
+        if (!font_id) {
+            return res.status(400).json({
+                status: "failed",
+                message: `Invalid font format for ${font_family_name}`
+            });
+        }
 
         //待處理：傳入字集都不是中文的情況
 
@@ -204,7 +219,7 @@ export const genFont = async (req, res) => {
             console.log("min_flag is FLASE. generate dynamic font");
             const hash = await hashString(req_word_set);
             console.log("hash is", hash);
-            const file_path = await finde_dynamic_font(
+            const file_path = await find_dynamic_font(
                 hash,
                 font_id,
                 font_family_name,
@@ -225,7 +240,7 @@ export const genFont = async (req, res) => {
                 status: "success",
                 message: "",
                 location: [file_path],
-                name: font_family_name,
+                name: font_family_name
             });
         } else {
             //請求靜態字型
