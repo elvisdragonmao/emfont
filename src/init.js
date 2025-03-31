@@ -93,7 +93,7 @@ async function downloadAllFilesInFonts() {
         );
 
         console.log("✅ 所有字體下載完成");
-    } catch (err) {
+    } catch (err) { 
         console.error("❌ 下載檔案失敗:", err);
     }
 }
@@ -137,7 +137,7 @@ async function insertFontTypes() {
         try {
             for (const fontName of fontNames) {
                 await db.query(
-                    `INSERT INTO font_types (font_name) VALUES ($1)
+                    `INSERT INTO font_familys (font_name) VALUES ($1)
              ON CONFLICT (font_name) DO NOTHING;`,
                     [fontName]
                 );
@@ -179,7 +179,7 @@ async function initCheck() {
             await listBuckets();
             await fech_mino();
         }
-        const schemaFilePath = path.resolve("src/static/sql/schema.sql");
+        const schemaFilePath = path.resolve("src/data/sql/schema.sql");
         await executeSQLFile(schemaFilePath);
         await insertFontTypes();
         console.log("init success");

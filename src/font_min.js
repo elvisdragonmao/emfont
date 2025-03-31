@@ -17,7 +17,8 @@ async function generateFont(
     originalFontFamily,
     font_weight,
     words,
-    output_name
+    output_name,
+    put_folder = "generated" //default
 ) {
     // Construct the full path to the font file based on the family and variant
     const fontFilePath = path.join(
@@ -48,10 +49,10 @@ async function generateFont(
                 deflate: true
             })
         )
+        //生成後在本地的名稱
         .use(rename(output_name))
-        //生成後在本地的明稱
-        .dest(path.join(__dirname, "generated"));
-    // Save to static/fonts/generated/
+        // Save to src/{put_folder}/
+        .dest(path.join(__dirname, put_folder));
     return new Promise((resolve, reject) => {
         fontmin.run(function (err, files) {
             if (err) {
@@ -73,7 +74,7 @@ async function find_dynamic_font(
     req_source = "https://font.emfont.cc/" //不可能在這裡指定，應該從前端的 body 封包一起請求（或是有其他方法）
 ) {
     //用 hash 值查詢動態字型檔是否存在
-    // const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);
+    // const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);
     // const exist = exist_search.rows[0];
     // //如果存在，回傳字型檔
     // console.log("@@I search:",exist);
@@ -85,10 +86,10 @@ async function find_dynamic_font(
         console.log("word set is aleardy exist!");
         //+回傳字型檔
         //更新使用狀態
-        // const op_result = await db.query('UPDATE dynamic_fonts SET last_use = NOW() WHERE hash_index = $1 AND font_type_id = $2', [word_hash, font_id]);//表格好像目前沒有上次使用時間，但我覺得應該要有 byiach
+        // const op_result = await db.query('UPDATE dynamic_fonts SET last_use = NOW() WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);//表格好像目前沒有上次使用時間，但我覺得應該要有 byiach
         try {
             const op_result = await db.query(
-                "UPDATE dynamic_fonts SET use_count = use_count+1,last_us = NOW()  WHERE hash_index = $1 AND font_type_id = $2",
+                "UPDATE dynamic_fonts SET use_count = use_count+1,last_us = NOW()  WHERE hash_index = $1 AND font_family_id = $2",
                 [word_hash, font_id]
             );
         } catch (err) {
@@ -100,7 +101,7 @@ async function find_dynamic_font(
     else {
         try {
             await db.query(
-                "INSERT INTO dynamic_fonts (hash_index, font_type_id,create_domain) VALUES ($1, $2, $3)",
+                "INSERT INTO dynamic_fonts (hash_index, font_family_id,create_domain) VALUES ($1, $2, $3)",
                 [word_hash, font_id, req_source]
             );
         } catch (err) {
