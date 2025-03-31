@@ -133,6 +133,6 @@ dist
 .pnp.*
 
 # emfont static file(you have to download by yourself)
-src/static/fonts/**
-!src/static/fonts/.gitkeep
-generated/
+src/_data/fonts/**
+!src/_data/fonts/.gitkeep
+_generated/

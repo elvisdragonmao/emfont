@@ -29,7 +29,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
         throw new Error("words_set are required"); // 使用 throw 讓 genFont 捕捉
     }
     const result = await db.query(
-        "SELECT id FROM font_familys WHERE font_name = $1",
+        "SELECT id FROM font_family WHERE font_name = $1",
         [FONT_NAME]
     );
     if (result.rowCount === 0) {

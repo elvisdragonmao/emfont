@@ -3,19 +3,15 @@
 CREATE TABLE IF NOT EXISTS font_family (
     id SERIAL PRIMARY KEY,
     font_name VARCHAR(255) UNIQUE NOT NULL,
-    font_class VARCHAR(255),
-    font_name VARCHAR(255),
-    font_name_zh VARCHAR(255),
-    name_en VARCHAR(255),
-    license VARCHAR(255),
+    font_name_zh VARCHAR(255) DEFAULT NULL,
+    license VARCHAR(255) DEFAULT NULL,
     version VARCHAR(255),
     font_weight VARCHAR(255),
     repo_url VARCHAR(255),
     author VARCHAR(255)
-    fon
 );
 -- 
--- INSERT INTO font_familys VALUES (1, 'ZhuQueFangSong');
+-- INSERT INTO font_family VALUES (1, 'ZhuQueFangSong');
 -- 動態字型對應表格
 CREATE TABLE IF NOT EXISTS dynamic_fonts(
     hash_index CHAR(10) PRIMARY KEY,  -- 原始hash的前10碼
@@ -25,7 +21,7 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts(
     use_count INT NOT NULL DEFAULT 1,
     last_us TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (font_family_id) REFERENCES font_familys(id)
+    FOREIGN KEY (font_family_id) REFERENCES font_family(id)
 );
 
 CREATE TABLE IF NOT EXISTS static_fonts(

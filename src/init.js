@@ -13,6 +13,7 @@ const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
 dotenv.config(); // 讀取 .env 變數
+const fontsDir = path.resolve("src/_data/fonts");//原始字型檔存放路徑
 const bucketName = process.env.MINIO_BUCKET;
 const s3Client = new S3Client({
     region: "auto",
@@ -70,7 +71,7 @@ async function downloadAllFilesInFonts() {
                 const data = await s3Client.send(getCommand);
 
                 // 建立本地檔案路徑
-                const localPath = path.join("src", "static", fileKey); // Create path based on fileKey
+                const localPath = path.join("src", "_data", fileKey); // Create path based on fileKey
                 const localDir = path.dirname(localPath);
                 fs.mkdirSync(localDir, { recursive: true });
 
@@ -98,7 +99,7 @@ async function downloadAllFilesInFonts() {
     }
 }
 
-const fontsDir = path.resolve("src/static/fonts");
+
 //init check
 
 // 讀取並執行 SQL 腳本檔案
@@ -137,7 +138,7 @@ async function insertFontTypes() {
         try {
             for (const fontName of fontNames) {
                 await db.query(
-                    `INSERT INTO font_familys (font_name) VALUES ($1)
+                    `INSERT INTO font_family (font_name) VALUES ($1)
              ON CONFLICT (font_name) DO NOTHING;`,
                     [fontName]
                 );
@@ -151,7 +152,7 @@ async function insertFontTypes() {
 }
 //從本地mino空間抓檔案
 async function fech_mino() {
-    //刪除本地src/static/fonts/裡面的所有東西
+    //刪除本地src/_data/fonts/裡面的所有東西
     const all_files_in_folder = await readdir(fontsDir);
 
     // 刪除所有檔案
@@ -179,7 +180,7 @@ async function initCheck() {
             await listBuckets();
             await fech_mino();
         }
-        const schemaFilePath = path.resolve("src/data/sql/schema.sql");
+        const schemaFilePath = path.resolve("src/_data/sql/schema.sql");
         await executeSQLFile(schemaFilePath);
         await insertFontTypes();
         console.log("init success");

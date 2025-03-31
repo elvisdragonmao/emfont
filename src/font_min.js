@@ -11,14 +11,14 @@ import { uploadToR2, checkFileExists } from "./r2.js";
 // Convert __dirname to work with ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const __Font_storge_path_base = path.join(__dirname, "static", "fonts"); //root/src/static/fonts/
+const __Font_storge_path_base = path.join(__dirname, "_data", "fonts"); //root/src/_data/fonts/
 
 async function generateFont(
     originalFontFamily,
     font_weight,
     words,
     output_name,
-    put_folder = "generated" //default
+    put_folder = "_data/_generated" //default
 ) {
     // Construct the full path to the font file based on the family and variant
     const fontFilePath = path.join(
@@ -101,7 +101,7 @@ async function find_dynamic_font(
     else {
         try {
             await db.query(
-                "INSERT INTO dynamic_fonts (hash_index, font_family_id,create_domain) VALUES ($1, $2, $3)",
+                "INSERT INTO dynamic_fonts (hash_index, font_family_id,referer) VALUES ($1, $2, $3)",
                 [word_hash, font_id, req_source]
             );
         } catch (err) {
@@ -121,7 +121,7 @@ async function find_dynamic_font(
             );
             const localFontPath = path.join(
                 __dirname,
-                "generated",
+                "_generated",
                 little_font_package
             );
             //+放到雲端硬碟
