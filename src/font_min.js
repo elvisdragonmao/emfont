@@ -135,4 +135,4 @@ async function find_dynamic_font(
         }
     }
 }
-export { find_dynamic_font};
+export { find_dynamic_font,generateFont};

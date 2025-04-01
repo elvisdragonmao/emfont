@@ -13,7 +13,7 @@ const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
 dotenv.config(); // 讀取 .env 變數
-const sotrge_original_fontsDir = path.resolve("src/_data/fonts");//原始字型檔存放路徑
+const sotrge_original_fontsDir = path.resolve("src/_data/fonts"); //原始字型檔存放路徑
 const bucketName = process.env.MINIO_BUCKET;
 const s3Client = new S3Client({
     region: "auto",
@@ -94,11 +94,10 @@ async function downloadAllFilesInFonts() {
         );
 
         console.log("✅ 所有字體下載完成");
-    } catch (err) { 
+    } catch (err) {
         console.error("❌ 下載檔案失敗:", err);
     }
 }
-
 
 //init check
 
@@ -122,7 +121,10 @@ async function insertFontTypes() {
         const fontData = [];
 
         for (const one_font_family of ALL_FONTS_dir) {
-            const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
+            const itemPath = path.join(
+                sotrge_original_fontsDir,
+                one_font_family
+            );
             console.log("itemPath:", itemPath);
             const stats = await stat(itemPath);
 
@@ -131,8 +133,11 @@ async function insertFontTypes() {
                 const fontFiles = await readdir(itemPath);
                 for (const fontFile of fontFiles) {
                     // 匹配檔名中的數字作為 weight（假設檔名包含數字，200.ttf）
-                    if (!fontFile.endsWith(".ttf") && !fontFile.endsWith(".otf")) {
-                        console.log("Skipping:", fontFile);  // 確保 README.md 這類檔案不會進來
+                    if (
+                        !fontFile.endsWith(".ttf") &&
+                        !fontFile.endsWith(".otf")
+                    ) {
+                        console.log("Skipping:", fontFile); // 確保 README.md 這類檔案不會進來
                         continue;
                     }
                     const match = fontFile.match(/.*?(\d+)\.(ttf|otf)$/);
@@ -142,7 +147,7 @@ async function insertFontTypes() {
                         // 將資料夾名（font_name）和提取的 weight 存入 fontData
                         fontData.push({
                             fontName: one_font_family, // 字型名稱（資料夾名稱）
-                            weight: weight  // 字型的 weight（檔案名稱中的數字）
+                            weight: weight // 字型的 weight（檔案名稱中的數字）
                         });
                     }
                 }
@@ -153,12 +158,10 @@ async function insertFontTypes() {
             console.log("No font directories found.");
             //中止程式
             throw new Error("No font directories found.");
-            
         }
 
         // 插入字型名稱（避免重複）
         try {
-            
             for (const { fontName, weight } of fontData) {
                 console.log(fontName, weight);
                 await db.query(
@@ -173,7 +176,7 @@ async function insertFontTypes() {
                             ELSE font_family.weights
                         END
                         `,
-                    [fontName,weight]
+                    [fontName, weight]
                 );
             }
             console.log("Font types inserted successfully.");
