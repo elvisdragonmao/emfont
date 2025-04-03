@@ -2,9 +2,9 @@
 
 -- 收錄字型
 CREATE TABLE IF NOT EXISTS font_family (
-    id TEXT PRIMARY KEY, -- 為什麼 id 要用 TEXT？hash?
-    name TEXT UNIQUE NOT NULL,
-    name_zh TEXT DEFAULT NULL,
+    id TEXT PRIMARY KEY, -- 無空格英文簡寫
+    name TEXT UNIQUE NOT NULL,-- 通用名稱（英文）
+    name_zh TEXT DEFAULT NULL,-- 中文名稱（繁體中文）
     weights SMALLINT[] NOT NULL,
     license TEXT DEFAULT NULL,
     version TEXT DEFAULT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS font_family (
     author TEXT DEFAULT NULL,
     CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'))
 );
-
+delete from dynamic_fonts;
 -- 動態字型對應表格
 CREATE TABLE IF NOT EXISTS dynamic_fonts(
     id SERIAL PRIMARY KEY, -- 聯合主鍵基本上需要有每一個屬性，那還不如直接生成一個 ID，正好也是 R2 File Name
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts(
     use_count INT NOT NULL DEFAULT 1,
     last_use TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    text TEXT NOT NULL,
+    -- text TEXT NOT NULL,這應該放在流水紀錄裡面
     hash CHAR(10) NOT NULL,
     FOREIGN KEY (family_id) REFERENCES font_family(id)
 );

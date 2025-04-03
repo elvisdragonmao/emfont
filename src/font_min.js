@@ -65,13 +65,13 @@ async function generateFont(
         });
     });
 }
-async function find_dynamic_font(
+async function find_dynamic_font(//return a R2 url client need
     word_hash,
     font_id,
     font_family,
     font_weight,
     original_word_set,
-    req_source = "https://font.emfont.cc/" //不可能在這裡指定，應該從前端的 body 封包一起請求（或是有其他方法）
+    req_source //插入 usage_log
 ) {
     //用 hash 值查詢動態字型檔是否存在
     // const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);
@@ -89,9 +89,10 @@ async function find_dynamic_font(
         // const op_result = await db.query('UPDATE dynamic_fonts SET last_use = NOW() WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);//表格好像目前沒有上次使用時間，但我覺得應該要有 byiach
         try {
             const op_result = await db.query(
-                "UPDATE dynamic_fonts SET use_count = use_count+1,last_us = NOW()  WHERE hash_index = $1 AND font_family_id = $2",
+                "UPDATE dynamic_fonts SET last_use = NOW()  WHERE hash = $1 AND family_id = $2",
                 [word_hash, font_id]
             );
+            //todo：還有更新use_count = use_count+1,在usage_log
         } catch (err) {
             console.error("❌rror during update font record:", err);
         }
@@ -100,12 +101,13 @@ async function find_dynamic_font(
     //如果不存在，則生成字型檔
     else {
         try {
+            console.log("@@",word_hash, font_id);
             await db.query(
-                "INSERT INTO dynamic_fonts (hash_index, font_family_id,referer) VALUES ($1, $2, $3)",
-                [word_hash, font_id, req_source]
+                "INSERT INTO dynamic_fonts (hash, family_id) VALUES ($1, $2)",
+                [word_hash, font_id]
             );
         } catch (err) {
-            console.error("❌rror during insert new font record:", err);
+            console.error("❌ error during insert new font record:", err);
             console.warn(
                 `可能是資料庫已經有這筆資料，但R2上沒有字型檔${file_exist}。已重新生成，下次不會再有這個錯誤，若重複出現同一個字型檔報錯，請檢查資料庫`
             );
@@ -121,6 +123,7 @@ async function find_dynamic_font(
             );
             const localFontPath = path.join(
                 __dirname,
+                "_data",
                 "_generated",
                 little_font_package
             );
@@ -132,6 +135,7 @@ async function find_dynamic_font(
             return r2Url;
         } catch (err) {
             console.error("Error during font generation:", err);
+            throw new Error("Font generation failed",err);
         }
     }
 }

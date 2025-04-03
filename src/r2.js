@@ -48,7 +48,7 @@ const checkFileExists = async (file_name) => {
             console.log("✅ 檔案存在:", file_name);
             return genPublicUrl(file_name);
         } else {
-            console.log("❌ 檔案不存在:", file_name);
+            console.log("檔案不存在，將會生成:", file_name);
             return false;
         }
     } catch (error) {

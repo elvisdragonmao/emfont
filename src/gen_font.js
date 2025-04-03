@@ -1,4 +1,5 @@
 import { find_dynamic_font} from "./font_min.js"; // 極致壓縮字型
+import { find_static_font } from "./font_nomin.js"; // 靜態字型
 import { db } from "./database.js";
 
 
@@ -29,7 +30,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
         throw new Error("words_set are required"); // 使用 throw 讓 genFont 捕捉
     }
     const result = await db.query(
-        "SELECT id FROM font_family WHERE font_name = $1",
+        "SELECT id FROM font_family WHERE name = $1",
         [FONT_NAME]
     );
     if (result.rowCount === 0) {
@@ -39,19 +40,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
     console.log(FONT_NAME, "id is", font_id);
     return font_id; // 如果沒問題，就回傳字型編號
 }
-async function find_static_font(word_set, font_family_name) {
-    // 回傳要用到的字型包編號
-    // 字串轉成字元陣列給 SQL 查詢
-    word_set = word_set.split("");
-    //查詢請求的字分別散落在哪些字型包中
-    const query =
-        "SELECT DISTINCT pack FROM static_fonts WHERE word = ANY($1::text[])";
-    const result = await db.query(query, [word_set]);
-    const use_packs = result.rows.map((row) => row.pack);
-    console.log(word_set, "散落在", use_packs);
-    //查詢請求的字型包是否存在
-    return 1; // 如果沒問題，就回傳原始值
-}
+
 
 export const genFont = async (req, res) => {
     //檢查字集格式
