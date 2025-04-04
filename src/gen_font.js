@@ -1,5 +1,5 @@
 import { find_dynamic_font} from "./font_min.js"; // 極致壓縮字型
-import { find_static_font } from "./font_nomin.js"; // 靜態字型
+import { find_static_font ,give_static_font} from "./font_nomin.js"; // 靜態字型
 import { db } from "./database.js";
 
 
@@ -73,9 +73,9 @@ export const genFont = async (req, res) => {
         //待處理：傳入字集都不是中文的情況
 
         // two condictions: 1.字型包是靜態的 2.字型包是動態的
-        if (min_flag || "Each is handsome") {
+        if (min_flag ) {
             //請求動態字型
-            console.log("min_flag is FLASE. generate dynamic font");
+            console.log(`min_flag is ${min_flag}. generate dynamic font`);
             const hash = await hashString(req_word_set);
             console.log("hash is", hash);
             const file_path = await find_dynamic_font(
@@ -106,7 +106,21 @@ export const genFont = async (req, res) => {
         } else {
             //請求靜態字型
             console.log("min_flag is true");
-            await find_static_font(req_word_set, font_family_name);
+            //TODO:確認字型包是否存在r2，若無，怎麼辦
+            const font_pack_you_need = await find_static_font(req_word_set);
+            const R2font_url = await give_static_font(
+                font_family_name,
+                font_weight,
+                font_pack_you_need,
+            );
+
+            console.log("📥 傳送檔案:", R2font_url);
+            return res.send({
+                status: "success",
+                message: "",
+                location: R2font_url,
+                name: font_family_name
+            });
         }
 
         // return res.status(200).send("Font generated");

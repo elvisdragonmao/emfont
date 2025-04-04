@@ -13,7 +13,7 @@ const s3Client = new S3Client({
     }
 });
 // gen public url
-const genPublicUrl = (remoteFileName) => {
+const genPublicUrl = (remoteFileName) => {//file name example: XXX.woff2 => is a file name  + Filename Extension 
     return `${process.env.R2_pub_url_base}/fonts/${remoteFileName}`;
 };
 async function uploadToR2(localFilePath, remoteFileName) {
@@ -45,10 +45,10 @@ const checkFileExists = async (file_name) => {
             method: "HEAD"
         }); // 使用 HEAD 方法減少流量
         if (response.ok) {
-            console.log("✅ 檔案存在:", file_name);
+            console.log("✅ 檔案存在:", genPublicUrl(file_name));
             return genPublicUrl(file_name);
         } else {
-            console.log("檔案不存在，將會生成:", file_name);
+            console.log(file_name,"檔案不存在");
             return false;
         }
     } catch (error) {

@@ -2,7 +2,7 @@
 //依照字頻表分裝檔案( 開機時重切)
 import { db } from "./database.js";
 import { generateFont } from "./font_min.js";
-import { uploadToR2 } from "./r2.js";
+import { uploadToR2,checkFileExists } from "./r2.js";
 import { fileURLToPath } from "url";
 import path from "path";
 async function init_all_static_font() {
@@ -26,10 +26,7 @@ async function init_all_static_font() {
         for (const weight_number of support_weights) {
             for (let i = 0; i < max_package_number; i++) {
                 const words = word_package_pair[i].words;
-                const pack = word_package_pair[i].pack;
-                if (pack < 10) {
-                    pack = `0${pack}`;
-                }
+                const pack = word_package_pair[i].pack.toString().padStart(2, '0');
                 await generateFont(ff_name,weight_number,words,`${pack}.woff2`,
                             `_data/_generated/${ff_name}-${weight_number}`)
                 const generated_font_path = path.join(
@@ -39,7 +36,7 @@ async function init_all_static_font() {
                                 `${ff_name}-${weight_number}`,
                                 `${pack}.woff2`
                             );
-                await uploadToR2(generated_font_path,`${ff_name}-${weight_number}/${i}.woff2`);
+                await uploadToR2(generated_font_path,`${ff_name}-${weight_number}/${pack}.woff2`);
                 
             }
             
@@ -58,7 +55,6 @@ async function find_static_font(word_set) {
     {
         word_set = word_set.split("");
         //查詢請求的字分別散落在哪些字型包中
-        word_set = ["a","b"]
         const query =
             "SELECT DISTINCT pack FROM static_fonts WHERE word = ANY($1::text[])";
         const result = await db.query(query, [word_set]);
@@ -72,21 +68,44 @@ async function find_static_font(word_set) {
         throw error;
     }
 }
-function give_static_font(font_family, font_weight, packs) {
-    if (!Array.isArray(packs) || !packs.every(Number.isInteger)) {
-        throw new TypeError("packs must be an array of integers");
+async function give_static_font(font_family, font_weight, packs) {
+    try
+    {
+        if (!Array.isArray(packs) || !packs.every(Number.isInteger)) {
+            throw new TypeError("packs must be an array of integers");
+        }
+        packs = packs.map((pack) => pack.toString().padStart(2, "0")); // 顯示時補零
+        // 回傳字型包路徑
+        const results = await Promise.all(
+            packs.map(async (pack) => {
+                const filename = `${font_family}-${font_weight}/${pack}.woff2`;
+                const real_r2_path= await checkFileExists(filename);
+                return { pack, real_r2_path };
+            })
+        );
+        
+        const missing = results.filter(result => !result.real_r2_path);
+        
+        if (missing.length > 0) {
+            const missingPaths = missing.map(m => m.real_r2_path).join(', ');
+            // TODO如果有缺少的字型檔，是不是要試著重新生成？
+            throw new Error(`Missing font files: ${missingPaths}`);
+        }
+        
+        // 全部存在的話就可以繼續
+        const R2paths = results.map(r => r.real_r2_path);
+        console.log("R2paths:", R2paths);
+        // return R2paths;
+        // R2paths example: [
+            // '{ALTER_R2_pub_url_base}/ZhuQueFangSong-400/01.woff2',
+            // '{ALTER_R2_pub_url_base}/ZhuQueFangSong-400/08.woff2',
+            // '{ALTER_R2_pub_url_base}/ZhuQueFangSong-400/11.woff2']
+        return R2paths;
     }
-    packs = packs.map((pack) => pack.toString().padStart(2, "0")); // 顯示時補零
-    // 回傳字型包路徑
-    const R2paths = packs.map((pack) => {
-        return `${font_family}-${font_weight}/${pack}.woff2`;
-    });
-    console.log("R2paths:", R2paths);
-    // return R2paths;
-    // R2paths example: [
-        // 'ZhuQueFangSong-400/01.woff2',
-        // 'ZhuQueFangSong-400/08.woff2',
-        // 'ZhuQueFangSong-400/11.woff2']
-    return R2paths;
+    catch (error) {
+        console.error("Error inserting font types:", error);
+        throw error;
+    }
 }
+// init_all_static_font()
 export {find_static_font,give_static_font,init_all_static_font} ;
