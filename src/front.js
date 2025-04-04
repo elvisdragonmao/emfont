@@ -19,20 +19,9 @@ app.register(import("@fastify/static"), {
     prefix: "/static/"
 });
 
-// Dynamic view route
-app.get("/:view", async (req, reply) => {
-    let { view } = req.params;
-    try {
-        if (!view || view === "") view = "home";
-        if (
-            fs.existsSync(path.join(__dirname, "views", "pages", `${view}.ejs`))
-        )
-            return reply.view(`/src/views/pages/${view}.ejs`);
-    } catch (err) {
-        console.log(err);
-        // if can't find view, return 404
-        return reply.status(404).view("/src/views/pages/404.ejs");
-    }
+// No matter what is in the URL, serve the website
+app.get("/*", async (request, reply) => {
+    return reply.view("/src/website.ejs");
 });
 
 // Start server

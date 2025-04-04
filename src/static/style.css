@@ -304,8 +304,7 @@ a.btn:active {
 }
 
 #section-about {
-    background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)),
-        url("/static/img/logo/emfont-logo-light.svg") no-repeat right bottom;
+    background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url("/static/img/logo/emfont-logo-light.svg") no-repeat right bottom;
     background-size: 80%;
 }
 
@@ -325,12 +324,13 @@ a.btn:active {
 
 .contributors,
 .sponsors {
-    flex: 1;
+    flex-grow: 1;
 }
 .contributors > div {
     display: flex;
-    gap: 2rem;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
     margin-bottom: 2rem;
 }
 
@@ -425,12 +425,7 @@ body:has(.home) {
     display: block;
     height: 1rem;
     width: 100%;
-    background: linear-gradient(
-        to top,
-        var(--slate-900) 0%,
-        var(--slate-900) 50%,
-        transparent 100%
-    );
+    background: linear-gradient(to top, var(--slate-900) 0%, var(--slate-900) 50%, transparent 100%);
     position: absolute;
     top: -2rem;
     left: 0;
@@ -487,8 +482,7 @@ body:has(.home) {
 }
 
 .search-container input[type="text"] {
-    background: url("/static/img/search.svg") no-repeat 0.5rem center,
-        var(--slate-700);
+    background: url("/static/img/search.svg") no-repeat 0.5rem center, var(--slate-700);
     background-size: 1.2rem;
     padding: 0.4rem 0.875rem 0.4rem 2.3rem;
 }
@@ -521,8 +515,7 @@ select {
     -moz-appearance: none; /* Firefox */
     -webkit-appearance: none; /* Safari and Chrome */
     appearance: none;
-    background: url("/static/img/barr.svg") no-repeat 0.7rem 52%,
-        var(--slate-700);
+    background: url("/static/img/barr.svg") no-repeat 0.7rem 52%, var(--slate-700);
     background-size: 0.8rem;
     padding: 0.4rem 0.875rem 0.4rem 2.1rem;
 }
@@ -576,7 +569,6 @@ input[type="checkbox"]:checked + label {
     padding-left: 1rem;
     display: block;
     color: var(--slate-100);
-    position: relative;
     transition: background 0.3s ease-out;
 }
 
@@ -594,9 +586,10 @@ a.font-item:hover {
     font-size: 3rem;
     white-space: nowrap;
     overflow: hidden;
+    position: relative;
 }
 
-.font-item::after {
+.font-preview:after {
     content: "";
     display: block;
     position: absolute;
@@ -610,6 +603,7 @@ a.font-item:hover {
 .font-title {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1rem;
 }
@@ -742,13 +736,7 @@ a.font-item:hover {
     border-radius: 0.5rem;
     background-color: var(--slate-700);
     margin-bottom: 1rem;
-    background: linear-gradient(
-        to right,
-        var(--slate-500) 0%,
-        var(--slate-500) var(--percent),
-        var(--slate-700) var(--percent),
-        var(--slate-700) 100%
-    );
+    background: linear-gradient(to right, var(--slate-500) 0%, var(--slate-500) var(--percent), var(--slate-700) var(--percent), var(--slate-700) 100%);
 }
 
 #section-font {
@@ -774,6 +762,7 @@ a.font-item:hover {
 footer {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     padding: 2rem;
     gap: 2rem;
 }
@@ -790,4 +779,62 @@ footer {
 .footer-zeabur {
     width: 14rem;
     margin-left: auto;
+}
+
+@media (max-width: 50rem) {
+    header {
+        transform: translateX(-100%);
+        height: 100vh;
+        padding: 2rem 1.5rem;
+        border-right: none;
+        transition: transform 0.3s ease-in-out;
+        position: fixed;
+        max-width: calc(100% - 3rem);
+    }
+
+    .home header {
+        transform: translateX(0%);
+        background-color: transparent;
+        left: 0;
+    }
+
+    #mobileToggle:checked + header {
+        transform: translateX(0%);
+    }
+    section {
+        margin-left: 0;
+    }
+
+    .mobile-nav {
+        display: block;
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        z-index: 10;
+        transform: translate(0%, -50%);
+        background-color: var(--slate-500);
+        width: 1.5rem;
+        height: 3rem;
+        border-radius: 0 0.3rem 0.3rem 0;
+        cursor: pointer;
+    }
+    .home .mobile-nav {
+        display: none;
+    }
+
+    .mobile-nav::after {
+        content: "";
+        display: block;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(270deg);
+        width: 1.5rem;
+        height: 1.5rem;
+        background: url("/static/img/barr.svg") no-repeat center center / contain;
+        transition: transform 0.3s ease-in-out;
+    }
+    #mobileToggle:checked + header .mobile-nav::after {
+        transform: translate(-50%, -50%) rotate(90deg);
+    }
 }

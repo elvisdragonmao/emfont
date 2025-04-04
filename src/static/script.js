@@ -25,6 +25,8 @@ const pages = [
     "logout",
     "dashboard"
 ];
+const mobileToggle = document.getElementById("mobileToggle");
+
 const updateMain = (path = window.location.pathname) => {
     const urlParts = path.split("/");
     let mainClass = urlParts[1].replace("index.html", "") || "";
@@ -50,9 +52,10 @@ const updateMain = (path = window.location.pathname) => {
             }, 300);
         } else document.querySelector("main").classList = mainClass;
         if (mainClass == "home") marqueeSet();
-        // get q from url
-        else if (mainClass == "fonts")
+        if (mainClass == "fonts"){
             document.getElementById("search-input").value = urlParams.get("q");
+            mobileToggle.checked = true;
+        } else   mobileToggle.checked = false;
     }
 };
 
