@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+    <head>
+        <!-- @format -->
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>emfont - 免費中文字體 Webfont 服務</title>
+        <meta
+            property="og:title"
+            content="emfont - 免費中文字體 Webfont 服務"
+        />
+        <meta name="description" content="免費中文 Webfont 服務" />
+        <meta property="og:description" content="免費中文 Webfont 服務" />
+        <meta name="author" content="毛哥EM" />
+        <meta name="keywords" content="emfont, webfont, 中文字體, 開源" />
+        <meta property="og:type" content="website" />
+        <meta name="theme-color" content="#0F172A" />
+        <meta property="og:site_name" content="emfont" />
+        <meta property="og:locale" content="zh-TW" />
+        <link
+            rel="icon"
+            type="image/png"
+            href="/static/img/logo/favicon-96x96.png"
+            sizes="96x96"
+        />
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="/static/img/logo/favicon.svg"
+        />
+        <link rel="shortcut icon" href="/static/img/logo/favicon.ico" />
+        <link
+            rel="apple-touch-icon"
+            sizes="180x180"
+            href="/static/img/logo/apple-touch-icon.png"
+        />
+        <meta name="apple-mobile-web-app-title" content="emfont" />
+        <link rel="manifest" href="/static/img/logo/site.webmanifest" />
+        <link rel="stylesheet" href="/static/style.css" />
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script
+            async=""
+            src="https://www.googletagmanager.com/gtag/js?id=G-H69XEEC798"
+        ></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag("js", new Date());
+
+            gtag("config", "G-H69XEEC798");
+        </script>
+    </head>
+    <body>
+        <main class="page-home">
+            <header>
+                <a href="/">
+                    <img
+                        src="/static/img/logo/emfont-logo-light.svg"
+                        alt=""
+                        id="logo"
+                /></a>
+                <div class="header-container">
+                    <nav class="navigation">
+                        <ul>
+                            <li>
+                                <a href="/fonts" id="font-button">字型</a>
+                            </li>
+                            <li>
+                                <a href="/docs">文件</a>
+                            </li>
+                            <li>
+                                <a href="/login">登入</a>
+                            </li>
+                            <li>
+                                <a href="/about">關於</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <h1>免費的中文 Webfont 服務</h1>
+                </div>
+                <div class="search-container">
+                    <a class="navigation" href="/">
+                        <img src="/static/img/larr.svg" alt="" />字型
+                    </a>
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="搜尋字型"
+                    />
+                    <h2>即時測試</h2>
+                    <textarea
+                        id="search-test"
+                        rows="3"
+                        placeholder="我個人認為義大利麵就應該拌42號混泥土。"
+                    ></textarea>
+                    <h2>支援語言</h2>
+                    <div class="language">
+                        <input type="checkbox" id="lang-sc" />
+                        <label for="lang-sc">簡</label>
+                        <input type="checkbox" id="lang-tc" />
+                        <label for="lang-tc">繁</label>
+                        <input type="checkbox" id="lang-jp" />
+                        <label for="lang-jp">日</label>
+                        <input type="checkbox" id="lang-ko" />
+                        <label for="lang-ko">韓</label>
+                        <input type="checkbox" id="lang-other" />
+                        <label for="lang-other">其他</label>
+                    </div>
+                    <h2>分類</h2>
+                    <div class="category">
+                        <input type="checkbox" id="cat-serif" />
+                        <label for="cat-serif">襯線</label>
+                        <input type="checkbox" id="cat-sans-serif" />
+                        <label for="cat-sans-serif">無襯線</label>
+                        <input type="checkbox" id="cat-mono" />
+                        <label for="cat-mono">等寬</label>
+                        <input type="checkbox" id="cat-cursive" />
+                        <label for="cat-cursive">手寫</label>
+                        <input type="checkbox" id="cat-decorative" />
+                        <label for="cat-decorative">藝術</label>
+                    </div>
+                    <h2>家族</h2>
+                    <select id="family">
+                        <option value="all">所有家族</option>
+                        <option value="Noto">Noto</option>
+                        <option value="SetoFont">SetoFont</option>
+                        <option value="Muzai Pixel">Muzai Pixel</option>
+                    </select>
+                    <h2>標籤</h2>
+                    <div class="tags">
+                        <input type="checkbox" id="tag-black" />
+                        <label for="tag-black">黑體</label>
+                        <input type="checkbox" id="tag-song" />
+                        <label for="tag-song">宋體</label>
+                        <input type="checkbox" id="tag-min" />
+                        <label for="tag-min">明體</label>
+                        <input type="checkbox" id="tag-kai" />
+                        <label for="tag-kai">楷體</label>
+                        <input type="checkbox" id="tag-round" />
+                        <label for="tag-round">圓體</label>
+                        <input type="checkbox" id="tag-pixel" />
+                        <label for="tag-pixel">像素</label>
+                        <input type="checkbox" id="tag-p" />
+                        <label for="tag-p">調和字</label>
+                        <input type="checkbox" id="tag-icon" />
+                        <label for="tag-icon">圖示</label>
+                    </div>
+                </div>
+                <div class="header-links">
+                    <a href="https://dc.elvismao.com"
+                        ><img src="/static/img/Discord.svg" alt="Discord"
+                    /></a>
+                    <a href="https://github.com/edit-Mr/emfont"
+                        ><img src="/static/img/GitHub.svg" alt="GitHub"
+                    /></a>
+                    <a href="https://t.me/emfont"
+                        ><img src="/static/img/Telegram.svg" alt="Telegram"
+                    /></a>
+                    <div class="header-links header-links-font">
+                        <a href="https://github.com/emfont/emfont/issues"
+                            ><img src="/static/img/warning.svg" alt="意見回饋"
+                        /></a>
+                        <a href="https://github.com/emfont/emfont/"
+                            ><img src="/static/img/GitHub.svg" alt="GitHub"
+                        /></a>
+                        <a href="/docs"
+                            ><img src="/static/img/question.svg" alt="說明文件"
+                        /></a>
+                    </div>
+                </div>
+            </header>
+            <section>
+                <div id="section-about">
+                    <p>
+                        emfont 能夠提供免費好用的的 webfont 服務，必須要感謝
+                        <a href="https://zeabur.com/" target="_blank">Zeabur</a>
+                        以及
+                        <a href="https://sponsor.ncse.tw/" target="_blank"
+                            >國雲網路</a
+                        >
+                        提供台灣高速穩定的運算資源。
+                        最重要的是感謝每一位使用者。能夠讓每一位設計師不再被中文字體，綻放腦中的想法，是我們最大的榮幸。
+                    </p>
+                    <p>
+                        如果你喜歡這個開源專案，歡迎在
+                        <a href="https://github.com/emfont/emfont">GitHub</a>
+                        留下一顆星星。
+                        而如果你有任何問題或有興趣協助開發，不要吝嗇在我們的
+                        <a href="https://dc.elvismao.com">Discord 伺服器</a>
+                        中提出。
+                    </p>
+                    <div class="credits">
+                        <div class="contributors">
+                            <h2>開發者</h2>
+                            <div>
+                                <a
+                                    href="https://elvismao.com"
+                                    class="contributor"
+                                >
+                                    <img
+                                        src="https://avatars.githubusercontent.com/u/61068739"
+                                        alt=""
+                                    />
+                                    毛哥EM</a
+                                >
+                                <a
+                                    href="https://github.com/iach526526"
+                                    class="contributor"
+                                >
+                                    <img
+                                        src="https://avatars.githubusercontent.com/u/98824625"
+                                        alt=""
+                                    />
+                                    Each Chan</a
+                                >
+                            </div>
+                        </div>
+                        <div class="sponsors">
+                            <h2>贊助</h2>
+                            <div>
+                                <a
+                                    href="https://zeabur.com/?referralCode=Edit-Mr"
+                                    target="_blank"
+                                    ><img
+                                        src="/static/img/Zeabur.svg"
+                                        class="zeabur"
+                                        alt="zeabur logo"
+                                /></a>
+                            </div>
+                            <a href="https://sponsor.ncse.tw/" target="_blank"
+                                ><img
+                                    src="/static/img/ncse.webp"
+                                    class="ncse"
+                                    alt="國雲網路 logo"
+                            /></a>
+                        </div>
+                    </div>
+                </div>
+                <div id="section-home">
+                    <div class="emfont-GenYoGothicTC">
+                        <span>不必微軟正黑可以源樣黑體</span>
+                    </div>
+                    <div class="emfont-GenYoMinTC">
+                        <span>不必新細明體可以源樣明體</span>
+                    </div>
+                    <div class="emfont-jfOpenHuninn">
+                        <span>不必思源黑體可以open粉圓</span>
+                    </div>
+                    <div class="emfont-MantouSans">
+                        <span>不必Roboto可以饅頭黑體</span>
+                    </div>
+                    <div class="emfont-ChenYuluoyan">
+                        <span>不必蘋果儷中黑可以辰宇落雁體</span>
+                    </div>
+                    <div class="emfont-ChillBitmap">
+                        <span>不必標楷體可以寒蝉点阵体</span>
+                    </div>
+                </div>
+                <div id="section-404">
+                    <div>
+                        <h1>404</h1>
+                        <h2>找不到這個頁面</h2>
+                        <p>
+                            Hold on, if love is the answer, you're
+                            <a href="/">home</a>.<br />
+                            - Daft Punk, Touch<br /><a href="/">回到首頁</a>
+                        </p>
+                    </div>
+                </div>
+                <div id="section-login">
+                    <div>
+                        <h1>登入</h1>
+                        <p>查看你的網頁的統計資料</p>
+                        <a href="/login/github" class="btn"
+                            ><img src="/static/img/GitHub.svg" alt="" />透過
+                            GitHub 繼續</a
+                        >
+                    </div>
+                </div>
+                <div id="section-search">
+                    <a class="font-item" href="/fonts/noto">
+                        <div class="font-title">
+                            <h3>源樣黑體 TC</h3>
+                            <div class="weight">
+                                <span class="l">L</span>
+                                ⋅ R ⋅ <span class="b">B</span>&nbsp; | &nbsp;by But Ko
+                            </div>
+                        </div>
+                        <div class="font-preview">
+                            我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。
+                        </div>
+                    </a>
+                    <a class="font-item" href="/fonts/noto">
+                        <div class="font-title">
+                            <h3>源樣黑體 TC</h3>
+                            <div class="weight">
+                                <span class="l">L</span>
+                                ⋅ R ⋅ <span class="b">B</span>&nbsp; | &nbsp;by But Ko
+                            </div>
+                        </div>
+                        <div class="font-preview">
+                            我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。
+                        </div>
+                    </a>
+                    <a class="font-item" href="/fonts/noto">
+                        <div class="font-title">
+                            <h3>源樣黑體 TC</h3>
+                            <div class="weight">
+                                <span class="l">L</span>
+                                ⋅ R ⋅ <span class="b">B</span>&nbsp; | &nbsp;by But Ko
+                            </div>
+                        </div>
+                        <div class="font-preview">
+                            我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。
+                        </div>
+                    </a>
+                </div>
+                <div id="section-font">
+                    <footer>
+                        <img
+                            src="/static/img/logo/favicon.svg"
+                            alt="emfont"
+                            class="footer-logo"
+                        /><img
+                            src="/static/img/Zeabur-deploy.svg"
+                            alt="Deployed on Zeabur"
+                            class="footer-zeabur"
+                        />
+                    </footer>
+                </div>
+            </section>
+        </main>
+        <script src="/static/main.js"></script>
+    </body>
+</html>
