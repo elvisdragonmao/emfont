@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
     <head>
-        <!-- @format -->
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>emfont - 免費中文字體 Webfont 服務</title>
+        <title><%= !!locals.title?title + " - emfont":'emfont - 免費中文字體 Webfont 服務' %></title>
         <meta
             property="og:title"
-            content="emfont - 免費中文字體 Webfont 服務"
+            content="<%= !!locals.title?title:'emfont - 免費中文字體 Webfont 服務' %>"
         />
-        <meta name="description" content="免費中文 Webfont 服務" />
-        <meta property="og:description" content="免費中文 Webfont 服務" />
+        <meta name="description" content="<%= !!locals.description?description:'emfont - 免費中文字體 Webfont 服務' %>" />
+        <meta property="og:description" content="<%= !!locals.description?description:'emfont - 免費中文字體 Webfont 服務' %>" />
         <meta name="author" content="毛哥EM" />
         <meta name="keywords" content="emfont, webfont, 中文字體, 開源" />
         <meta property="og:type" content="website" />
-        <meta name="theme-color" content="#0F172A" />
+        <meta name="theme-color" content="#0f172a" />
         <meta property="og:site_name" content="emfont" />
         <meta property="og:locale" content="zh-TW" />
+        <meta property="og:image" content="/static/img/og.webp">
+        <meta property="og:image:alt" content="emfont - 免費中文字體 Webfont 服務">
         <link
             rel="icon"
             type="image/png"
@@ -457,6 +458,6 @@
                 </div>
             </section>
         </main>
-        <script src="/static/main.js"></script>
+        <script src="/static/script.js"></script>
     </body>
 </html>

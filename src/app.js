@@ -46,8 +46,42 @@ app.get("/", async (req, reply) => {
     // } catch (err) {
     //     console.error("JWT verification failed:", err);
     // }
+    return reply.view("/src/website.ejs", { user, page: "home" });
+});
 
-    return reply.view("/src/views/pages/home.ejs", { user }); // 確保 return
+app.get("/login", async (req, reply) => {
+    return reply.view("/src/website.ejs", { user, page: "login" });
+});
+
+app.get("/logout", (req, reply) => {
+    reply.clearCookie("token");
+    reply.redirect("/");
+});
+
+app.get("/fonts/:font", async (req, reply) => {
+    let page = "font";
+    if (req.params.font === "") page = "fonts";
+    if (false)
+        // 字體不存在
+        return res
+            .status(404)
+            .view("/src/website.ejs", { user, page: "notFound" });
+    return reply.view("/src/website.ejs", { user, page });
+});
+
+app.get("/about", async (req, reply) => {
+    return reply.view("/src/website.ejs", { user, page: "about" });
+});
+
+app.get("/dashboard", async (req, reply) => {
+    const user = req.cookies.token;
+    if (!user) return reply.redirect("/login");
+    return reply.view("/src/website.ejs", { user, page: "dashboard" });
+});
+
+app.get("/auth/github", async (req, reply) => {
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`;
+    reply.redirect(githubAuthUrl);
 });
 
 app.get("/emfont.js", async (req, reply) => {
@@ -56,19 +90,6 @@ app.get("/emfont.js", async (req, reply) => {
 
 app.get("/emfont.min.js", async (req, reply) => {
     return reply.sendFile("/src/static/js/main.js");
-});
-
-app.get("/fonts", async (req, reply) => {
-    return reply.view("/src/views/pages/fonts.ejs", { user });
-});
-
-app.get("/dashboard", async (req, reply) => {
-    // check if user is logged in
-    const user = req.cookies.token;
-    if (!user) {
-        return reply.redirect("/login");
-    }
-    return reply.view("/src/views/pages/dashboard.ejs", { user });
 });
 
 app.post("/g/:font", async (req, res) => {
@@ -99,16 +120,6 @@ app.get("/testq", async (request, reply) => {
         console.error("Error executing query", err.stack);
         reply.status(500).send("Database query failed");
     }
-});
-// GitHub OAuth login redirect
-
-app.get("/login", async (req, reply) => {
-    return reply.view("/src/views/pages/login.ejs", { user });
-});
-
-app.get("/auth/github", async (req, reply) => {
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`;
-    reply.redirect(githubAuthUrl);
 });
 
 // GitHub OAuth callback
@@ -146,12 +157,6 @@ app.get("/auth/github", async (req, reply) => {
 //         reply.send("Login failed");
 //     }
 // });
-
-// Logout
-app.get("/logout", (req, reply) => {
-    reply.clearCookie("token");
-    reply.redirect("/");
-});
 
 //init
 app.ready().then(initCheck);

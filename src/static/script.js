@@ -37,7 +37,7 @@ const updateMain = (path = window.location.pathname) => {
             marqueeSet();
         }, 300);
     } else {
-        console.log(urlParts);
+        const urlParams = new URLSearchParams(window.location.search);
         if (
             mainClass == "fonts" &&
             urlParts.length > 2 &&
@@ -50,6 +50,9 @@ const updateMain = (path = window.location.pathname) => {
             }, 300);
         } else document.querySelector("main").classList = mainClass;
         if (mainClass == "home") marqueeSet();
+        // get q from url
+        else if (mainClass == "fonts")
+            document.getElementById("search-input").value = urlParams.get("q");
     }
 };
 
