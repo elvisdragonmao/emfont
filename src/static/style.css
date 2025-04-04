@@ -86,7 +86,7 @@ header {
     height: 100vh;
     height: 100dvh;
     position: fixed;
-    z-index: 2;
+    z-index: 20;
     background-color: var(--slate-900);
 }
 
@@ -570,6 +570,7 @@ input[type="checkbox"]:checked + label {
     display: block;
     color: var(--slate-100);
     transition: background 0.3s ease-out;
+    position: relative;
 }
 
 #section-search .font-item:last-child {
@@ -589,7 +590,7 @@ a.font-item:hover {
     position: relative;
 }
 
-.font-preview:after {
+.font-item:after {
     content: "";
     display: block;
     position: absolute;
@@ -606,6 +607,8 @@ a.font-item:hover {
     flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
 }
 
 .font-item h3 {
