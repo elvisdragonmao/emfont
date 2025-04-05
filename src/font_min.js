@@ -21,18 +21,14 @@ async function generateFont(
     put_folder = "_data/_generated" //default
 ) {
     // Construct the full path to the font file based on the family and variant
-    const fontFilePath = path.join(
-        __Font_storge_path_base,
-        originalFontFamily,
-        `${font_weight}.ttf`
-    );
-    // Check if the font file exists before proceeding
-    if (!fs.existsSync(fontFilePath)) {
-        console.error("Font file not found:", fontFilePath);
-        return res.status(404).json({
-            status: "failed",
-            message: `Font not found for ${font_family_name}`
-        });
+    const fontFilePath = [".ttf", ".otf"]// extensions name may be ttf or otf. Try to find any of them
+    .map(ext => path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`))
+    .find(fs.existsSync);
+
+    if (!fontFilePath) {
+        console.error("Font file not found:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), 
+                                            path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
+        throw new Error("Font file not found");
     }
 
     // Initialize Fontmin with the selected font file
