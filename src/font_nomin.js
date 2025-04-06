@@ -5,7 +5,7 @@ import { generateFont } from "./font_min.js";
 import { uploadToR2,checkFileExists } from "./r2.js";
 import { fileURLToPath } from "url";
 import path from "path";
-async function init_all_static_font() {
+async function regenerate_all_static_font() {
     const word_package_pair = (
         await db.query(
             "SELECT pack, STRING_AGG(word, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;"
@@ -46,7 +46,6 @@ async function init_all_static_font() {
     }
     console.log("done!")
 }
-// await init_all_static_font();
 
 async function find_static_font(word_set) {
     // 回傳要用到的字型包編號
@@ -107,5 +106,4 @@ async function give_static_font(font_family, font_weight, packs) {
         throw error;
     }
 }
-// init_all_static_font()
-export {find_static_font,give_static_font,init_all_static_font} ;
+export {find_static_font,give_static_font,regenerate_all_static_font} ;

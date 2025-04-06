@@ -4,13 +4,14 @@ import { promisify } from "util";
 import dotenv from "dotenv";
 import { db, initDb, dbConnected } from "./database.js"; // 匯入 db.js 中的資料庫連線模組
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import {regenerate_all_static_font} from "./font_nomin.js"
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
 dotenv.config(); // 讀取 .env 變數
 const sotrge_original_fontsDir = path.resolve("src/_data/fonts"); //原始字型檔存放路徑
 const bucketName = process.env.MINIO_BUCKET;
-const s3Client = new S3Client({
+const LOCAL_MINIO_CLIENT = new S3Client({
     region: "auto",
     endpoint: process.env.MINIO_ENDPOINT,
     credentials: {
@@ -22,7 +23,7 @@ const s3Client = new S3Client({
 
 async function listBuckets() {
     try {
-        const data = await s3Client.send(new ListBucketsCommand({}));
+        const data = await LOCAL_MINIO_CLIENT.send(new ListBucketsCommand({}));
         console.log(
             "Buckets:",
             data.Buckets.map(b => b.Name)
@@ -33,18 +34,18 @@ async function listBuckets() {
 }
 
 async function downloadAllFilesInFonts() {
-    const prefix = "fonts"; // Directory name in minio
+    const prefix = "original-fonts"; // Directory name in minio
     try {
-        // List all files in the fonts/ directory
+        // List all files in the original-fonts directory
         const listCommand = new ListObjectsV2Command({
             Bucket: bucketName,
             Prefix: prefix
         });
 
-        const listResponse = await s3Client.send(listCommand);
+        const listResponse = await LOCAL_MINIO_CLIENT.send(listCommand);
 
         if (!listResponse.Contents || listResponse.Contents.length === 0) {
-            console.log("No files found in the fonts/ directory.");
+            console.log(`No files found in the ${bucketName}/original-fonts/ directory.`);
             return;
         }
 
@@ -61,7 +62,7 @@ async function downloadAllFilesInFonts() {
                     Key: fileKey
                 });
 
-                const data = await s3Client.send(getCommand);
+                const data = await LOCAL_MINIO_CLIENT.send(getCommand);
 
                 // 建立本地檔案路徑
                 const localPath = path.join("src", "_data", fileKey); // Create path based on fileKey
@@ -148,14 +149,16 @@ async function insertFontTypes() {
             throw new Error("No font directories found.");
         }
 
-        // 插入字型名稱（避免重複）
+        // sync all font file in _fata/fonts let records are same with SQL 
         try {
+            //clear avaible font-weight. it will regenerate in for loop below 
+            await db.query("UPDATE font_family SET weights = ARRAY[]::smallint[]");
             for (const { fontName, weight } of fontData) {
                 console.log(fontName, typeof fontName, weight, typeof parseInt(weight));
                 const qresult_font_family = await db.query(
                     // if someone `font-family` row has exist but not this weight, then add this weight to the array
                     `
-                        SELECT id,repo_url from font_family WHERE LOWER(id) = LOWER($1);
+                        SELECT id,repo_url from font_family WHERE id= $1;
                         `,
                     [fontName]
                 );//表格內目前的字型名稱大小寫和檔案的大小寫不一樣
@@ -166,6 +169,11 @@ async function insertFontTypes() {
                                         Pls remove it in workspace folder or add its 
                                         information in database`);
                 }
+                //if database does't exist this weight record , append it in arrary
+                await db.query(`UPDATE font_family SET weights =
+                                        array_append(COALESCE(weights, '{}'), $1)
+                                        WHERE id = $2 AND NOT ($1 = ANY(weights));`
+                                ,[weight,fontName])
             }
             console.log("Font types inserted successfully.");
         } catch (error) {
@@ -207,11 +215,12 @@ async function initCheck() {
             console.error("Database connection failed. Exiting...");
             return false;
         }
-        //判斷是不是在 zeabur 是才找 minio
+        //判斷是不是在 zeabur ，是才找 minio
         if (process.env.LOCAL_TEST !== 'true') {
             console.log("initCheck: local_test is false");
             await listBuckets();
             await fech_mino();
+            await regenerate_all_static_font();
         }
         const schemaFilePath = path.resolve("src/_data/sql/schema.sql");
         const word_feq_FilePath = path.resolve("src/_data/sql/words.sql");
