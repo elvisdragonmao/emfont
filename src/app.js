@@ -14,6 +14,7 @@ import { initCheck } from "./init.js";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path from "path";
+import fastifyStatic from "@fastify/static";
 dotenv.config(); // 讀取 .env 變數
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,9 +29,9 @@ let bulletin = process.env.BULLETIN || "";
 //app.register(fastifyJwt, { secret: process.env.JWT_SECRET });
 app.register(fastifyView, { engine: { ejs: ejs } });
 
-app.register(import("@fastify/static"), {
-    root: path.join(__dirname, "static"), // 修正路徑問題
-    prefix: "/static/"
+app.register(fastifyStatic, {
+    root: path.join(__dirname, "public"),
+    prefix: "/"
 });
 
 app.register(cors, {
@@ -52,6 +53,10 @@ app.get("/", async (req, reply) => {
     // }
     return reply.view("/src/website.ejs", { user, page: "home" });
 });
+
+app.get('/emfont.min.js', async (req, reply) => {
+    return reply.redirect(301, '/emfont.js');
+  });
 
 app.get("/login", async (req, reply) => {
     return reply.view("/src/website.ejs", { user, page: "login" });
@@ -84,14 +89,6 @@ app.get("/dashboard", async (req, reply) => {
 app.get("/auth/github", async (req, reply) => {
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`;
     reply.redirect(githubAuthUrl);
-});
-
-app.get("/emfont.js", async (req, reply) => {
-    return reply.sendFile("/src/static/js/main.js");
-});
-
-app.get("/emfont.min.js", async (req, reply) => {
-    return reply.sendFile("/src/static/js/main.js");
 });
 
 app.post("/g/:font", async (req, res) => {
