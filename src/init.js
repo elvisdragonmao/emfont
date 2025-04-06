@@ -151,27 +151,29 @@ async function insertFontTypes() {
         // 插入字型名稱（避免重複）
         try {
             for (const { fontName, weight } of fontData) {
-                console.log(fontName, weight);
-                await db.query(
+                console.log(fontName, typeof fontName, weight, typeof parseInt(weight));
+                const qresult_font_family = await db.query(
                     // if someone `font-family` row has exist but not this weight, then add this weight to the array
                     `
-                        INSERT INTO font_family (id, name, weights) 
-                        VALUES ($1, $1, ARRAY[$2]::smallint[]) 
-                        ON CONFLICT (name) 
-                        DO UPDATE SET weights = 
-                        CASE 
-                            WHEN NOT $2 = ANY(font_family.weights) THEN array_append(font_family.weights, $2)
-                            ELSE font_family.weights
-                        END
+                        SELECT id,repo_url from font_family WHERE LOWER(id) = LOWER($1);
                         `,
-                    [fontName, weight]
-                );
+                    [fontName]
+                );//表格內目前的字型名稱大小寫和檔案的大小寫不一樣
+                const verify_font_file= qresult_font_family.rows[0] //can use .id ,.repo_url get vaild value
+                console.log(typeof(verify_font_file),verify_font_file)
+                if (!verify_font_file) {
+                    throw new TypeError(`${fontName}-${weight} doesn't in SQL record.
+                                        Pls remove it in workspace folder or add its 
+                                        information in database`);
+                }
             }
             console.log("Font types inserted successfully.");
-        } finally {
+        } catch (error) {
+            console.error(`Error when check font file`, error);
+            throw error;
         }
     } catch (error) {
-        console.error("Error inserting font types:", error);
+        console.error(`Error when check font file`, error);
         throw error;
     }
 }
