@@ -1,7 +1,7 @@
 <div align=center>
 
-<img src=src/static/img/logo/emfont-logo-light.svg#gh-dark-mode-only height=48px>
-<img src=src/static/img/logo/emfont-logo-dark.svg#gh-light-mode-only height=48px>
+<img src=src/public/static/img/logo/emfont-logo-light.svg#gh-dark-mode-only height=48px>
+<img src=src/public/static/img/logo/emfont-logo-dark.svg#gh-light-mode-only height=48px>
 
 <div style=display:none>
 
@@ -48,9 +48,9 @@ pnpm install
 
 然後請你自己架設 [minIO](https://min.io/) ([S3](https://aws.amazon.com/tw/pm/serv-s3/), [R2](https://www.cloudflare.com/zh-tw/developer-platform/products/r2/))、[Redis](https://redis.io/)[、PostgreSQL](https://www.postgresql.org/)。
 
-也可以順便自己架設 [說明文件](https://github.com/emfont/doc)、[caddy](https://zeabur.com/zh-TW/templates/FFDLWU)
+也可以順便自己架設 [說明文件](https://github.com/emfont/doc) 以及 [caddy](https://zeabur.com/zh-TW/templates/FFDLWU) 來控制路由。
 
-**環境變數：** 複製 `.env.example` 並命名為 `.env`，然後根據需要修改其中的變數。
+**環境變數：** 複製 `.env.example` 並命名為 `.env`，然後根據需要修改其中的變數。最後啟動即可。
 
 ```bash
 pnpm start
