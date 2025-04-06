@@ -14,7 +14,7 @@ async function regenerate_all_static_font() {
     // list all fonts family and theirs support weights
     const all_font_family = (
         await db.query(
-            "SELECT name as ff_name, weights as support_weights FROM font_family"
+            "SELECT id as ff_name, weights as support_weights FROM font_family"
         )
     ).rows;
     // console.log("max_package_number:", max_package_number);
