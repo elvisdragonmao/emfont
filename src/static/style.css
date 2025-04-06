@@ -787,10 +787,10 @@ footer {
 #bulletin {
     display: none;
     position: absolute;
-    bottom: 6rem;
+    bottom: 13rem;
     left: 1rem;
     width: 19rem;
-    max-width: 100%;
+    max-width: calc(100% - 2rem);
     padding: 2rem 2rem;
     z-index: 999;
     background-color: var(--slate-800);
