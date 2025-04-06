@@ -18,10 +18,6 @@ CREATE TABLE IF NOT EXISTS font_family (
     CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'))
 );
 
--- Clear existing data (if needed)
--- Important: This should be done separately or removed if you want to preserve data
--- DELETE FROM dynamic_fonts;
-
 -- 動態字型對應表格
 CREATE TABLE IF NOT EXISTS dynamic_fonts (
     id SERIAL PRIMARY KEY, -- 聯合主鍵基本上需要有每一個屬性，那還不如直接生成一個 ID，正好也是 R2 File Name
