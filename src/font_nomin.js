@@ -8,7 +8,7 @@ import path from "path";
 async function regenerate_all_static_font() {
     const word_package_pair = (
         await db.query(
-            "SELECT pack, STRING_AGG(word, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;"
+            "SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;"
         )
     ).rows;
     // list all fonts family and theirs support weights

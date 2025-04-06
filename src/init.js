@@ -142,7 +142,7 @@ async function insertFontTypes() {
                 }
             }
         }
-        console.log(`find ${fontData.length} font file`);
+        console.log(`find ${fontData.length} font file\n=================`);
         if (fontData.length === 0) {
             console.log("No font directories found.");
             //中止程式
@@ -154,7 +154,7 @@ async function insertFontTypes() {
             //clear avaible font-weight. it will regenerate in for loop below 
             await db.query("UPDATE font_family SET weights = ARRAY[]::smallint[]");
             for (const { fontName, weight } of fontData) {
-                console.log(fontName, typeof fontName, weight, typeof parseInt(weight));
+                // console.log(fontName, typeof fontName, weight, typeof parseInt(weight));
                 const qresult_font_family = await db.query(
                     // if someone `font-family` row has exist but not this weight, then add this weight to the array
                     `
@@ -163,7 +163,7 @@ async function insertFontTypes() {
                     [fontName]
                 );//表格內目前的字型名稱大小寫和檔案的大小寫不一樣
                 const verify_font_file= qresult_font_family.rows[0] //can use .id ,.repo_url get vaild value
-                console.log(typeof(verify_font_file),verify_font_file)
+                // console.log(typeof(verify_font_file),verify_font_file)
                 if (!verify_font_file) {
                     throw new TypeError(`${fontName}-${weight} doesn't in SQL record.
                                         Pls remove it in workspace folder or add its 
