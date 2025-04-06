@@ -11,7 +11,7 @@ import { uploadToR2, checkFileExists } from "./r2.js";
 // Convert __dirname to work with ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const __Font_storge_path_base = path.join(__dirname, "_data", "fonts"); //root/src/_data/fonts/
+const __Font_storge_path_base = path.join(__dirname, "_data", "original-fonts"); //projectroot/src/_data/original-fonts/
 
 async function generateFont(
     originalFontFamily,

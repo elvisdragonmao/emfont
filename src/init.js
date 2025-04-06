@@ -9,7 +9,7 @@ const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
 dotenv.config(); // 讀取 .env 變數
-const sotrge_original_fontsDir = path.resolve("src/_data/fonts"); //原始字型檔存放路徑
+const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts"); //原始字型檔存放路徑
 const bucketName = process.env.MINIO_BUCKET;
 const LOCAL_MINIO_CLIENT = new S3Client({
     region: "auto",
