@@ -14,7 +14,7 @@ const s3Client = new S3Client({
 });
 // gen public url
 const genPublicUrl = (remoteFileName) => {//file name example: XXX.woff2 => is a file name  + Filename Extension 
-    return `${process.env.R2_pub_url_base}/fonts/${remoteFileName}`;
+    return `${process.env.R2_PUB_URL_BASE}/fonts/${remoteFileName}`;
 };
 async function uploadToR2(localFilePath, remoteFileName) {
     try {
