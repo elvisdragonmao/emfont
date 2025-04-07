@@ -5,41 +5,63 @@ import { generateFont } from "./font_min.js";
 import { uploadToR2,checkFileExists } from "./r2.js";
 import { fileURLToPath } from "url";
 import path from "path";
+async function gen_static_font(ff_name,support_weights,words,pack){
+    console.log("gen static:",ff_name,words)
+    return //R2 已上傳檢查還沒做，先關閉下方功能
+    try
+    {
+        await generateFont(ff_name,support_weights,words,`${pack}.woff2`,
+            `_data/_generated/${ff_name}-${support_weights}`)
+        const generated_font_path = path.join(
+                    path.dirname(fileURLToPath(import.meta.url)),
+                    "_data",
+                    "_generated",
+                    `${ff_name}-${support_weights}`,
+                    `${pack}.woff2`
+                );
+        await uploadToR2(generated_font_path,`${ff_name}-${support_weights}/${pack}.woff2`);
+        return true
+    }
+    catch(err)
+    {
+        return new Error(err)
+    }
+}
 async function regenerate_all_static_font() {
     const word_package_pair = (
         await db.query(
             "SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;"
         )
     ).rows;
-    // list all fonts family and theirs support weights
-    const all_font_family = (
+    // list all have to regenerate fonts family and theirs support weights .
+    //regen rules: no record in pack_status history or over 1 month haven't regen
+    const all_need_gen_fonts = (
         await db.query(
-            "SELECT id as ff_name, weights as support_weights FROM font_family"
+        `SELECT ff.id AS ff_name, w AS support_weights
+        FROM font_family ff
+        JOIN LATERAL unnest(ff.weights) AS w ON true
+        LEFT JOIN pack_status ss
+            ON ff.id = ss.family AND ss.weights = w
+        WHERE ss.family IS NULL
+        OR ss.last_update < NOW() - INTERVAL '1 month';`
         )
     ).rows;
-    // console.log("max_package_number:", max_package_number);
-    // console.log("word_package_pair:", word_package_pair);
     const max_package_number = word_package_pair.length;
-    // const max_font_family_id = all_font_family.length;
-    // console.log("max_package_number:", word_package_pair);
-    for (const { ff_name, support_weights } of all_font_family) {
-        for (const weight_number of support_weights) {
-            for (let i = 0; i < max_package_number; i++) {
-                const words = word_package_pair[i].words;
-                const pack = word_package_pair[i].pack.toString().padStart(2, '0');
-                await generateFont(ff_name,weight_number,words,`${pack}.woff2`,
-                            `_data/_generated/${ff_name}-${weight_number}`)
-                const generated_font_path = path.join(
-                                path.dirname(fileURLToPath(import.meta.url)),
-                                "_data",
-                                "_generated",
-                                `${ff_name}-${weight_number}`,
-                                `${pack}.woff2`
-                            );
-                await uploadToR2(generated_font_path,`${ff_name}-${weight_number}/${pack}.woff2`);
-                
+
+    for (const { ff_name, support_weights } of all_need_gen_fonts) {
+        for (let i = 0; i < max_package_number; i++) {
+            const words = word_package_pair[i].words;
+            const pack = word_package_pair[i].pack.toString().padStart(2, '0');
+            const gen_result = await gen_static_font(ff_name,support_weights,words,pack)
+            if (gen_result!=true)
+            {
+                console.log(ff_name,support_weights,"faild")
             }
-            
+            await db.query(`INSERT INTO pack_status (family, weights, last_update)
+                            VALUES ($1, $2, CURRENT_TIMESTAMP)
+                            ON CONFLICT (family, weights)
+                            DO UPDATE SET last_update = CURRENT_TIMESTAMP;`
+                            ,[ff_name,support_weights])
         }
         //when generate entir family-fontWeight folder 
         console.log("generate statice font package for ",ff_name)

@@ -18,6 +18,14 @@ CREATE TABLE IF NOT EXISTS font_family (
     CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'))
 );
 
+-- 靜態字型上次更新時間
+CREATE TABLE IF NOT EXISTS pack_status (
+    family TEXT, -- font family 
+    weights INT NOT NULL ,-- font weights
+    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (family, weights),
+    FOREIGN KEY (family) REFERENCES font_family(id)
+);
 -- 動態字型對應表格
 CREATE TABLE IF NOT EXISTS dynamic_fonts (
     id SERIAL PRIMARY KEY, -- 聯合主鍵基本上需要有每一個屬性，那還不如直接生成一個 ID，正好也是 R2 File Name
@@ -30,6 +38,7 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts (
     hash CHAR(10) NOT NULL,
     FOREIGN KEY (family_id) REFERENCES font_family(id)
 );
+
 
 -- 文字對應表格 (每周更新一次)
 CREATE TABLE IF NOT EXISTS static_fonts (

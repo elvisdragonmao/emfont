@@ -132,7 +132,7 @@ async function insertFontTypes() {
                     const match = fontFile.match(/.*?(\d+)\.(ttf|otf)$/);
                     if (match) {
                         const weight = match[1]; // 取得數字部分作為 weight
-                        console.log("weight:", weight);
+                        // console.log("weight:", weight);
                         // 將資料夾名（font_name）和提取的 weight 存入 fontData
                         fontData.push({
                             fontName: one_font_family, // 字型名稱（資料夾名稱）
@@ -220,12 +220,12 @@ async function initCheck() {
             console.log("initCheck: local_test is false");
             await listBuckets();
             await fech_mino();
-            await regenerate_all_static_font();
         }
         const schemaFilePath = path.resolve("src/_data/sql/schema.sql");
         const word_feq_FilePath = path.resolve("src/_data/sql/words.sql");
         await executeSQLFile(schemaFilePath);
         await executeSQLFile(word_feq_FilePath);
+        await regenerate_all_static_font();//
         await insertFontTypes();
         console.log("init success");
         return true;
