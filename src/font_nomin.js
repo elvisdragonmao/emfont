@@ -96,9 +96,9 @@ async function give_static_font(font_family, font_weight, packs) {
         console.log("R2paths:", R2paths);
         // return R2paths;
         // R2paths example: [
-            // '{ALTER_R2_pub_url_base}/ZhuQueFangSong-400/01.woff2',
-            // '{ALTER_R2_pub_url_base}/ZhuQueFangSong-400/08.woff2',
-            // '{ALTER_R2_pub_url_base}/ZhuQueFangSong-400/11.woff2']
+            // '{ALTER_R2_PUB_URL_BASE}/ZhuQueFangSong-400/01.woff2',
+            // '{ALTER_R2_PUB_URL_BASE}/ZhuQueFangSong-400/08.woff2',
+            // '{ALTER_R2_PUB_URL_BASE}/ZhuQueFangSong-400/11.woff2']
         return R2paths;
     }
     catch (error) {
