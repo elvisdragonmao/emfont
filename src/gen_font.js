@@ -7,12 +7,13 @@ import { db } from "./database.js";
 async function hashString(str) {
     const encoder = new TextEncoder();
     const data = encoder.encode(str);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const fullHash = hashArray
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join("");
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
     // 截取前 10 個字元作為縮短的哈希值
+    console.log('hash is ',fullHash)
     return fullHash.substring(0, 10);
 }
 
@@ -30,7 +31,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
         throw new Error("words_set are required"); // 使用 throw 讓 genFont 捕捉
     }
     const result = await db.query(
-        "SELECT id FROM font_family WHERE name = $1",
+        "SELECT id FROM font_family WHERE id = $1",
         [FONT_NAME]
     );
     if (result.rowCount === 0) {
@@ -64,7 +65,7 @@ export const genFont = async (req, res) => {
         const font_family_name = req.params.font;
         const font_id = await checkFormat(req_word_set, font_family_name);
         if (!font_id) {
-            return res.status(400).json({
+            return res.code(400).send({
                 status: "failed",
                 message: `Invalid font format for ${font_family_name}`
             });
@@ -76,7 +77,12 @@ export const genFont = async (req, res) => {
         if (min_flag ) {
             //請求動態字型
             console.log(`min_flag is ${min_flag}. generate dynamic font`);
-            const hash = await hashString(req_word_set);
+            const summery={
+                wordSet: req_word_set,
+                fontWeight: font_weight,
+                fontFamily: font_family_name
+              };
+            const hash = await hashString(summery);
             console.log("hash is", hash);
             const file_path = await find_dynamic_font(
                 hash,
@@ -125,9 +131,9 @@ export const genFont = async (req, res) => {
 
         // return res.status(200).send("Font generated");
     } catch (err) {
-        console.log("gentFont() error in gen_font.js:", err.stack);
+        console.log("gentFont() 500 error in gen_font.js:", err.stack);
 
-        return res.status(400).send({
+        return res.status(500).send({
             status: "failed",
             message: `error generating font: ${err.message}`
         });

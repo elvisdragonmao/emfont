@@ -73,7 +73,6 @@ async function find_dynamic_font(//return a R2 url client need
     // const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);
     // const exist = exist_search.rows[0];
     // //如果存在，回傳字型檔
-    // console.log("@@I search:",exist);
     const file_exist = await checkFileExists(
         `${word_hash}-${font_family}-${font_weight}.woff`
     ); //return false or file path

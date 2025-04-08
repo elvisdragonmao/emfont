@@ -98,8 +98,8 @@ app.post("/g/:font", async (req, res) => {
             //return 404
             return res.status(404).send("Font not found");
         }
-        console.log("請求字型：", req.params); // { font: 'ZhuQueFangSong' }
-        console.log("word set is :", req.body); // { words: '軟語伴茶' }
+        // console.log("請求字型：", req.params); // { font: 'ZhuQueFangSong' }
+        console.log("word set is :", req.body); // { words: '軟語伴茶',weight: '400', min: 'true', format: 'woff2' }
         await genFont(req, res);
     } catch (error) {
         console.log(":g/font error in app.js:", error.stack);
