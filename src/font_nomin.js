@@ -6,21 +6,19 @@ import { uploadToR2,checkFileExists } from "./r2.js";
 import { fileURLToPath } from "url";
 import path from "path";
 async function gen_static_font(ff_name,support_weights,words,pack){
-    console.log("gen static:",ff_name,words)
-    return //R2 已上傳檢查還沒做，先關閉下方功能
     try
     {
         await generateFont(ff_name,support_weights,words,`${pack}.woff2`,
             `_data/_generated/${ff_name}-${support_weights}`)
-        const generated_font_path = path.join(
-                    path.dirname(fileURLToPath(import.meta.url)),
-                    "_data",
-                    "_generated",
-                    `${ff_name}-${support_weights}`,
-                    `${pack}.woff2`
-                );
-        await uploadToR2(generated_font_path,`${ff_name}-${support_weights}/${pack}.woff2`);
-        return true
+            const generated_font_path = path.join(
+                path.dirname(fileURLToPath(import.meta.url)),
+                "_data",
+                "_generated",
+                `${ff_name}-${support_weights}`,
+                `${pack}.woff2`
+            );
+            await uploadToR2(generated_font_path,`${ff_name}-${support_weights}/${pack}.woff2`);
+            return true
     }
     catch(err)
     {
@@ -77,7 +75,7 @@ async function find_static_font(word_set) {
         word_set = word_set.split("");
         //查詢請求的字分別散落在哪些字型包中
         const query =
-            "SELECT DISTINCT pack FROM static_fonts WHERE word = ANY($1::text[])";
+            "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[])";
         const result = await db.query(query, [word_set]);
         const use_packs = result.rows.map((row) => Number(row.pack)); // 確保是數字
         console.log(word_set, "散落在", use_packs);

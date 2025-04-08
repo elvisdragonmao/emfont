@@ -210,13 +210,14 @@ async function fech_mino() {
 
 async function initCheck() {
     try {
+        const isLocal = process.env.LOCAL_TEST === 'true';
         await initDb();
         if (!dbConnected) {
             console.error("Database connection failed. Exiting...");
             return false;
         }
         //判斷是不是在 zeabur ，是才找 minio
-        if (process.env.LOCAL_TEST !== 'true') {
+        if (!isLocal) {
             console.log("initCheck: local_test is false");
             await listBuckets();
             await fech_mino();
@@ -225,9 +226,11 @@ async function initCheck() {
         const word_feq_FilePath = path.resolve("src/_data/sql/words.sql");
         await executeSQLFile(schemaFilePath);
         await executeSQLFile(word_feq_FilePath);
-        await regenerate_all_static_font();//
         await insertFontTypes();
-        console.log("init success");
+        if (!isLocal) {
+            await regenerate_all_static_font();
+        }
+        console.log("init done");
         return true;
     } catch (err) {
         console.error("Error init break:", err);
