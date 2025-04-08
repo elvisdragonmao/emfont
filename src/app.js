@@ -49,14 +49,14 @@ app.get("/", async (req, reply) => {
     //         user = await req.jwtVerify();
     //     }
     // } catch (err) {
-    //     console.error("JWT verification failed:", err);
+    //     console.error("JWT 驗證失敗:", err);
     // }
     return reply.view("/src/website.ejs", { user, page: "home" });
 });
 
-app.get('/emfont.min.js', async (req, reply) => {
-    return reply.redirect(301, '/emfont.js');
-  });
+app.get("/emfont.min.js", async (req, reply) => {
+    return reply.redirect(301, "/emfont.js");
+});
 
 app.get("/login", async (req, reply) => {
     return reply.view("/src/website.ejs", { user, page: "login" });
@@ -99,10 +99,10 @@ app.post("/g/:font", async (req, res) => {
             return res.status(404).send("Font not found");
         }
         // console.log("請求字型：", req.params); // { font: 'ZhuQueFangSong' }
-        console.log("word set is :", req.body); // { words: '軟語伴茶',weight: '400', min: 'true', format: 'woff2' }
+        console.log("請求字集:", req.body); // { words: '軟語伴茶',weight: '400', min: 'true', format: 'woff2' }
         await genFont(req, res);
     } catch (error) {
-        console.log(":g/font error in app.js:", error.stack);
+        console.log("字體請求錯誤: ", error.stack);
         res.status(500).send({ status: "failed", message: error.message });
     }
 });
@@ -110,13 +110,10 @@ app.post("/g/:font", async (req, res) => {
 //測試資料庫路由
 app.get("/testq", async (request, reply) => {
     try {
-        // 執行 SELECT 查詢
-        const res = await db.query("SELECT * FROM font_requests");
-
-        // 使用 EJS 顯示結果
-        return reply.view("/src/views/pages/font_requests", { data: res.rows });
+        const select = await db.query("SELECT * FROM font_requests");
+        return res.send({ status: "success", message: "資料庫路由測試成功", data: select.rows });
     } catch (err) {
-        console.error("Error executing query", err.stack);
+        console.error("資料庫路由測試失敗", err.stack);
         reply.status(500).send("Database query failed");
     }
 });
@@ -171,7 +168,7 @@ const start = async () => {
     try {
         const run_port = process.env.PORT || 3000;
         app.listen({ port: run_port, host: "0.0.0.0" }, () => {
-            console.log(`Server running at http://localhost:${run_port}`);
+            console.log(`啟動在 http://localhost:${run_port}`);
         });
     } catch (err) {
         app.log.error(err);
@@ -185,10 +182,10 @@ start();
 app.ready().then(async () => {
     const result = await initCheck();
     if (result) {
-        console.log("initCheck passed, starting service...");
+        console.log("🎉初始化成功，服務已啟動。");
         alive = true;
     } else {
-        console.log("initCheck failed, but website is still running...");
+        console.log("😥初始化失敗，網頁仍在運行");
         if (!bulletin) bulletin = "emfont 啟動失敗，暫時無法使用。";
     }
 });

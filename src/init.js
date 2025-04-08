@@ -45,11 +45,11 @@ async function downloadAllFilesInFonts() {
         const listResponse = await LOCAL_MINIO_CLIENT.send(listCommand);
 
         if (!listResponse.Contents || listResponse.Contents.length === 0) {
-            console.log(`No files found in the ${bucketName}/original-fonts/ directory.`);
+            console.log(`在 ${bucketName}/original-fonts/ 沒有找到任何字體`);
             return;
         }
 
-        console.log(`🔄 Found ${listResponse.Contents.length} 個字體文件，開始下載...`);
+        console.log(`🔄 找到 ${listResponse.Contents.length} 個字體文件，開始下載...`);
 
         await Promise.all(
             listResponse.Contents.map(async file => {
