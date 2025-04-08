@@ -28,10 +28,10 @@ let dbConnected = false;
 async function initDb() {
     try {
         await db.connect();
-        console.log("✅ Connected to PostgreSQL");
+        console.log("✅ PostgreSQL 連接成功");
         dbConnected = true;
     } catch (err) {
-        console.error("❌ PostgreSQL connection failed:", err);
+        console.error("❌ PostgreSQL 連接失敗:", err);
         // 不 throw，讓主程式決定怎麼處理
     }
 }

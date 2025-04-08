@@ -38,7 +38,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
         return false;
     }
     const font_id = result.rows[0].id; // Extracting the id value
-    console.log(FONT_NAME, "id is", font_id);
+    console.log(FONT_NAME, "的 ID 是", font_id);
     return font_id; // 如果沒問題，就回傳字型編號
 }
 
@@ -76,7 +76,7 @@ export const genFont = async (req, res) => {
         // two condictions: 1.字型包是靜態的 2.字型包是動態的
         if (min_flag ) {
             //請求動態字型
-            console.log(`min_flag is ${min_flag}. generate dynamic font`);
+            console.log(`正在生成動態字體`);
             const summery={
                 wordSet: req_word_set,
                 fontWeight: font_weight,
@@ -111,7 +111,6 @@ export const genFont = async (req, res) => {
             });
         } else {
             //請求靜態字型
-            console.log("min_flag is true");
             //TODO:確認字型包是否存在r2，若無，怎麼辦
             const font_pack_you_need = await find_static_font(req_word_set);
             const R2font_url = await give_static_font(
