@@ -4,7 +4,7 @@ import ejs from "ejs";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
-
+import fastifyStatic from "@fastify/static";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -14,16 +14,15 @@ const app = Fastify({ logger: true });
 app.register(fastifyView, { engine: { ejs: ejs } });
 
 // Register static file serving
-app.register(import("@fastify/static"), {
-    root: path.join(__dirname, "static"),
-    prefix: "/static/"
+app.register(fastifyStatic, {
+    root: path.join(__dirname, "public"),
+    prefix: "/"
 });
-
-// No matter what is in the URL, serve the website
-app.get("/*", async (request, reply) => {
-    return reply.view("/src/website.ejs");
+let user = "";
+// Catch-all route
+app.get("/", async (req, reply) => {
+    return reply.view("/src/website.ejs", { user, page: "home" });
 });
-
 // Start server
 const start = async () => {
     try {
