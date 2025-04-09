@@ -8,7 +8,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "nodemon src/app.js",
         "front": "nodemon src/front.js",
-        "test_f": "node src/font_nomin.js",
+        "test_f": "node src/list_font.js",
         "start": "node src/app.js"
     },
     "keywords": [],
@@ -33,6 +33,7 @@
         "drizzle-orm": "^0.40.0",
         "ejs": "^3.1.10",
         "fastify": "^5.2.1",
+        "fonteditor-core": "^2.4.1",
         "fontmin": "^2.0.0",
         "gulp-rename": "^2.0.0",
         "ioredis": "^5.5.0",
