@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts (
 CREATE TABLE IF NOT EXISTS static_fonts (
     char VARCHAR(2) PRIMARY KEY,
     pack SMALLINT NOT NULL,
+    families TEXT[] DEFAULT ARRAY[]::TEXT[], -- 有哪些字型有這個字
     use_count INT NOT NULL DEFAULT 0
 );
 
