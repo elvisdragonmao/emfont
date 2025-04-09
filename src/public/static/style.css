@@ -370,6 +370,30 @@ body:has(.home) {
     --innerWidth: 100vw;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    #section-home > div {
+        animation: fadeIn 3s linear infinite alternate;
+    }
+    #section-home > .emfont-GenYoMinTC {
+        animation-delay: -2s;
+    }
+    #section-home > .emfont-jfOpenHuninn {
+        animation-delay: -1s;
+    }
+    #section-home > .emfont-MantouSans {
+        animation-delay: -2s;
+    }
+    #section-home > .emfont-ChenYuluoyan {
+        animation-delay: -1.5s;
+    }
+    #section-home > .emfont-ChillBitmap {
+        animation-delay: -2.5s;
+    }
+    #section-home > div:nth-child(2n) {
+        color: unset;
+    }
+}
+
 @keyframes marquee {
     0% {
         transform: translateX(0);
@@ -379,12 +403,21 @@ body:has(.home) {
     }
 }
 
+@keyframes fadeIn {
+    0% {
+        opacity: 0.2;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .emfont-GenYoGothicTC {
     font-family: "源樣黑體丹", "微軟正黑體";
     font-size: 20vh;
 }
 .emfont-GenYoMinTC {
-    font-family: "源樣明體丹","新細明體","PMingLiU";
+    font-family: "源樣明體丹", "新細明體", "PMingLiU";
     font-size: 15vh;
 }
 .emfont-jfOpenHuninn {
@@ -392,7 +425,7 @@ body:has(.home) {
     font-size: 17vh;
 }
 .emfont-MantouSans {
-    font-family: "饅頭黑體","新細明體","PMingLiU";
+    font-family: "饅頭黑體", "新細明體", "PMingLiU";
     font-size: 19vh;
 }
 .emfont-ChenYuluoyan {
@@ -400,7 +433,7 @@ body:has(.home) {
     font-size: 18vh;
 }
 .emfont-ChillBitmap {
-    font-family: "寒蝉点阵体","新細明體","PMingLiU";
+    font-family: "寒蝉点阵体", "新細明體", "PMingLiU";
     font-size: 15vh;
 }
 
@@ -796,7 +829,7 @@ footer {
     background-color: var(--slate-800);
     border: 1px solid var(--slate-700);
 }
-#closeBulletin{
+#closeBulletin {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
