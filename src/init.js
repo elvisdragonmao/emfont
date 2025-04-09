@@ -120,27 +120,30 @@ async function insertFontTypes() {
             console.log("itemPath:", itemPath);
             const stats = await stat(itemPath);
 
-            if (stats.isDirectory()) {
-                // 讀取該資料夾內的所有檔案
-                const fontFiles = await readdir(itemPath);
-                for (const fontFile of fontFiles) {
-                    // 匹配檔名中的數字作為 weight（假設檔名包含數字，200.ttf）
-                    if (!fontFile.endsWith(".ttf") && !fontFile.endsWith(".otf")) {
-                        console.log("Skipping:", fontFile); // 確保 README.md 這類檔案不會進來
-                        continue;
-                    }
-                    const match = fontFile.match(/.*?(\d+)\.(ttf|otf)$/);
-                    if (match) {
-                        const weight = match[1]; // 取得數字部分作為 weight
-                        // console.log("weight:", weight);
-                        // 將資料夾名（font_name）和提取的 weight 存入 fontData
-                        fontData.push({
-                            fontName: one_font_family, // 字型名稱（資料夾名稱）
-                            weight: weight // 字型的 weight（檔案名稱中的數字）
-                        });
-                    }
+            if (!(stats.isDirectory())) {
+                //不是資料夾就跳過
+                continue;
+            }
+            // 讀取該資料夾內的所有檔案
+            const fontFiles = await readdir(itemPath);
+            for (const fontFile of fontFiles) {
+                // 匹配檔名中的數字作為 weight（假設檔名包含數字，200.ttf）
+                if (!fontFile.endsWith(".ttf") && !fontFile.endsWith(".otf")) {
+                    console.log("Skipping:", fontFile); // 確保 README.md 這類檔案不會進來
+                    continue;
+                }
+                const match = fontFile.match(/.*?(\d+)\.(ttf|otf)$/);
+                if (match) {
+                    const weight = match[1]; // 取得數字部分作為 weight
+                    // console.log("weight:", weight);
+                    // 將資料夾名（font_name）和提取的 weight 存入 fontData
+                    fontData.push({
+                        fontName: one_font_family, // 字型名稱（資料夾名稱）
+                        weight: weight // 字型的 weight（檔案名稱中的數字）
+                    });
                 }
             }
+            
         }
         console.log(`find ${fontData.length} font file\n=================`);
         if (fontData.length === 0) {
@@ -165,15 +168,17 @@ async function insertFontTypes() {
                 const verify_font_file= qresult_font_family.rows[0] //can use .id ,.repo_url get vaild value
                 // console.log(typeof(verify_font_file),verify_font_file)
                 if (!verify_font_file) {
-                    throw new TypeError(`${fontName}-${weight} doesn't in SQL record.
+                    //未認證字型報錯,不提供服務（字重欄留空）
+                    console.log(`${fontName}-${weight} doesn't in SQL record.
                                         Pls remove it in workspace folder or add its 
-                                        information in database`);
+                                        information in database`)
+                    continue;
                 }
                 //if database does't exist this weight record , append it in arrary
                 await db.query(`UPDATE font_family SET weights =
                                         array_append(COALESCE(weights, '{}'), $1)
                                         WHERE id = $2 AND NOT ($1 = ANY(weights));`
-                                ,[weight,fontName])
+                                ,[weight,fontName]);
             }
             console.log("Font types inserted successfully.");
         } catch (error) {
