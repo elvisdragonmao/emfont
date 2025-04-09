@@ -1,7 +1,7 @@
 //切割靜態字型檔（非極致壓縮）
 //依照字頻表分裝檔案 (開機時重切)
 import { db } from "./database.js";
-import { generateFont } from "./font_min.js";
+import { generateFont, readFontBuffer } from "./font_min.js";
 import { uploadToR2, checkFileExists } from "./r2.js";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -18,6 +18,10 @@ async function gen_static_font(ff_name, support_weights, words, pack) {
 
 async function regenerate_all_static_font() {
     const word_package_pair = (await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
+    // {
+    //     1:'一堆字',
+    //     2:'另一堆字'
+    // }
     // list all have to regenerate fonts family and theirs support weights .
     //regen rules: no record in pack_status history or over 1 month haven't regen
     const all_need_gen_fonts = (
@@ -33,12 +37,35 @@ async function regenerate_all_static_font() {
     ).rows;
 
     const max_package_number = word_package_pair.length;
-
     for (const { ff_name, support_weights } of all_need_gen_fonts) {
+        //
+        // read all font 隨便選一個字重
+        const fontData = await readFontBuffer(ff_name,support_weights)
+        const buffer = fontData.buffer;
+
+        const font = Font.create(buffer, {
+            type: fontData.type,
+            hinting: true,
+            kerning: true
+        });
+
+        const fontObject = font.get();
+
+        // cmap: maps Unicode code points to glyph index
+        const cmap = fontObject.cmap;
+        const supportedChars = Object.keys(cmap)
+            .map(code => String.fromCodePoint(parseInt(code)))
+            .join("");
+            
+        console.log(supportedChars);
+
+        const charArray = Object.keys(cmap).map(code => String.fromCodePoint(parseInt(code)));
+        console.log(charArray);
+
         // 並行生成所有 pack
         const gen_promises = word_package_pair.map(({ pack, words }) => {
             const padded_pack = pack.toString().padStart(2, "0");
-            return gen_static_font(ff_name, support_weights, words, padded_pack)
+            return gen_static_font(ff_name, support_weights, words, padded_pack, buffer)
                 .then(result => ({
                     success: result === true,
                     pack: padded_pack

@@ -13,22 +13,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const __Font_storge_path_base = path.join(__dirname, "_data", "original-fonts"); //projectroot/src/_data/original-fonts/
 
+async function readFontBuffer(originalFontFamily,font_weight) {
+    let success = false, buffer;
+     // Construct the full path to the font file based on the family and variant
+     const fontFilePath = [".ttf", ".otf"] // extensions name may be ttf or otf. Try to find any of them
+     .map(ext => path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`))
+     .find(fs.existsSync);
+ if (!fontFilePath) {
+     console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
+ } else {
+    success = true;
+ buffer = fs.readFileSync(fontFilePath);
+ }
+ return {butter, type, success}
+}
+
 async function generateFont(
     originalFontFamily,
     font_weight,
     words,
     output_name,
-    put_folder = "_data/_generated" //default
+    put_folder = "_data/_generated", //default
+    buffer = null
 ) {
-    // Construct the full path to the font file based on the family and variant
-    const fontFilePath = [".ttf", ".otf"] // extensions name may be ttf or otf. Try to find any of them
-        .map(ext => path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`))
-        .find(fs.existsSync);
-
-    if (!fontFilePath) {
-        console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
-        throw new Error("找不到字體");
-    }
+    if(!buffer) buffer = readFontBuffer(originalFontFamily,font_weight).buffer;
 
     // Initialize Fontmin with the selected font file
     const fontmin = new Fontmin()
@@ -113,4 +121,4 @@ async function find_dynamic_font( //return a R2 url client need
         }
     }
 }
-export { find_dynamic_font, generateFont };
+export { find_dynamic_font, generateFont ,readFontBuffer};
