@@ -1,8 +1,18 @@
 import fs from "fs";
 import path from "path";
-import { ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
 
 export default async () => {
+    const LOCAL_MINIO_CLIENT = new S3Client({
+        region: "auto",
+        endpoint: process.env.MINIO_ENDPOINT,
+        credentials: {
+            accessKeyId: process.env.MINIO_USERNAME,
+            secretAccessKey: process.env.MINIO_PASSWORD
+        },
+        forcePathStyle: true
+    });
+
     try {
         const data = await LOCAL_MINIO_CLIENT.send(new ListBucketsCommand({}));
         console.log(

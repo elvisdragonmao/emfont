@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
-import { S3Client } from "@aws-sdk/client-s3";
 
 import { db, initDb } from "./database.js";
 import { regenerateAllStaticFont } from "./font_nomin.js";
@@ -14,15 +13,6 @@ const stat = promisify(fs.stat);
 dotenv.config();
 const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts");
 const bucketName = process.env.MINIO_BUCKET;
-const LOCAL_MINIO_CLIENT = new S3Client({
-    region: "auto",
-    endpoint: process.env.MINIO_ENDPOINT,
-    credentials: {
-        accessKeyId: process.env.MINIO_USERNAME,
-        secretAccessKey: process.env.MINIO_PASSWORD
-    },
-    forcePathStyle: true
-});
 
 //init check
 
