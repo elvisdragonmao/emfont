@@ -23,17 +23,15 @@ const db = new Client({
     connectionString: process.env.DATABASE_URL
 });
 
-let dbConnected = false;
-
 async function initDb() {
     try {
         await db.connect();
         console.log("✅ PostgreSQL 連接成功");
-        dbConnected = true;
+        return true;
     } catch (err) {
         console.error("❌ PostgreSQL 連接失敗:", err);
-        // 不 throw，讓主程式決定怎麼處理
+        return false;
     }
 }
 
-export { db, dbConnected, initDb };
+export { db, initDb };

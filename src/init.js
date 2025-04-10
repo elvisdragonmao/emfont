@@ -2,9 +2,12 @@ import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
-import { db, initDb, dbConnected } from "./database.js";
-import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
-import { regenerate_all_static_font } from "./font_nomin.js";
+import { S3Client } from "@aws-sdk/client-s3";
+
+import { db, initDb } from "./database.js";
+import { regenerateAllStaticFont } from "./font_nomin.js";
+import { fetchMinio } from "./fetch_minio.js";
+
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -20,75 +23,6 @@ const LOCAL_MINIO_CLIENT = new S3Client({
     },
     forcePathStyle: true
 });
-
-async function listBuckets() {
-    try {
-        const data = await LOCAL_MINIO_CLIENT.send(new ListBucketsCommand({}));
-        console.log(
-            "Buckets:",
-            data.Buckets.map(b => b.Name)
-        );
-    } catch (err) {
-        console.error("Error listing buckets:", err);
-    }
-}
-
-async function downloadAllFilesInFonts() {
-    const prefix = "original-fonts";
-    try {
-        const listCommand = new ListObjectsV2Command({
-            Bucket: bucketName,
-            Prefix: prefix
-        });
-
-        const listResponse = await LOCAL_MINIO_CLIENT.send(listCommand);
-
-        if (!listResponse.Contents || listResponse.Contents.length === 0) {
-            console.log(`在 ${bucketName}/original-fonts/ 沒有找到任何字體`);
-            return;
-        }
-
-        console.log(`🔄 找到 ${listResponse.Contents.length} 個字體文件，開始下載...`);
-
-        await Promise.all(
-            listResponse.Contents.map(async file => {
-                const fileKey = file.Key;
-                if (!fileKey) return;
-
-                const getCommand = new GetObjectCommand({
-                    Bucket: bucketName,
-                    Key: fileKey
-                });
-
-                const data = await LOCAL_MINIO_CLIENT.send(getCommand);
-
-                const localPath = path.join("src", "_data", fileKey);
-                const localDir = path.dirname(localPath);
-                fs.mkdirSync(localDir, { recursive: true });
-
-                // **使用 Promise 等待檔案寫入完成**
-                await new Promise((resolve, reject) => {
-                    //Pipe the stream from S3 to the local file
-                    const fileStream = fs.createWriteStream(localPath);
-                    data.Body.pipe(fileStream);
-
-                    fileStream.on("finish", () => {
-                        resolve();
-                    });
-
-                    fileStream.on("error", err => {
-                        console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
-                        reject(err);
-                    });
-                });
-            })
-        );
-
-        console.log("✅ 所有字體下載完成");
-    } catch (err) {
-        console.error("❌ 下載檔案失敗:", err);
-    }
-}
 
 //init check
 
@@ -174,48 +108,15 @@ async function insertFontTypes() {
     }
 }
 //從本地mino空間抓檔案
-async function fech_mino() {
-    //刪除本地src/_data/fonts/裡面的所有東西
-    const all_files_in_folder = await readdir(sotrge_original_fontsDir);
-
-    // 刪除所有檔案
-    for (const one_font_family of all_files_in_folder) {
-        const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
-        const stats = await stat(itemPath);
-        if (stats.isDirectory()) {
-            await fs.promises.rm(itemPath, { recursive: true, force: true });
-        } else {
-            await fs.promises.unlink(itemPath);
-        }
-    }
-
-    console.log("✅ 本地字體檔案已清除");
-
-    // 從 MinIO 抓取檔案，確保下載完成
-    await downloadAllFilesInFonts();
-    console.log("✅ 所有字體文件已成功下載");
-}
 
 async function initCheck() {
     try {
-        const isLocal = process.env.LOCAL_TEST === "true";
-        await initDb();
-        if (!dbConnected) {
-            console.error("Database connection failed. Exiting...");
-            return false;
-        }
-        //判斷是不是在 zeabur ，是才找 minio
-        if (!isLocal) {
-            console.log("initCheck: local_test is false");
-            await listBuckets();
-            await fech_mino();
-        }
-        const schemaFilePath = path.resolve("src/_data/sql/schema.sql");
-        const word_feq_FilePath = path.resolve("src/_data/sql/words.sql");
-        await executeSQLFile(schemaFilePath);
-        await executeSQLFile(word_feq_FilePath);
+        if (!(await initDb())) return false;
+        await fetchMinio();
+        await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
+        await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await insertFontTypes();
-        await regenerate_all_static_font();
+        await regenerateAllStaticFont();
         return true;
     } catch (err) {
         console.error("❌ 初始化失敗:", err);

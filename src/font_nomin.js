@@ -17,7 +17,7 @@ async function gen_static_font(ff_name, support_weights, words, pack) {
     }
 }
 
-async function regenerate_all_static_font() {
+async function regenerateAllStaticFont() {
     // list all have to regenerate fonts family and theirs support weights .
     //regen rules: no record in pack_status history or over 1 month haven't regen
     const all_need_gen_fonts = (
@@ -223,4 +223,4 @@ async function give_static_font(font_family, font_weight, packs) {
         throw error;
     }
 }
-export { find_static_font, give_static_font, regenerate_all_static_font };
+export { find_static_font, give_static_font, regenerateAllStaticFont };
