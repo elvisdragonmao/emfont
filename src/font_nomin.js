@@ -120,8 +120,8 @@ async function regenerateAllStaticFont() {
         await Promise.all([...insertPromises, ...updatePromises]);
 
         console.log(`已新增 ${newChars.length} 個字到資料庫`);
-
-        const word_package_pair = (await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
+        await db.query("COMMIT");
+        const word_package_pair =(await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
         // {
         //     1:'一堆字',
         //     2:'另一堆字'
