@@ -3,10 +3,10 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title><%= !!locals.title ? title + " - emfont" : "emfont - 免費中文字體 Webfont 服務" %></title>
-        <meta property="og:title" content="<%= !!locals.title?title:'emfont - 免費中文字體 Webfont 服務' %>" />
-        <meta name="description" content="<%= !!locals.description?description:'emfont - 免費中文字體 Webfont 服務' %>" />
-        <meta property="og:description" content="<%= !!locals.description?description:'emfont - 免費中文字體 Webfont 服務' %>" />
+        <title>{{title}}</title>
+        <meta property="og:title" content="{{title}}" />
+        <meta name="description" content="{{description}}" />
+        <meta property="og:description" content="{{description}}" />
         <meta name="author" content="毛哥EM" />
         <meta name="keywords" content="emfont, webfont, 中文字體, 開源" />
         <meta property="og:type" content="website" />
@@ -35,7 +35,7 @@
         </script>
     </head>
     <body>
-        <main class="page-home">
+        <main class="{{page}}">
             <input type="checkbox" id="mobileToggle" />
             <header>
                 <label class="mobile-nav" for="mobileToggle"></label>
