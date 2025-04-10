@@ -1,8 +1,14 @@
 import fs from "fs";
 import path from "path";
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import { promisify } from "util";
 
 export default async () => {
+    const bucketName = process.env.MINIO_BUCKET;
+    if (!bucketName) {
+        console.log("❌ 沒有設定 MINIO_BUCKET 環境變數，無法下載字型");
+        return;
+    }
     const LOCAL_MINIO_CLIENT = new S3Client({
         region: "auto",
         endpoint: process.env.MINIO_ENDPOINT,
@@ -23,6 +29,10 @@ export default async () => {
         console.error("❌ 無法連接到 MinIO，跳過字型下載", err);
         return;
     }
+
+    const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts");
+    const readdir = promisify(fs.readdir);
+    const stat = promisify(fs.stat);
 
     //刪除本地src/_data/fonts/裡面的所有東西
     const all_files_in_folder = await readdir(sotrge_original_fontsDir);

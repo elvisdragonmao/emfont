@@ -12,7 +12,6 @@ const stat = promisify(fs.stat);
 
 dotenv.config();
 const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts");
-const bucketName = process.env.MINIO_BUCKET;
 
 //init check
 
