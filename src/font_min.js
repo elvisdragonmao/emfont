@@ -50,7 +50,7 @@ async function generateFont(
 
     // 使用 fonteditor-core 讀入字型
     const font = Font.create(buffer, {
-        type: 'ttf',
+        type: type,
         subset: subsetCodePoints,
         hinting: true,
         compound2simple: true,

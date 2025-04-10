@@ -149,7 +149,6 @@ async function regenerate_all_static_font() {
             const pack = word_package_pair[idx].pack.toString().padStart(2, "0");
             // console.log(res,)
             if (res.status === "fulfilled" && res.value.success) {
-                console.log("sucess timestamp")
                 // 成功就更新 timestamp
                 db.query(
                     `INSERT INTO pack_status (family, weights, last_update)
@@ -163,7 +162,7 @@ async function regenerate_all_static_font() {
                 console.log(`${ff_name} ${support_weights} pack ${pack} 生成失敗`);
             }
         });
-
+        await db.query("COMMIT");
         console.log(`✅ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
     }
 
