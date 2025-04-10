@@ -3,6 +3,7 @@
 import { db } from "./database.js";
 import { generateFont, readFontBuffer } from "./font_min.js";
 import { uploadToR2, checkFileExists } from "./r2.js";
+import {Font} from 'fonteditor-core';
 import { fileURLToPath } from "url";
 import path from "path";
 async function gen_static_font(ff_name, support_weights, words, pack) {
@@ -30,9 +31,8 @@ async function regenerate_all_static_font() {
             OR ss.last_update < NOW() - INTERVAL '1 month';`
         )
     ).rows;
-
     for (const { ff_name, support_weights } of all_need_gen_fonts) {
-        // read all font 隨便選一個字重
+        // read all font 隨便選一個字重(假設相同字型，不同字重的支援度一樣)
         const fontData = await readFontBuffer(ff_name, support_weights);
         const buffer = fontData.buffer;
         const font = Font.create(buffer, {
@@ -43,16 +43,16 @@ async function regenerate_all_static_font() {
         const fontObject = font.get();
         // cmap: maps Unicode code points to glyph index
         const cmap = fontObject.cmap;
-        const supportedChars = Object.keys(cmap)
-            .map(code => String.fromCodePoint(parseInt(code)))
-            .join("");
-        const charArray = Object.keys(cmap).map(code => String.fromCodePoint(parseInt(code)));
+
+        const charArray = Object.keys(cmap)
+        .map(code => String.fromCodePoint(parseInt(code)))
+        .filter(char => char !== '\x00');  // 過濾掉 0x00 字元
         console.log(charArray);
 
-        await client.query("BEGIN");
+        await db.query("BEGIN");
 
         // 1. 查出已經存在的字
-        const { rows: existing } = await client.query("SELECT char FROM static_fonts WHERE char = ANY($1)", [charArray]);
+        const { rows: existing } = await db.query("SELECT char FROM static_fonts WHERE char = ANY($1)", [charArray]);
         const existingChars = new Set(existing.map(row => row.char));
 
         // 2. 找出還沒出現在資料庫的字
@@ -61,12 +61,12 @@ async function regenerate_all_static_font() {
 
         if (newChars.length === 0) {
             console.log("沒有新字要插入");
-            await client.query("COMMIT");
+            await db.query("COMMIT");
             return;
         }
 
         // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
-        const { rows: lastPackRows } = await client.query(
+        const { rows: lastPackRows } = await db.query(
             `SELECT pack, COUNT(*) AS count 
            FROM static_fonts 
            GROUP BY pack 
@@ -101,7 +101,7 @@ async function regenerate_all_static_font() {
 
         // 4. 把新字 insert 進去
         const insertPromises = inserts.map(({ char, pack, families }) =>
-            client.query(
+            db.query(
                 `INSERT INTO static_fonts (char, pack, families)
              VALUES ($1, $2, $3)`,
                 [char, pack, families]
@@ -110,11 +110,11 @@ async function regenerate_all_static_font() {
 
         // 把已經出現在資料庫的字檢查 families 有沒有這個字型，沒有的話加入陣列
         const updatePromises = oldChars.map(async char => {
-            const { rows: existingFamilies } = await client.query(`SELECT families FROM static_fonts WHERE char = $1`, [char]);
+            const { rows: existingFamilies } = await db.query(`SELECT families FROM static_fonts WHERE char = $1`, [char]);
             const familiesSet = new Set(existingFamilies[0].families);
             familiesSet.add(ff_name);
             const updatedFamilies = Array.from(familiesSet);
-            return client.query(`UPDATE static_fonts SET families = $1 WHERE char = $2`, [updatedFamilies, char]);
+            return db.query(`UPDATE static_fonts SET families = $1 WHERE char = $2`, [updatedFamilies, char]);
         });
 
         await Promise.all([...insertPromises, ...updatePromises]);
@@ -133,11 +133,13 @@ async function regenerate_all_static_font() {
             return gen_static_font(ff_name, support_weights, words, padded_pack, buffer)
                 .then(result => ({
                     success: result === true,
+                    res:result,
                     pack: padded_pack
                 }))
-                .catch(() => ({
+                .catch(error => ({
                     success: false,
-                    pack: padded_pack
+                    
+                    errorMsg: error.message || "Unknown error"  // 如果捕捉到錯誤，將錯誤訊息儲存
                 }));
         });
 
@@ -145,7 +147,9 @@ async function regenerate_all_static_font() {
 
         results.forEach((res, idx) => {
             const pack = word_package_pair[idx].pack.toString().padStart(2, "0");
+            // console.log(res,)
             if (res.status === "fulfilled" && res.value.success) {
+                console.log("sucess timestamp")
                 // 成功就更新 timestamp
                 db.query(
                     `INSERT INTO pack_status (family, weights, last_update)
@@ -155,6 +159,7 @@ async function regenerate_all_static_font() {
                     [ff_name, support_weights]
                 );
             } else {
+                console.log(res)
                 console.log(`${ff_name} ${support_weights} pack ${pack} 生成失敗`);
             }
         });

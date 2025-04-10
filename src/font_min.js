@@ -1,7 +1,8 @@
 // dynamic font generation useage function
 import fs from "fs";
-import rename from "gulp-rename";
-//import Fontmin from "fontmin";
+// import rename from "gulp-rename";
+// import Fontmin from "fontmin";
+import { Font,woff2 } from 'fonteditor-core';
 import path from "path";
 import { db } from "./database.js";
 import { uploadToR2, checkFileExists } from "./r2.js";
@@ -11,18 +12,23 @@ const __Font_storge_path_base = path.join(__dirname, "_data", "original-fonts");
 
 async function readFontBuffer(originalFontFamily, font_weight) {
     let success = false,
-        buffer;
+        buffer,type;
     // Construct the full path to the font file based on the family and variant
-    const fontFilePath = [".ttf", ".otf"] // extensions name may be ttf or otf. Try to find any of them
-        .map(ext => path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`))
-        .find(fs.existsSync);
-    if (!fontFilePath) {
+    // extensions name may be ttf or otf. Try to find any of them
+    const file_found = [".ttf", ".otf"]
+    .map(ext => ({
+        ext: ext.slice(1),
+        fullPath: path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`)
+    }))
+    .find(({ fullPath }) => fs.existsSync(fullPath));
+    if (!file_found) {
         console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
     } else {
         success = true;
-        buffer = fs.readFileSync(fontFilePath);
+        type = file_found.ext;
+        buffer = fs.readFileSync(file_found.fullPath);
     }
-    return { butter, type, success };
+    return { buffer, type, success };
 }
 
 async function generateFont(
@@ -33,37 +39,43 @@ async function generateFont(
     put_folder = "_data/_generated", //default
     buffer = null
 ) {
-    if (!buffer) buffer = readFontBuffer(originalFontFamily, font_weight).buffer;
+    // 如果沒提供 buffer，就讀取字型檔
+    let type,success;
+    if (!buffer) {
+        ({buffer,type,success } = await readFontBuffer(originalFontFamily, font_weight));
+    }
+    // 將文字轉成 Unicode 編碼 (code point)
+    const subsetCodePoints = Array.from(new Set(words)).map(ch => ch.codePointAt(0));
+    await woff2.init(); //  初始化 woff2 WASM 模組
 
-    // Initialize Fontmin with the selected font file
-    const fontmin = new Fontmin()
-        .src(fontFilePath)
-        .use(
-            Fontmin.glyph({
-                text: words,
-                hinting: false
-            })
-        )
-        .use(
-            Fontmin.ttf2woff({
-                deflate: true
-            })
-        )
-        //生成後在本地的名稱
-        .use(rename(output_name))
-        // Save to src/{put_folder}/
-        .dest(path.join(__dirname, put_folder));
-    return new Promise((resolve, reject) => {
-        fontmin.run(function (err, files) {
-            if (err) {
-                reject(err);
-            } else {
-                // Log the generated font files' paths
-                console.log("字體生成成功");
-                resolve(files);
-            }
-        });
+    // 使用 fonteditor-core 讀入字型
+    const font = Font.create(buffer, {
+        type: 'ttf',
+        subset: subsetCodePoints,
+        hinting: true,
+        compound2simple: true,
+        inflate: null,
     });
+
+    // 儲存為 .woff 格式的 buffer
+    const outBuffer = font.write({
+        type: 'woff2',
+        hinting: false,
+        deflate: woff2.encode,
+    });
+
+    // 確保資料夾存在
+    const destFolder = path.join(__dirname, put_folder);
+    fs.mkdirSync(destFolder, { recursive: true });
+
+    // 輸出路徑
+    const outputPath = path.join(destFolder, `${output_name}`);
+
+    // 寫入檔案
+    fs.writeFileSync(outputPath, outBuffer);
+
+    console.log("✅ 字體生成成功:", outputPath);
+    return outputPath;
 }
 async function find_dynamic_font( //return a R2 url client need
     word_hash,
