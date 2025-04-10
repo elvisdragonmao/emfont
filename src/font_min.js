@@ -1,31 +1,28 @@
 // dynamic font generation useage function
 import fs from "fs";
 import rename from "gulp-rename";
-import Fontmin from "fontmin";
+//import Fontmin from "fontmin";
 import path from "path";
-import { fileURLToPath } from "url";
 import { db } from "./database.js";
 import { uploadToR2, checkFileExists } from "./r2.js";
 
-// Function to generate font file with specified words
-// Convert __dirname to work with ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = import.meta.dirname;
 const __Font_storge_path_base = path.join(__dirname, "_data", "original-fonts"); //projectroot/src/_data/original-fonts/
 
-async function readFontBuffer(originalFontFamily,font_weight) {
-    let success = false, buffer;
-     // Construct the full path to the font file based on the family and variant
-     const fontFilePath = [".ttf", ".otf"] // extensions name may be ttf or otf. Try to find any of them
-     .map(ext => path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`))
-     .find(fs.existsSync);
- if (!fontFilePath) {
-     console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
- } else {
-    success = true;
- buffer = fs.readFileSync(fontFilePath);
- }
- return {butter, type, success}
+async function readFontBuffer(originalFontFamily, font_weight) {
+    let success = false,
+        buffer;
+    // Construct the full path to the font file based on the family and variant
+    const fontFilePath = [".ttf", ".otf"] // extensions name may be ttf or otf. Try to find any of them
+        .map(ext => path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`))
+        .find(fs.existsSync);
+    if (!fontFilePath) {
+        console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
+    } else {
+        success = true;
+        buffer = fs.readFileSync(fontFilePath);
+    }
+    return { butter, type, success };
 }
 
 async function generateFont(
@@ -36,7 +33,7 @@ async function generateFont(
     put_folder = "_data/_generated", //default
     buffer = null
 ) {
-    if(!buffer) buffer = readFontBuffer(originalFontFamily,font_weight).buffer;
+    if (!buffer) buffer = readFontBuffer(originalFontFamily, font_weight).buffer;
 
     // Initialize Fontmin with the selected font file
     const fontmin = new Fontmin()
@@ -121,4 +118,4 @@ async function find_dynamic_font( //return a R2 url client need
         }
     }
 }
-export { find_dynamic_font, generateFont ,readFontBuffer};
+export { find_dynamic_font, generateFont, readFontBuffer };

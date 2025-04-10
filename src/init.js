@@ -2,14 +2,14 @@ import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
-import { db, initDb, dbConnected } from "./database.js"; // 匯入 db.js 中的資料庫連線模組
+import { db, initDb, dbConnected } from "./database.js";
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
-import {regenerate_all_static_font} from "./font_nomin.js"
+import { regenerate_all_static_font } from "./font_nomin.js";
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
-dotenv.config(); // 讀取 .env 變數
-const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts"); //原始字型檔存放路徑
+dotenv.config();
+const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts");
 const bucketName = process.env.MINIO_BUCKET;
 const LOCAL_MINIO_CLIENT = new S3Client({
     region: "auto",
@@ -34,9 +34,8 @@ async function listBuckets() {
 }
 
 async function downloadAllFilesInFonts() {
-    const prefix = "original-fonts"; // Directory name in minio
+    const prefix = "original-fonts";
     try {
-        // List all files in the original-fonts directory
         const listCommand = new ListObjectsV2Command({
             Bucket: bucketName,
             Prefix: prefix
@@ -54,9 +53,8 @@ async function downloadAllFilesInFonts() {
         await Promise.all(
             listResponse.Contents.map(async file => {
                 const fileKey = file.Key;
-                if (!fileKey) return; // Skip if no file key
+                if (!fileKey) return;
 
-                // Get file from S3
                 const getCommand = new GetObjectCommand({
                     Bucket: bucketName,
                     Key: fileKey
@@ -64,8 +62,7 @@ async function downloadAllFilesInFonts() {
 
                 const data = await LOCAL_MINIO_CLIENT.send(getCommand);
 
-                // 建立本地檔案路徑
-                const localPath = path.join("src", "_data", fileKey); // Create path based on fileKey
+                const localPath = path.join("src", "_data", fileKey);
                 const localDir = path.dirname(localPath);
                 fs.mkdirSync(localDir, { recursive: true });
 
@@ -99,12 +96,9 @@ async function downloadAllFilesInFonts() {
 async function executeSQLFile(filePath) {
     const sql = await fs.promises.readFile(filePath, "utf-8");
     try {
-        console.log(`Executing SQL script from ${filePath}`);
         await db.query(sql);
-        console.log(`Executed SQL script from ${filePath}`);
     } catch (err) {
-        console.error(`Error executing SQL script from ${filePath}:`, err);
-        throw new Error(`Error executing SQL script from ${filePath}`);
+        throw new Error(`❌ SQL 執行失敗: ${filePath}`);
     }
 }
 
@@ -117,10 +111,10 @@ async function insertFontTypes() {
 
         for (const one_font_family of ALL_FONTS_dir) {
             const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
-            console.log("itemPath:", itemPath);
+            console.log("🗃️  字體存放位置:", itemPath);
             const stats = await stat(itemPath);
 
-            if (!(stats.isDirectory())) {
+            if (!stats.isDirectory()) {
                 //不是資料夾就跳過
                 continue;
             }
@@ -143,48 +137,37 @@ async function insertFontTypes() {
                     });
                 }
             }
-            
         }
-        console.log(`find ${fontData.length} font file\n=================`);
+        console.log(`📦 找到 ${fontData.length} 個字體`);
         if (fontData.length === 0) {
-            console.log("No font directories found.");
-            //中止程式
-            throw new Error("No font directories found.");
+            throw new Error("🔍 沒有找到任何字體");
         }
-
-        // sync all font file in _fata/fonts let records are same with SQL 
-        try {
-            //clear avaible font-weight. it will regenerate in for loop below 
-            await db.query("UPDATE font_family SET weights = ARRAY[]::smallint[]");
-            for (const { fontName, weight } of fontData) {
-                // console.log(fontName, typeof fontName, weight, typeof parseInt(weight));
-                const qresult_font_family = await db.query(
-                    // if someone `font-family` row has exist but not this weight, then add this weight to the array
-                    `
+        //clear avaible font-weight. it will regenerate in for loop below
+        await db.query("UPDATE font_family SET weights = ARRAY[]::smallint[]");
+        for (const { fontName, weight } of fontData) {
+            // console.log(fontName, typeof fontName, weight, typeof parseInt(weight));
+            const qresult_font_family = await db.query(
+                // if someone `font-family` row has exist but not this weight, then add this weight to the array
+                `
                         SELECT id,repo_url from font_family WHERE id= $1;
                         `,
-                    [fontName]
-                );//表格內目前的字型名稱大小寫和檔案的大小寫不一樣
-                const verify_font_file= qresult_font_family.rows[0] //can use .id ,.repo_url get vaild value
-                // console.log(typeof(verify_font_file),verify_font_file)
-                if (!verify_font_file) {
-                    //未認證字型報錯,不提供服務（字重欄留空）
-                    console.log(`${fontName}-${weight} doesn't in SQL record.
-                                        Pls remove it in workspace folder or add its 
-                                        information in database`)
-                    continue;
-                }
-                //if database does't exist this weight record , append it in arrary
-                await db.query(`UPDATE font_family SET weights =
-                                        array_append(COALESCE(weights, '{}'), $1)
-                                        WHERE id = $2 AND NOT ($1 = ANY(weights));`
-                                ,[weight,fontName]);
+                [fontName]
+            ); //表格內目前的字型名稱大小寫和檔案的大小寫不一樣
+            const verify_font_file = qresult_font_family.rows[0]; //can use .id ,.repo_url get vaild value
+            // console.log(typeof(verify_font_file),verify_font_file)
+            if (!verify_font_file) {
+                console.warn(`❔ 資料庫不認識: ${fontName}-${weight}`);
+                continue;
             }
-            console.log("Font types inserted successfully.");
-        } catch (error) {
-            console.error(`Error when check font file`, error);
-            throw error;
+            //if database does't exist this weight record , append it in arrary
+            await db.query(
+                `UPDATE font_family SET weights =
+                                        array_append(COALESCE(weights, '{}'), $1)
+                                        WHERE id = $2 AND NOT ($1 = ANY(weights));`,
+                [weight, fontName]
+            );
         }
+        console.log("✅ 字體資料已更新");
     } catch (error) {
         console.error(`Error when check font file`, error);
         throw error;
@@ -215,7 +198,7 @@ async function fech_mino() {
 
 async function initCheck() {
     try {
-        const isLocal = process.env.LOCAL_TEST === 'true';
+        const isLocal = process.env.LOCAL_TEST === "true";
         await initDb();
         if (!dbConnected) {
             console.error("Database connection failed. Exiting...");
@@ -232,13 +215,10 @@ async function initCheck() {
         await executeSQLFile(schemaFilePath);
         await executeSQLFile(word_feq_FilePath);
         await insertFontTypes();
-        if (!isLocal) {
-            await regenerate_all_static_font();
-        }
-        console.log("init done");
+        await regenerate_all_static_font();
         return true;
     } catch (err) {
-        console.error("Error init break:", err);
+        console.error("❌ 初始化失敗:", err);
         return false;
     }
 }

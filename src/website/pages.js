@@ -18,39 +18,44 @@ export default async app => {
         res.type("text/html").status(status).send(html);
     };
 
-    app.get("/", async (req, reply) => {
-        return renderSite(reply, { page: "home", title: "首頁" });
+    app.get("/", async (req, res) => {
+        return renderSite(res, { page: "home" });
     });
 
-    app.get("/fonts/:font", async (req, reply) => {
+    app.get("/fonts", async (req, res) => {
+        let page = "font";
+        return renderSite(res, { page, title: "字體 | emfont" });
+    });
+
+    app.get("/fonts/:font", async (req, res) => {
         let page = "font";
         if (req.params.font === "") page = "fonts";
         if (false)
             // 字體不存在
-            return renderSite(reply, { page: "notFound" }, 404);
-        return reply.view("/src/website.ejs", { user, page });
+            return renderSite(res, { page: "notFound" }, 404);
+        return renderSite(res, { page, title: "字體 | emfont" });
     });
 
-    app.get("/login", async (req, reply) => {
-        return renderSite(reply, { page: "login" });
+    app.get("/login", async (req, res) => {
+        return renderSite(res, { page: "login", title: "登入 | emfont" });
     });
 
-    app.get("/about", async (req, reply) => {
-        return renderSite(reply, { page: "about" });
+    app.get("/about", async (req, res) => {
+        return renderSite(res, { page: "about", title: "關於 | emfont" });
     });
 
-    app.get("/dashboard", async (req, reply) => {
+    app.get("/dashboard", async (req, res) => {
         const user = req.cookies.token;
-        if (!user) return reply.redirect("/login");
-        return renderSite(reply, { page: "dashboard" });
+        if (!user) return res.redirect("/login");
+        return renderSite(res, { page: "dashboard", title: "儀表板 | emfont" });
     });
 
-    app.setNotFoundHandler((req, reply) => {
-        return renderSite(reply, { page: "notFound" });
+    app.setNotFoundHandler((req, res) => {
+        return renderSite(res, { page: "notFound", title: "找不到頁面 | emfont" }, 404);
     });
 
-    app.get("/logout", (req, reply) => {
-        reply.clearCookie("token");
-        reply.redirect("/");
+    app.get("/logout", (req, res) => {
+        res.clearCookie("token");
+        res.redirect("/");
     });
 };

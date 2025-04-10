@@ -7,11 +7,11 @@ export default async app => {
         prefix: "/"
     });
 
-    app.get("/auth/github", async (req, reply) => {
-        return reply.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`);
+    app.get("/auth/github", async (req, res) => {
+        return res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`);
     });
 
-    app.get("/emfont.min.js", async (req, reply) => {
-        return reply.redirect(301, "/emfont.js");
+    app.get("/emfont.min.js", async (req, res) => {
+        return res.redirect(301, "/emfont.js");
     });
 };

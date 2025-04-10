@@ -17,11 +17,6 @@ async function gen_static_font(ff_name, support_weights, words, pack) {
 }
 
 async function regenerate_all_static_font() {
-    const word_package_pair = (await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
-    // {
-    //     1:'一堆字',
-    //     2:'另一堆字'
-    // }
     // list all have to regenerate fonts family and theirs support weights .
     //regen rules: no record in pack_status history or over 1 month haven't regen
     const all_need_gen_fonts = (
@@ -36,31 +31,101 @@ async function regenerate_all_static_font() {
         )
     ).rows;
 
-    const max_package_number = word_package_pair.length;
     for (const { ff_name, support_weights } of all_need_gen_fonts) {
-        //
         // read all font 隨便選一個字重
-        const fontData = await readFontBuffer(ff_name,support_weights)
+        const fontData = await readFontBuffer(ff_name, support_weights);
         const buffer = fontData.buffer;
-
         const font = Font.create(buffer, {
             type: fontData.type,
             hinting: true,
             kerning: true
         });
-
         const fontObject = font.get();
-
         // cmap: maps Unicode code points to glyph index
         const cmap = fontObject.cmap;
         const supportedChars = Object.keys(cmap)
             .map(code => String.fromCodePoint(parseInt(code)))
             .join("");
-            
-        console.log(supportedChars);
-
         const charArray = Object.keys(cmap).map(code => String.fromCodePoint(parseInt(code)));
         console.log(charArray);
+
+        await client.query("BEGIN");
+
+        // 1. 查出已經存在的字
+        const { rows: existing } = await client.query("SELECT char FROM static_fonts WHERE char = ANY($1)", [charArray]);
+        const existingChars = new Set(existing.map(row => row.char));
+
+        // 2. 找出還沒出現在資料庫的字
+        const newChars = charArray.filter(char => !existingChars.has(char));
+        const oldChars = charArray.filter(char => existingChars.has(char));
+
+        if (newChars.length === 0) {
+            console.log("沒有新字要插入");
+            await client.query("COMMIT");
+            return;
+        }
+
+        // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
+        const { rows: lastPackRows } = await client.query(
+            `SELECT pack, COUNT(*) AS count 
+           FROM static_fonts 
+           GROUP BY pack 
+           ORDER BY pack DESC 
+           LIMIT 1`
+        );
+
+        let currentPack = 0;
+        let packCount = 0;
+
+        if (lastPackRows.length > 0) {
+            currentPack = parseInt(lastPackRows[0].pack);
+            packCount = parseInt(lastPackRows[0].count);
+        }
+
+        const inserts = [];
+
+        for (const char of newChars) {
+            if (packCount >= 90) {
+                currentPack += 1;
+                packCount = 0;
+            }
+
+            inserts.push({
+                char,
+                pack: currentPack,
+                families: [ff_name]
+            });
+
+            packCount += 1;
+        }
+
+        // 4. 把新字 insert 進去
+        const insertPromises = inserts.map(({ char, pack, families }) =>
+            client.query(
+                `INSERT INTO static_fonts (char, pack, families)
+             VALUES ($1, $2, $3)`,
+                [char, pack, families]
+            )
+        );
+
+        // 把已經出現在資料庫的字檢查 families 有沒有這個字型，沒有的話加入陣列
+        const updatePromises = oldChars.map(async char => {
+            const { rows: existingFamilies } = await client.query(`SELECT families FROM static_fonts WHERE char = $1`, [char]);
+            const familiesSet = new Set(existingFamilies[0].families);
+            familiesSet.add(ff_name);
+            const updatedFamilies = Array.from(familiesSet);
+            return client.query(`UPDATE static_fonts SET families = $1 WHERE char = $2`, [updatedFamilies, char]);
+        });
+
+        await Promise.all([...insertPromises, ...updatePromises]);
+
+        console.log(`已新增 ${newChars.length} 個字到資料庫`);
+
+        const word_package_pair = (await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
+        // {
+        //     1:'一堆字',
+        //     2:'另一堆字'
+        // }
 
         // 並行生成所有 pack
         const gen_promises = word_package_pair.map(({ pack, words }) => {
@@ -97,7 +162,7 @@ async function regenerate_all_static_font() {
         console.log(`✅ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
     }
 
-    console.log("🎉 所有靜態字體生成完成！");
+    console.log("✨ 所有靜態字體生成完成！");
 }
 
 async function find_static_font(word_set) {
