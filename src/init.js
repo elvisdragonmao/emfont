@@ -6,7 +6,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 
 import { db, initDb } from "./database.js";
 import { regenerateAllStaticFont } from "./font_nomin.js";
-import { fetchMinio } from "./fetch_minio.js";
+import fetchMinio from "./fetch_minio.js";
 
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
