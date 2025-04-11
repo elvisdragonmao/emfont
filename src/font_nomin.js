@@ -235,7 +235,7 @@ async function find_static_font(word_set) {
         throw error;
     }
 }
-async function give_static_font(font_family, font_weight, packs) {
+async function give_static_font(font_family, font_weight, packs, state) {
     try {
         if (!Array.isArray(packs) || !packs.every(Number.isInteger)) {
             throw new TypeError("packs must be an array of integers");
@@ -245,7 +245,9 @@ async function give_static_font(font_family, font_weight, packs) {
         const results = await Promise.all(
             packs.map(async pack => {
                 const filename = `${font_family}-${font_weight}/${pack}.woff2`;
-                const real_r2_path = await checkR2FileExists(filename);
+                let real_r2_path;
+                if (state.r2) real_r2_path = await checkR2FileExists(filename);
+                else real_r2_path = `${state.baseURL}/_generated/${filename}`;
                 return { pack, real_r2_path };
             })
         );
@@ -259,14 +261,7 @@ async function give_static_font(font_family, font_weight, packs) {
         }
 
         // 全部存在的話就可以繼續
-        const R2paths = results.map(r => r.real_r2_path);
-        console.log("R2paths:", R2paths);
-        // return R2paths;
-        // R2paths example: [
-        // '{ALTER_R2_PUB_URL_BASE}/ZhuQueFangSong-400/01.woff2',
-        // '{ALTER_R2_PUB_URL_BASE}/ZhuQueFangSong-400/08.woff2',
-        // '{ALTER_R2_PUB_URL_BASE}/ZhuQueFangSong-400/11.woff2']
-        return R2paths;
+        return results.map(r => r.real_r2_path);
     } catch (error) {
         console.error("Error inserting font types:", error);
         throw error;
