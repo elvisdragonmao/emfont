@@ -374,19 +374,19 @@ body:has(.home) {
     #section-home > div {
         animation: fadeIn 3s linear infinite alternate;
     }
-    #section-home > .emfont-GenYoMinTC {
+    #section-home > .emfont-GenYoMinTC-min {
         animation-delay: -2s;
     }
-    #section-home > .emfont-jfOpenHuninn {
+    #section-home > .emfont-jfOpenHuninn-min {
         animation-delay: -1s;
     }
-    #section-home > .emfont-MantouSans {
+    #section-home > .emfont-MantouSans-min {
         animation-delay: -2s;
     }
-    #section-home > .emfont-ChenYuluoyan {
+    #section-home > .emfont-ChenYuLuoYan-min {
         animation-delay: -1.5s;
     }
-    #section-home > .emfont-ChillBitmap {
+    #section-home > .emfont-ChillBitmap16px-min {
         animation-delay: -2.5s;
     }
     #section-home > div:nth-child(2n) {
@@ -412,27 +412,27 @@ body:has(.home) {
     }
 }
 
-.emfont-GenYoGothicTC {
+.emfont-GenYoGothicTC-min {
     font-family: "源樣黑體丹", "微軟正黑體";
     font-size: 20vh;
 }
-.emfont-GenYoMinTC {
+.emfont-GenYoMinTC-min {
     font-family: "源樣明體丹", "新細明體", "PMingLiU";
     font-size: 15vh;
 }
-.emfont-jfOpenHuninn {
+.emfont-jfOpenHuninn-min {
     font-family: "jf open 粉圓 2.1", "微軟正黑體";
     font-size: 17vh;
 }
-.emfont-MantouSans {
+.emfont-MantouSans-min {
     font-family: "饅頭黑體", "新細明體", "PMingLiU";
     font-size: 19vh;
 }
-.emfont-ChenYuluoyan {
+.emfont-ChenYuLuoYan-min {
     font-family: "辰宇落雁體 2.0", "微軟正黑體";
     font-size: 18vh;
 }
-.emfont-ChillBitmap {
+.emfont-ChillBitmap16px-min {
     font-family: "寒蝉点阵体", "新細明體", "PMingLiU";
     font-size: 15vh;
 }

@@ -8,11 +8,12 @@ import { fileURLToPath } from "url";
 import path from "path";
 async function gen_static_font(ff_name, support_weights, words, pack, r2 = false) {
     try {
-        await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${ff_name}-${support_weights}`);
+        let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${ff_name}-${support_weights}`);
+        if (generated.status === "failed") return generated;
         if (!r2) return true;
         const generated_font_path = path.join(path.dirname(fileURLToPath(import.meta.url)), "_data", "_generated", `${ff_name}-${support_weights}`, `${pack}.woff2`);
         await uploadToR2(generated_font_path, `${ff_name}-${support_weights}/${pack}.woff2`);
-        return true;
+        return { status: "success" };
     } catch (err) {
         return new Error(err);
     }

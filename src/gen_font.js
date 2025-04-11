@@ -8,8 +8,6 @@ async function hashString(str) {
     const hashBuffer = await crypto.subtle.digest("SHA-1", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const fullHash = hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
-    // 截取前 10 個字元作為縮短的哈希值
-    console.log("hash is ", fullHash);
     return fullHash;
 }
 
@@ -54,17 +52,13 @@ export const genFont = async (req, res, state) => {
         const font_family_name = req.params.font;
         const font_id = await checkFormat(req_word_set, font_family_name);
         if (!font_id) {
-            return res.code(400).send({
+            return res.code(404).send({
                 status: "failed",
-                message: `Invalid font format for ${font_family_name}`
+                message: `${font_family_name} doesn't exist`
             });
         }
 
-        //待處理：傳入字集都不是中文的情況
-
-        // two condictions: 1.字型包是靜態的 2.字型包是動態的
         if (min_flag) {
-            //請求動態字型
             console.log(`正在生成動態字體`);
             const summery = {
                 wordSet: req_word_set,
@@ -72,25 +66,20 @@ export const genFont = async (req, res, state) => {
                 fontFamily: font_family_name
             };
             const hash = await hashString(summery);
-            console.log("hash is", hash);
             const file_path = await find_dynamic_font(hash, font_id, font_family_name, font_weight, req_word_set, req_source, state);
-            // 確保 file_path 存在並且有效
-            if (!file_path) {
-                if (!font_id) {
-                    return res.code(400).send({ status: "failed", message: `Invalid font format for ${font_family_name}` });
-                }
-            }
+            console.log(file_path);
+            if (file_path.status === "failed") res.code(400).send(file_path);
             return res.send({
                 status: "success",
                 message: "",
-                location: [file_path],
+                location: [file_path.location],
                 name: font_family_name
             });
         } else {
             //請求靜態字型
             //TODO:確認字型包是否存在r2，若無，怎麼辦
             const font_pack_you_need = await find_static_font(req_word_set);
-            const R2font_url = await give_static_font(font_family_name, font_weight, font_pack_you_need,state);
+            const R2font_url = await give_static_font(font_family_name, font_weight, font_pack_you_need, state);
             return res.send({
                 status: "success",
                 message: "",
