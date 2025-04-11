@@ -48,7 +48,7 @@ export default async (app, state) => {
         try {
             const { rows } = await db.query(
                 `
-                SELECT id, name, weights, authors 
+                SELECT id, name, weights, authors, name_zh, name_en,category, tags, family
                 FROM font_family
                 ${whereClause}
             `,
@@ -59,7 +59,12 @@ export default async (app, state) => {
                 id: row.id,
                 name: row.name,
                 weight: row.weights || [],
-                author: row.authors && row.authors.length > 0 ? row.authors[0] : null
+                author: row.authors && row.authors.length > 0 ? row.authors[0] : null,
+                name_zh: row.name_zh,
+                name_en: row.name_en,
+                category: row.category,
+                tags: row.tags || [],
+                family: row.family
             }));
 
             return res.send(fonts);
