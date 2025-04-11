@@ -16,7 +16,7 @@ import registerApi from "./website/api.js";
 import registerStatic from "./website/static.js";
 
 dotenv.config();
-const state = { alive: false, bulletin: process.env.BULLETIN || "" };
+const state = { alive: false, bulletin: process.env.BULLETIN || "", local: true, r2: false };
 
 const user = {};
 const app = Fastify({ logger: { level: "error" }, ignoreTrailingSlash: true });
@@ -37,9 +37,9 @@ await registerStatic(app);
 // Start server
 const start = async () => {
     try {
-        const runPort = process.env.RUN_PORT || 3000;
-        app.listen({ port: runPort, host: "0.0.0.0" }, () => {
-            console.log(`🔗 網頁啟動在 http://localhost:${runPort}`);
+        state.runPort = process.env.RUN_PORT || 3000;
+        app.listen({ port: state.runPort, host: "0.0.0.0" }, () => {
+            console.log(`🔗 網頁啟動在 http://localhost:${state.runPort}`);
         });
     } catch (err) {
         app.log.error(err);
@@ -51,10 +51,9 @@ start();
 
 //init
 app.ready().then(async () => {
-    const result = await initCheck();
-    if (result) {
+    await initCheck(state);
+    if (state.alive) {
         console.log("🎉 初始化成功，服務已啟動");
-        state.alive = true;
     } else {
         console.log("🤨 初始化失敗，網頁仍在運行");
         if (!state.bulletin) state.bulletin = "emfont 啟動失敗，暫時無法使用。";

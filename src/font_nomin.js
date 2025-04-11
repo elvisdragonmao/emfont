@@ -2,13 +2,14 @@
 //依照字頻表分裝檔案 (開機時重切)
 import { db } from "./database.js";
 import { generateFont, readFontBuffer } from "./font_min.js";
-import { uploadToR2, checkFileExists } from "./r2.js";
-import {Font} from 'fonteditor-core';
+import { uploadToR2, checkR2FileExists } from "./r2.js";
+import { Font } from "fonteditor-core";
 import { fileURLToPath } from "url";
 import path from "path";
-async function gen_static_font(ff_name, support_weights, words, pack) {
+async function gen_static_font(ff_name, support_weights, words, pack, r2 = false) {
     try {
         await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${ff_name}-${support_weights}`);
+        if (!r2) return true;
         const generated_font_path = path.join(path.dirname(fileURLToPath(import.meta.url)), "_data", "_generated", `${ff_name}-${support_weights}`, `${pack}.woff2`);
         await uploadToR2(generated_font_path, `${ff_name}-${support_weights}/${pack}.woff2`);
         return true;
@@ -17,7 +18,7 @@ async function gen_static_font(ff_name, support_weights, words, pack) {
     }
 }
 
-async function regenerateAllStaticFont() {
+async function regenerateAllStaticFont(state) {
     // list all have to regenerate fonts family and theirs support weights .
     //regen rules: no record in pack_status history or over 1 month haven't regen
     const all_need_gen_fonts = (
@@ -45,8 +46,8 @@ async function regenerateAllStaticFont() {
         const cmap = fontObject.cmap;
 
         const charArray = Object.keys(cmap)
-        .map(code => String.fromCodePoint(parseInt(code)))
-        .filter(char => char !== '\x00');  // 過濾掉 0x00 字元
+            .map(code => String.fromCodePoint(parseInt(code)))
+            .filter(char => char !== "\x00"); // 過濾掉 0x00 字元
         console.log(charArray);
 
         await db.query("BEGIN");
@@ -100,57 +101,104 @@ async function regenerateAllStaticFont() {
         }
 
         // 4. 把新字 insert 進去
-        const insertPromises = inserts.map(({ char, pack, families }) =>
-            db.query(
-                `INSERT INTO static_fonts (char, pack, families)
-             VALUES ($1, $2, $3)`,
-                [char, pack, families]
-            )
-        );
+        for (let i = 0; i < inserts.length; i += 1000) {
+            const batch = inserts.slice(i, i + 1000);
+            const values = [];
+            const params = [];
 
-        // 把已經出現在資料庫的字檢查 families 有沒有這個字型，沒有的話加入陣列
-        const updatePromises = oldChars.map(async char => {
-            const { rows: existingFamilies } = await db.query(`SELECT families FROM static_fonts WHERE char = $1`, [char]);
-            const familiesSet = new Set(existingFamilies[0].families);
-            familiesSet.add(ff_name);
-            const updatedFamilies = Array.from(familiesSet);
-            return db.query(`UPDATE static_fonts SET families = $1 WHERE char = $2`, [updatedFamilies, char]);
-        });
+            batch.forEach(({ char, pack, families }, index) => {
+                const baseIndex = index * 3;
+                values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
+                params.push(char, pack, families);
+            });
+            //console.log("正在插入第", i, "到", i + batch.length, "個字");
+            await db.query(`INSERT INTO static_fonts (char, pack, families) VALUES ${values.join(",")}`, params);
+        }
 
-        await Promise.all([...insertPromises, ...updatePromises]);
+        const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
+        // 先處理好合併邏輯
+        const updateMap = new Map();
 
-        console.log(`已新增 ${newChars.length} 個字到資料庫`);
+        for (const row of rows) {
+            const set = new Set(row.families);
+            set.add(ff_name);
+            updateMap.set(row.char, Array.from(set));
+        }
+
+        //  建一個對應用的 VALUES 表格，然後一次更新
+        const values = [];
+        const bindings = [];
+        let paramIndex = 1;
+
+        for (const [char, families] of updateMap.entries()) {
+            values.push(`($${paramIndex}::text[], $${paramIndex + 1}::text)`);
+            bindings.push(families, char);
+            paramIndex += 2;
+        }
+
+        const updateSQL = `
+        UPDATE static_fonts AS sf
+        SET families = v.families
+        FROM (
+          VALUES
+            ${values.join(",\n")}
+        ) AS v(families, char)
+        WHERE sf.char = v.char
+      `;
+
+        await db.query(updateSQL, bindings);
         await db.query("COMMIT");
-        const word_package_pair =(await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
+        console.log(`已更新 ${updateMap.size} 筆字元`);
+
+        const word_package_pair = (await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
         // {
         //     1:'一堆字',
         //     2:'另一堆字'
         // }
 
         // 並行生成所有 pack
-        const gen_promises = word_package_pair.map(({ pack, words }) => {
-            const padded_pack = pack.toString().padStart(2, "0");
-            return gen_static_font(ff_name, support_weights, words, padded_pack, buffer)
-                .then(result => ({
-                    success: result === true,
-                    res:result,
-                    pack: padded_pack
-                }))
-                .catch(error => ({
-                    success: false,
-                    
-                    errorMsg: error.message || "Unknown error"  // 如果捕捉到錯誤，將錯誤訊息儲存
-                }));
-        });
+        const results = [];
+        let batchSize = 3; // 一次處理的包數量
+        for (let i = 0; i < word_package_pair.length; i += batchSize) {
+            const batch = word_package_pair.slice(i, i + batchSize);
 
-        const results = await Promise.allSettled(gen_promises);
+            const tasks = batch.map(({ pack, words }) => {
+                const padded_pack = pack.toString().padStart(2, "0");
 
-        results.forEach((res, idx) => {
-            const pack = word_package_pair[idx].pack.toString().padStart(2, "0");
-            // console.log(res,)
-            if (res.status === "fulfilled" && res.value.success) {
-                // 成功就更新 timestamp
-                db.query(
+                return gen_static_font(ff_name, support_weights, words, padded_pack, buffer, state.r2)
+                    .then(result => ({
+                        success: result === true,
+                        res: result,
+                        pack: padded_pack,
+                        rawPack: pack
+                    }))
+                    .catch(error => ({
+                        success: false,
+                        errorMsg: error.message || "Unknown error",
+                        pack: padded_pack,
+                        rawPack: pack
+                    }));
+            });
+            const settled = await Promise.allSettled(tasks);
+
+            for (const res of settled) {
+                if (res.status === "fulfilled") {
+                    results.push(res.value);
+                } else {
+                    results.push({
+                        success: false,
+                        errorMsg: res.reason?.message || "Unknown error",
+                        pack: "??"
+                    });
+                }
+            }
+        }
+
+        for (const res of results) {
+            const { pack, success, errorMsg } = res;
+
+            if (success) {
+                await db.query(
                     `INSERT INTO pack_status (family, weights, last_update)
                      VALUES ($1, $2, CURRENT_TIMESTAMP)
                      ON CONFLICT (family, weights)
@@ -158,10 +206,11 @@ async function regenerateAllStaticFont() {
                     [ff_name, support_weights]
                 );
             } else {
-                console.log(res)
+                console.log(res);
                 console.log(`${ff_name} ${support_weights} pack ${pack} 生成失敗`);
             }
-        });
+        }
+
         await db.query("COMMIT");
         console.log(`✅ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
     }
@@ -196,7 +245,7 @@ async function give_static_font(font_family, font_weight, packs) {
         const results = await Promise.all(
             packs.map(async pack => {
                 const filename = `${font_family}-${font_weight}/${pack}.woff2`;
-                const real_r2_path = await checkFileExists(filename);
+                const real_r2_path = await checkR2FileExists(filename);
                 return { pack, real_r2_path };
             })
         );

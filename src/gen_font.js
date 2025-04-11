@@ -1,19 +1,15 @@
-import { find_dynamic_font} from "./font_min.js"; // 極致壓縮字型
-import { find_static_font ,give_static_font} from "./font_nomin.js"; // 靜態字型
+import { find_dynamic_font } from "./font_min.js"; // 極致壓縮字型
+import { find_static_font, give_static_font } from "./font_nomin.js"; // 靜態字型
 import { db } from "./database.js";
-
-
 
 async function hashString(str) {
     const encoder = new TextEncoder();
     const data = encoder.encode(str);
     const hashBuffer = await crypto.subtle.digest("SHA-1", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const fullHash = hashArray
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+    const fullHash = hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
     // 截取前 10 個字元作為縮短的哈希值
-    console.log('hash is ',fullHash)
+    console.log("hash is ", fullHash);
     return fullHash.substring(0, 10);
 }
 
@@ -30,10 +26,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
     if (!WORD_SET) {
         throw new Error("words_set are required"); // 使用 throw 讓 genFont 捕捉
     }
-    const result = await db.query(
-        "SELECT id FROM font_family WHERE id = $1",
-        [FONT_NAME]
-    );
+    const result = await db.query("SELECT id FROM font_family WHERE id = $1", [FONT_NAME]);
     if (result.rowCount === 0) {
         return false;
     }
@@ -42,14 +35,11 @@ async function checkFormat(WORD_SET, FONT_NAME) {
     return font_id; // 如果沒問題，就回傳字型編號
 }
 
-
-export const genFont = async (req, res) => {
+export const genFont = async (req, res, state) => {
     //檢查字集格式
     try {
         if (!req.body || !req.body.words) {
-            return res
-                .status(400)
-                .json({ status: "failed", message: "Missing words parameter" });
+            return res.status(400).json({ status: "failed", message: "Missing words parameter" });
         }
         //req.body.word 是使用者請求的字集
         const req_word_set = req.body.words;
@@ -58,8 +48,7 @@ export const genFont = async (req, res) => {
         //請求字重
         const font_weight = req.body.weight || 400;
         //req_word_set,min_flag,font_weight 有可能是 undefined
-        const req_source =
-            req.headers.referer || req.headers.origin || "unknown"; //請求網域
+        const req_source = req.headers.referer || req.headers.origin || "unknown"; //請求網域
 
         //font tag 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
         const font_family_name = req.params.font;
@@ -74,30 +63,21 @@ export const genFont = async (req, res) => {
         //待處理：傳入字集都不是中文的情況
 
         // two condictions: 1.字型包是靜態的 2.字型包是動態的
-        if (min_flag ) {
+        if (min_flag) {
             //請求動態字型
             console.log(`正在生成動態字體`);
-            const summery={
+            const summery = {
                 wordSet: req_word_set,
                 fontWeight: font_weight,
                 fontFamily: font_family_name
-              };
+            };
             const hash = await hashString(summery);
             console.log("hash is", hash);
-            const file_path = await find_dynamic_font(
-                hash,
-                font_id,
-                font_family_name,
-                font_weight,
-                req_word_set,
-                req_source
-            );
+            const file_path = await find_dynamic_font(hash, font_id, font_family_name, font_weight, req_word_set, req_source, state);
             // 確保 file_path 存在並且有效
             if (!file_path) {
                 if (!font_id) {
-                    return res
-                        .code(400)
-                        .send({ status: "failed", message: `Invalid font format for ${font_family_name}` });
+                    return res.code(400).send({ status: "failed", message: `Invalid font format for ${font_family_name}` });
                 }
             }
 
@@ -113,11 +93,7 @@ export const genFont = async (req, res) => {
             //請求靜態字型
             //TODO:確認字型包是否存在r2，若無，怎麼辦
             const font_pack_you_need = await find_static_font(req_word_set);
-            const R2font_url = await give_static_font(
-                font_family_name,
-                font_weight,
-                font_pack_you_need,
-            );
+            const R2font_url = await give_static_font(font_family_name, font_weight, font_pack_you_need);
 
             console.log("📥 傳送檔案:", R2font_url);
             return res.send({

@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { db, initDb } from "./database.js";
 import { regenerateAllStaticFont } from "./font_nomin.js";
 import fetchMinio from "./fetch_minio.js";
+import { initR2 } from "./r2.js";
 
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
@@ -31,16 +32,12 @@ async function insertFontTypes() {
         // 取得 `sotrge_original_fontsDir` 下的所有子項目
         const ALL_FONTS_dir = await readdir(sotrge_original_fontsDir);
         const fontData = [];
-
+        console.log("🗃️  找到 " + ALL_FONTS_dir.join(", "));
         for (const one_font_family of ALL_FONTS_dir) {
             const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
-            console.log("🗃️  字體存放位置:", itemPath);
             const stats = await stat(itemPath);
-
-            if (!stats.isDirectory()) {
-                //不是資料夾就跳過
-                continue;
-            }
+            //不是資料夾就跳過
+            if (!stats.isDirectory()) continue;
             // 讀取該資料夾內的所有檔案
             const fontFiles = await readdir(itemPath);
             for (const fontFile of fontFiles) {
@@ -61,7 +58,7 @@ async function insertFontTypes() {
                 }
             }
         }
-        console.log(`📦 找到 ${fontData.length} 個字體`);
+        console.log(`📦 收錄 ${fontData.length} 個字體`);
         if (fontData.length === 0) {
             throw new Error("🔍 沒有找到任何字體");
         }
@@ -98,14 +95,16 @@ async function insertFontTypes() {
 }
 //從本地mino空間抓檔案
 
-async function initCheck() {
+async function initCheck(state) {
     try {
         if (!(await initDb())) return false;
-        await fetchMinio();
+        await fetchMinio(state);
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
         await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await insertFontTypes();
-        await regenerateAllStaticFont();
+        await initR2(state);
+        await regenerateAllStaticFont(state);
+        state.alive = true;
         return true;
     } catch (err) {
         console.error("❌ 初始化失敗:", err);
