@@ -33,6 +33,7 @@ async function insertFontTypes() {
         const ALL_FONTS_dir = await readdir(sotrge_original_fontsDir);
         const fontData = [];
         console.log("🗃️  找到 " + ALL_FONTS_dir.join(", "));
+        let skipped = [];
         for (const one_font_family of ALL_FONTS_dir) {
             const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
             const stats = await stat(itemPath);
@@ -41,11 +42,6 @@ async function insertFontTypes() {
             // 讀取該資料夾內的所有檔案
             const fontFiles = await readdir(itemPath);
             for (const fontFile of fontFiles) {
-                // 匹配檔名中的數字作為 weight（假設檔名包含數字，200.ttf）
-                if (!fontFile.endsWith(".ttf") && !fontFile.endsWith(".otf")) {
-                    console.log("Skipping:", fontFile); // 確保 README.md 這類檔案不會進來
-                    continue;
-                }
                 const match = fontFile.match(/.*?(\d+)\.(ttf|otf)$/);
                 if (match) {
                     const weight = match[1]; // 取得數字部分作為 weight
@@ -55,13 +51,12 @@ async function insertFontTypes() {
                         fontName: one_font_family, // 字型名稱（資料夾名稱）
                         weight: weight // 字型的 weight（檔案名稱中的數字）
                     });
-                }
+                } else skipped.push(fontFile);
             }
         }
         console.log(`📦 收錄 ${fontData.length} 個字體`);
-        if (fontData.length === 0) {
-            throw new Error("🔍 沒有找到任何字體");
-        }
+        if (skipped.length > 0) console.warn(`⏭️ 已跳過: ${skipped.join(", ")}`);
+        if (fontData.length === 0) throw new Error("🔍 沒有找到任何字體");
         //clear avaible font-weight. it will regenerate in for loop below
         await db.query("UPDATE font_family SET weights = ARRAY[]::smallint[]");
         for (const { fontName, weight } of fontData) {
@@ -99,10 +94,10 @@ async function initCheck(state) {
     try {
         if (!(await initDb())) return false;
         await fetchMinio(state);
+        await initR2(state);
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
         await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await insertFontTypes();
-        await initR2(state);
         await regenerateAllStaticFont(state);
         state.alive = true;
         return true;

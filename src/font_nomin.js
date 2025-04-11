@@ -11,6 +11,7 @@ async function gen_static_font(ff_name, support_weights, words, pack, r2 = false
         let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${ff_name}-${support_weights}`);
         if (generated.status === "failed") return generated;
         if (!r2) return true;
+        console.log("上傳到 R2", r2);
         const generated_font_path = path.join(path.dirname(fileURLToPath(import.meta.url)), "_data", "_generated", `${ff_name}-${support_weights}`, `${pack}.woff2`);
         await uploadToR2(generated_font_path, `${ff_name}-${support_weights}/${pack}.woff2`);
         return { status: "success" };
@@ -166,7 +167,7 @@ async function regenerateAllStaticFont(state) {
             const tasks = batch.map(({ pack, words }) => {
                 const padded_pack = pack.toString().padStart(2, "0");
 
-                return gen_static_font(ff_name, support_weights, words, padded_pack, buffer, state.r2)
+                return gen_static_font(ff_name, support_weights, words, padded_pack, state.r2)
                     .then(result => ({
                         success: result === true,
                         res: result,
