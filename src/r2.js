@@ -54,7 +54,7 @@ async function uploadToR2(localFilePath, remoteFileName) {
         await s3Client.send(new PutObjectCommand(uploadParams));
 
         const r2Url = genPublicUrl(remoteFileName);
-        console.log("✅ 檔案已上傳至 R2:", r2Url);
+        console.log("☁️ 檔案已上傳至 R2:", r2Url);
         return r2Url;
     } catch (err) {
         console.error("❌ 上傳到 R2 失敗:", err);
