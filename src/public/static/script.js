@@ -84,67 +84,119 @@ document.getElementById("closeBulletin").addEventListener("click", () => {
     document.getElementById("bulletin").style.display = "none";
 });
 
-// search
+const weightChart = {
+    100: ["T", "Thin"],
+    200: ["EL", "Extra Light"],
+    300: ["L", "Light"],
+    350: ["N", "Normal"],
+    400: ["R", "Regular"],
+    500: ["M", "Medium"],
+    600: ["SB", "Semi Bold"],
+    700: ["B", "Bold"],
+    800: ["EB", "Extra Bold"],
+    900: ["H", "Heavy"],
+    950: ["XH", "Extra Heavy"]
+};
 
-const searchInput = document.querySelector("#search-input");
-const sectionSearch = document.querySelector("#section-search");
-const searchTest = document.querySelector("#search-test");
-// 範例展示字串
-const previewText = searchTest.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
+let fontList = {};
+const families = new Set();
+const tags = new Set();
+const categories = new Set();
 
-// 輸出 font-item DOM 結構
-function renderFontItem(font) {
-    const weightChart = {
-        100: ["T", "Thin"],
-        200: ["EL", "Extra Light"],
-        300: ["L", "Light"],
-        350: ["N", "Normal"],
-        400: ["R", "Regular"],
-        500: ["M", "Medium"],
-        600: ["SB", "Semi Bold"],
-        700: ["B", "Bold"],
-        800: ["EB", "Extra Bold"],
-        900: ["H", "Heavy"],
-        950: ["XH", "Extra Heavy"]
-    };
+const updateFontDisplay = () => {
+    const tags = [...document.querySelectorAll(".tags input:checked")].map(i => i.classList[0].replace("tag-", ""));
+    const categories = [...document.querySelectorAll(".category input:checked")].map(i => i.classList[0].replace("cat-", ""));
+    const family = document.getElementById("family").value;
 
-    const parts = [];
-    for (let weight in font.weight) {
-        if (weights.includes(weight)) {
-            parts.push(`<span class="l">${weightChart[weight][0]}</span>`);
-        } else parts.push(`<span class="l">${weight}</span>`);
+    const filtered = fontList.filter(font => {
+        const matchFamily = family === "all" || font.family === family;
+        const matchCategory = categories.length === 0 || categories.includes(font.category);
+        const matchTags = tags.length === 0 || tags.every(tag => font.tags.includes(tag));
+        return matchFamily && matchCategory && matchTags;
+    });
+
+    // 你可以改成要放的地方
+    const container = document.getElementById("section-search");
+    container.innerHTML = "";
+
+    const searchTest = document.querySelector("#search-test");
+    const previewText = searchTest.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
+
+    filtered.forEach(font => {
+        const div = document.createElement("div");
+        const parts = [];
+        for (let weight in font.weight) {
+            if (weightChart[weight]) {
+                parts.push(`<span class="l">${weightChart[weight][0]}</span>`);
+            } else parts.push(`<span class="l">${weight}</span>`);
+        }
+        weightStr = parts.join(" ⋅ ");
+
+        div.innerHTML = `
+                <a class="font-item" href="/fonts/${encodeURIComponent(font.id)}">
+                    <div class="font-title">
+                        <h3>${font.name}</h3>
+                        <div class="weight">
+                            ${weightStr}&nbsp; | &nbsp;by ${font.author}
+                        </div>
+                    </div>
+                    <div class="font-preview emfont-${font.id}" style=font-family:"${font.name}">${previewText}</div>
+                </a>
+            `;
+
+        container.appendChild(div);
+    });
+    //  emfont.init();
+    if (container.innerHTML == "") {
+        container.innerHTML = `<div class="no-result"><div class="╯°□°╯">(╯°□°)╯︵ ┻━┻</div>你要求也太苛刻了吧！<br>沒找到想要的字體嗎？歡迎到 GitHub 推薦給我們！</div>`;
     }
-    weightStr = parts.join(" ⋅ ");
-    return `
-        <a class="font-item" href="/fonts/${encodeURIComponent(font.id)}">
-            <div class="font-title">
-                <h3>${font.name}</h3>
-                <div class="weight">
-                    ${weightStr}&nbsp; | &nbsp;by ${font.author}
-                </div>
-            </div>
-            <div class="font-preview">${previewText}</div>
-        </a>
-    `;
-}
+};
 
+const initSearch = async () => {
+    const res = await fetch(`/list`);
+    fontList = await res.json();
+    fontList.forEach(font => {
+        families.add(font.family);
+        font.tags.forEach(tag => tags.add(tag));
+        categories.add(font.category);
+    });
+
+    // Populate family <select>
+    const familySelect = document.getElementById("family");
+    families.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f;
+        opt.textContent = f;
+        familySelect.appendChild(opt);
+    });
+
+    const tagContainer = document.querySelector(".tags");
+    tags.forEach(tag => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="tag-${tag}" />${tag}`;
+        tagContainer.appendChild(label);
+    });
+
+    const categoryContainer = document.querySelector(".category");
+    categories.forEach(cat => {
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" class="cat-${cat}" />${cat}`;
+        categoryContainer.appendChild(label);
+    });
+
+    updateFontDisplay();
+    document.querySelectorAll(".search-container input, .search-container select").forEach(input => {
+        input.addEventListener("change", updateFontDisplay);
+    });
+
+    const searchText = document.getElementById("search-test");
+    let debounceTimer;
+    searchText.addEventListener("input", () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            updateFontDisplay();
+        }, 400);
+    });
+};
+initSearch();
 // 綁定 input 事件
-searchInput.addEventListener("input", async e => {
-    const query = e.target.value.trim();
-    if (!query) {
-        sectionSearch.innerHTML = ""; // 清空
-        return;
-    }
-
-    try {
-        const res = await fetch(`/list?q=${encodeURIComponent(query)}`);
-        const fonts = await res.json();
-
-        // 產生 HTML 並插入
-        const html = fonts.map(renderFontItem).join("");
-        sectionSearch.innerHTML = html;
-    } catch (err) {
-        console.error("搜尋失敗", err);
-        sectionSearch.innerHTML = "<p>搜尋失敗，請稍後再試。</p>";
-    }
-});

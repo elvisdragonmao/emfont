@@ -574,7 +574,7 @@ h2 {
     transition: background-color 0.1s ease-out;
 }
 
-input[type="checkbox"]:checked + label {
+label:has(input[type="checkbox"]:checked) {
     background-color: var(--slate-400);
 }
 
@@ -594,6 +594,20 @@ input[type="checkbox"]:checked + label {
 
 #section-search {
     padding: 2rem 3rem 2rem 2rem;
+}
+
+#section-search:has(.no-result) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.╯°□°╯ {
+    font-size: 3rem;
+}
+.no-result {
+    font-size: 1.5rem;
+    line-height: 2;
+    text-align: center;
 }
 
 .font-item {
@@ -895,4 +909,9 @@ footer {
     #mobileToggle:checked + header .mobile-nav::after {
         transform: translate(-50%, -50%) rotate(90deg);
     }
+}
+
+
+.language{
+    color: var(--slate-400);
 }
