@@ -1,6 +1,6 @@
 import { join } from "path";
 import fastifyStatic from "@fastify/static";
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, writeFile } from "fs/promises";
 
 export default async (app, state) => {
     app.register(fastifyStatic, {
@@ -21,8 +21,7 @@ export default async (app, state) => {
     app.get("/emfont.min.js", async (req, res) => {
         return res.redirect(301, "/emfont.js");
     });
-
-    let content = await readFile(join(import.meta.dirname, "../emfont.js"), 'utf-8');
-    content = content.replace(/{{BASE_URL}}/g, baseUrl);
+    let content = await readFile(join(import.meta.dirname, "../emfont.js"), "utf-8");
+    content = content.replace(/{{BASE_URL}}/g, state.baseURL);
     await writeFile(join(import.meta.dirname, "../public/emfont.js"), content);
 };

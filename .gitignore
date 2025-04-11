@@ -1,6 +1,8 @@
 # DataGrip
 .idea
 
+src/public/emfont.js
+
 # Logs
 logs
 *.log

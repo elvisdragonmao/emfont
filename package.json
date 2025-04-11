@@ -6,8 +6,8 @@
     "main": "src/app.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "nodemon src/app.js",
-        "front": "nodemon src/front.js",
+        "dev": "nodemon src/app.js --ignore public/*",
+        "front": "nodemon src/front.js --ignore public/*",
         "test_f": "node src/list_font.js",
         "start": "node src/app.js"
     },
