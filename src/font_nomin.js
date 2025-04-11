@@ -11,7 +11,6 @@ async function gen_static_font(ff_name, support_weights, words, pack, r2 = false
         let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${ff_name}-${support_weights}`);
         if (generated.status === "failed") return generated;
         if (!r2) return true;
-        console.log("上傳到 R2", r2);
         const generated_font_path = path.join(path.dirname(fileURLToPath(import.meta.url)), "_data", "_generated", `${ff_name}-${support_weights}`, `${pack}.woff2`);
         await uploadToR2(generated_font_path, `${ff_name}-${support_weights}/${pack}.woff2`);
         return { status: "success" };
@@ -50,7 +49,7 @@ async function regenerateAllStaticFont(state) {
         const charArray = Object.keys(cmap)
             .map(code => String.fromCodePoint(parseInt(code)))
             .filter(char => char !== "\x00"); // 過濾掉 0x00 字元
-        console.log(charArray);
+        console.log(ff_name, support_weights,"有這些字：",charArray);
 
         await db.query("BEGIN");
 
@@ -65,7 +64,7 @@ async function regenerateAllStaticFont(state) {
         if (newChars.length === 0) {
             console.log("沒有新字要插入");
             await db.query("COMMIT");
-            return;
+            // return;
         }
 
         // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
@@ -152,7 +151,10 @@ async function regenerateAllStaticFont(state) {
         await db.query("COMMIT");
         console.log(`已更新 ${updateMap.size} 筆字元`);
 
-        const word_package_pair = (await db.query("SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts GROUP BY pack ORDER BY pack;")).rows;
+        const word_package_pair = (await db.query(`SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts
+                                                    WHERE char = ANY($1)
+                                                    GROUP BY pack ORDER BY pack;`,
+                                                    [charArray])).rows;
         // {
         //     1:'一堆字',
         //     2:'另一堆字'
@@ -161,19 +163,22 @@ async function regenerateAllStaticFont(state) {
         // 並行生成所有 pack
         const results = [];
         let batchSize = 3; // 一次處理的包數量
+        console.log(word_package_pair)
         for (let i = 0; i < word_package_pair.length; i += batchSize) {
             const batch = word_package_pair.slice(i, i + batchSize);
 
             const tasks = batch.map(({ pack, words }) => {
                 const padded_pack = pack.toString().padStart(2, "0");
-
-                return gen_static_font(ff_name, support_weights, words, padded_pack, state.r2)
-                    .then(result => ({
-                        success: result === true,
+                
+                return gen_static_font(ff_name, support_weights, words, padded_pack, buffer, state.r2)
+                    .then(result => {
+                        console.log(`[${padded_pack}] gen_static_font result:`, result);
+                        return {
+                        success: result.status =="success",
                         res: result,
                         pack: padded_pack,
-                        rawPack: pack
-                    }))
+                        rawPack: pack};
+                    })
                     .catch(error => ({
                         success: false,
                         errorMsg: error.message || "Unknown error",
@@ -218,6 +223,7 @@ async function regenerateAllStaticFont(state) {
     }
 
     console.log("✨ 所有靜態字體生成完成！");
+
 }
 
 async function find_static_font(word_set) {
