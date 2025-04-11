@@ -108,7 +108,7 @@ class Emfont {
                     const weight = fontName.match(/-(\d+)/)[1];
                     if (weight)
                         postFontName = fontName.replace("-" + weight, "");
-                    return fetch("https://font.emtech.cc/g/" + postFontName, {
+                    return fetch("{{BASE_URL}}/g/" + postFontName, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json"

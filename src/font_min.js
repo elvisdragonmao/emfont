@@ -127,8 +127,7 @@ async function find_dynamic_font( //return a R2 url client need
             if (state.r2) {
                 r2Url = await uploadToR2(localFontPath, little_font_package);
             } else {
-                console.log("R2 不可用，將使用本地字型檔");
-                r2Url = `${state.runPort}/_data/_generated/${little_font_package}`;
+                r2Url = `${state.baseURL}/_generated/${little_font_package}`;
             }
             return r2Url;
         } catch (err) {
