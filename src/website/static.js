@@ -1,10 +1,17 @@
-import { join } from 'path';
+import { join } from "path";
 import fastifyStatic from "@fastify/static";
+import { readFile, writeFile } from 'fs/promises';
 
-export default async app => {
+export default async (app, state) => {
     app.register(fastifyStatic, {
-        root: join(import.meta.dirname,"../public"),
+        root: join(import.meta.dirname, "../public"),
         prefix: "/"
+    });
+
+    app.register(fastifyStatic, {
+        root: join(import.meta.dirname, "../_data/_generated"),
+        prefix: "/_generated/",
+        decorateReply: false
     });
 
     app.get("/auth/github", async (req, res) => {
@@ -14,4 +21,8 @@ export default async app => {
     app.get("/emfont.min.js", async (req, res) => {
         return res.redirect(301, "/emfont.js");
     });
+
+    let content = await readFile(join(import.meta.dirname, "../emfont.js"), 'utf-8');
+    content = content.replace(/{{BASE_URL}}/g, baseUrl);
+    await writeFile(join(import.meta.dirname, "../public/emfont.js"), content);
 };

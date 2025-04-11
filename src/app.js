@@ -17,6 +17,8 @@ import registerStatic from "./website/static.js";
 
 dotenv.config();
 const state = { alive: false, bulletin: process.env.BULLETIN || "", local: true, r2: false };
+const port = process.env.RUN_PORT || 3000;
+state.baseURL = process.env.BASE_URL || `http://localhost:${port}`;
 
 const user = {};
 const app = Fastify({ logger: { level: "error" }, ignoreTrailingSlash: true });
@@ -32,14 +34,13 @@ app.register(cors, {
 
 await registerPages(app);
 await registerApi(app, state);
-await registerStatic(app);
+await registerStatic(app, state);
 
 // Start server
 const start = async () => {
     try {
-        state.runPort = process.env.RUN_PORT || 3000;
-        app.listen({ port: state.runPort, host: "0.0.0.0" }, () => {
-            console.log(`🔗 網頁啟動在 http://localhost:${state.runPort}`);
+        app.listen({ port: port, host: "0.0.0.0" }, () => {
+            console.log(`🔗 網頁啟動在 ${state.baseURL}`);
         });
     } catch (err) {
         app.log.error(err);
