@@ -2,25 +2,26 @@
 import fs from "fs";
 // import rename from "gulp-rename";
 // import Fontmin from "fontmin";
-import { Font,woff2 } from 'fonteditor-core';
+import { Font, woff2 } from "fonteditor-core";
 import path from "path";
 import { db } from "./database.js";
-import { uploadToR2, checkFileExists } from "./r2.js";
+import { uploadToR2, checkR2FileExists } from "./r2.js";
 
 const __dirname = import.meta.dirname;
 const __Font_storge_path_base = path.join(__dirname, "_data", "original-fonts"); //projectroot/src/_data/original-fonts/
 
 async function readFontBuffer(originalFontFamily, font_weight) {
     let success = false,
-        buffer,type;
+        buffer,
+        type;
     // Construct the full path to the font file based on the family and variant
     // extensions name may be ttf or otf. Try to find any of them
     const file_found = [".ttf", ".otf"]
-    .map(ext => ({
-        ext: ext.slice(1),
-        fullPath: path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`)
-    }))
-    .find(({ fullPath }) => fs.existsSync(fullPath));
+        .map(ext => ({
+            ext: ext.slice(1),
+            fullPath: path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}${ext}`)
+        }))
+        .find(({ fullPath }) => fs.existsSync(fullPath));
     if (!file_found) {
         console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
     } else {
@@ -40,9 +41,9 @@ async function generateFont(
     buffer = null
 ) {
     // 如果沒提供 buffer，就讀取字型檔
-    let type,success;
+    let type, success;
     if (!buffer) {
-        ({buffer,type,success } = await readFontBuffer(originalFontFamily, font_weight));
+        ({ buffer, type, success } = await readFontBuffer(originalFontFamily, font_weight));
     }
     // 將文字轉成 Unicode 編碼 (code point)
     const subsetCodePoints = Array.from(new Set(words)).map(ch => ch.codePointAt(0));
@@ -54,14 +55,14 @@ async function generateFont(
         subset: subsetCodePoints,
         hinting: true,
         compound2simple: true,
-        inflate: null,
+        inflate: null
     });
 
     // 儲存為 .woff 格式的 buffer
     const outBuffer = font.write({
-        type: 'woff2',
+        type: "woff2",
         hinting: false,
-        deflate: woff2.encode,
+        deflate: woff2.encode
     });
 
     // 確保資料夾存在
@@ -83,13 +84,14 @@ async function find_dynamic_font( //return a R2 url client need
     font_family,
     font_weight,
     original_word_set,
-    req_source //插入 usage_log
+    req_source, //插入 usage_log
+    state
 ) {
     //用 hash 值查詢動態字型檔是否存在
     // const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);
     // const exist = exist_search.rows[0];
     // //如果存在，回傳字型檔
-    const file_exist = await checkFileExists(`${word_hash}-${font_family}-${font_weight}.woff`); //return false or file path
+    const file_exist = await checkR2FileExists(`${word_hash}-${font_family}-${font_weight}.woff`); //return false or file path
     const little_font_package = `${word_hash}-${font_family}-${font_weight}.woff`;
     if (file_exist) {
         console.log("字體已存在!");
@@ -102,7 +104,7 @@ async function find_dynamic_font( //return a R2 url client need
         } catch (err) {
             console.error("❌ 資料庫紀錄失敗", err);
         }
-        return file_exist; //if file exist, return checkFileExists return file path
+        return file_exist; //if file exist, return checkR2FileExists return file path
     }
     //如果不存在，則生成字型檔
     else {
@@ -121,8 +123,13 @@ async function find_dynamic_font( //return a R2 url client need
             //+放到雲端硬碟
             //+回傳字型檔`${word_hash}-${font_weight}.woff`
             // 上傳到 R2
-            const r2Url = await uploadToR2(localFontPath, little_font_package);
-            console.log("✅ R2 URL:", r2Url);
+            let r2Url = "";
+            if (state.r2) {
+                r2Url = await uploadToR2(localFontPath, little_font_package);
+            } else {
+                console.log("R2 不可用，將使用本地字型檔");
+                r2Url = `${state.runPort}/_data/_generated/${little_font_package}`;
+            }
             return r2Url;
         } catch (err) {
             console.error("字體生成失敗:", err);

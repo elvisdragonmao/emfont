@@ -3,10 +3,10 @@ import path from "path";
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
 import { promisify } from "util";
 
-export default async () => {
+export default async state => {
     const bucketName = process.env.MINIO_BUCKET;
     if (!bucketName) {
-        console.log("❌ 沒有設定 MINIO_BUCKET 環境變數，無法下載字型");
+        console.log("⏭️  沒有設定 MINIO_BUCKET 環境變數，跳過下載字型");
         return;
     }
     const LOCAL_MINIO_CLIENT = new S3Client({
@@ -25,6 +25,7 @@ export default async () => {
             "🗃️  MinIO 連接成功，找到的 Bucket:",
             data.Buckets.map(b => b.Name)
         );
+        state.local = false;
     } catch (err) {
         console.error("❌ 無法連接到 MinIO，跳過字型下載", err);
         return;

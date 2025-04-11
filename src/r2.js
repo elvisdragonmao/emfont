@@ -12,10 +12,34 @@ const s3Client = new S3Client({
         secretAccessKey: process.env.R2_SECRET_ACCESS_KEY
     }
 });
+
+// 初始化 R2
+const initR2 = async state => {
+    try {
+        if (!process.env.R2_ENDPOINT || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME) {
+            console.log("🏠 R2 沒有設定，會在本地提供字體");
+            return;
+        }
+        // 檢查 R2 連線
+        const params = {
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: "test.txt",
+            Body: "test"
+        };
+        await s3Client.send(new PutObjectCommand(params));
+        console.log("✅ R2 測試成功");
+        state.r2 = true;
+    } catch (error) {
+        console.log("❌ R2 測試失敗:", error);
+    }
+};
+
 // gen public url
-const genPublicUrl = (remoteFileName) => {//file name example: XXX.woff2 => is a file name  + Filename Extension 
+const genPublicUrl = remoteFileName => {
+    //file name example: XXX.woff2 => is a file name  + Filename Extension
     return `${process.env.R2_PUB_URL_BASE}/fonts/${remoteFileName}`;
 };
+
 async function uploadToR2(localFilePath, remoteFileName) {
     try {
         const fileContent = fs.readFileSync(localFilePath);
@@ -39,16 +63,15 @@ async function uploadToR2(localFilePath, remoteFileName) {
 }
 
 // 檢查檔案是否存在
-const checkFileExists = async (file_name) => {
+const checkR2FileExists = async file_name => {
     try {
         const response = await fetch(genPublicUrl(file_name), {
             method: "HEAD"
         }); // 使用 HEAD 方法減少流量
         if (response.ok) {
-            console.log("✅ 檔案存在:", genPublicUrl(file_name));
             return genPublicUrl(file_name);
         } else {
-            console.log(file_name,"檔案不存在");
+            console.log(file_name, "檔案不存在");
             return false;
         }
     } catch (error) {
@@ -56,4 +79,4 @@ const checkFileExists = async (file_name) => {
         return false;
     }
 };
-export { uploadToR2, checkFileExists };
+export { uploadToR2, checkR2FileExists, initR2 };

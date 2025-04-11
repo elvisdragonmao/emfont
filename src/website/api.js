@@ -1,6 +1,6 @@
 import { genFont } from "../gen_font.js";
 import { db } from "../database.js";
-export default async (app,state) => {
+export default async (app, state) => {
     app.post("/g/:font", async (req, res) => {
         try {
             if (req.params.font === "") {
@@ -8,7 +8,7 @@ export default async (app,state) => {
                 return res.status(404).send("Font not found");
             }
             console.log("請求字集:", req.body); // { words: '軟語伴茶',weight: '400', min: 'true', format: 'woff2' }
-            await genFont(req, res);
+            await genFont(req, res, state);
         } catch (error) {
             console.error("字體請求錯誤: ", error.stack);
             res.status(500).send({ status: "failed", message: error.message });
