@@ -23,7 +23,7 @@ async function readFontBuffer(originalFontFamily, font_weight) {
         }))
         .find(({ fullPath }) => fs.existsSync(fullPath));
     if (!file_found) {
-        console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf`), path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.otf`));
+        console.error("找不到字體:", path.join(__Font_storge_path_base, originalFontFamily, `${font_weight}.ttf / .otf`));
     } else {
         success = true;
         type = file_found.ext;
@@ -45,6 +45,10 @@ async function generateFont(
     if (!buffer) {
         ({ buffer, type, success } = await readFontBuffer(originalFontFamily, font_weight));
     }
+    if (!success) {
+        return { status: "failed", message: "emfont can't read original font, please try again later." };
+    }
+
     // 將文字轉成 Unicode 編碼 (code point)
     const subsetCodePoints = Array.from(new Set(words)).map(ch => ch.codePointAt(0));
     await woff2.init(); //  初始化 woff2 WASM 模組
@@ -76,7 +80,10 @@ async function generateFont(
     fs.writeFileSync(outputPath, outBuffer);
 
     console.log("✅ 字體生成成功:", outputPath);
-    return outputPath;
+    return {
+        status: "success",
+        location: outputPath
+    };
 }
 async function find_dynamic_font( //return a R2 url client need
     word_hash,
@@ -104,7 +111,7 @@ async function find_dynamic_font( //return a R2 url client need
         //更新使用狀態
         // const op_result = await db.query('UPDATE dynamic_fonts SET last_use = NOW() WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);//表格好像目前沒有上次使用時間，但我覺得應該要有 byiach
         try {
-            const op_result = await db.query("UPDATE dynamic_fonts SET last_use = NOW()  WHERE hash = $1 AND family_id = $2", [word_hash, font_id]);
+            await db.query("UPDATE dynamic_fonts SET last_use = NOW()  WHERE hash = $1 AND family_id = $2", [word_hash, font_id]);
             //todo：還有更新use_count = use_count+1,在usage_log
         } catch (err) {
             console.error("❌ 資料庫紀錄失敗", err);
@@ -114,7 +121,6 @@ async function find_dynamic_font( //return a R2 url client need
     //如果不存在，則生成字型檔
     else {
         try {
-            console.log("@@", word_hash, font_id);
             await db.query("INSERT INTO dynamic_fonts (hash, family_id) VALUES ($1, $2)", [word_hash, font_id]);
         } catch (err) {
             console.error("❌ error during insert new font record:", err);
@@ -123,7 +129,10 @@ async function find_dynamic_font( //return a R2 url client need
         console.log("字集不存在過去的生成資料庫紀錄");
         try {
             //+生成字型檔
-            await generateFont(font_family, font_weight, original_word_set, little_font_package);
+            let generated = await generateFont(font_family, font_weight, original_word_set, little_font_package);
+            if (generated.status === "failed") {
+                return generated;
+            }
             const localFontPath = path.join(__dirname, "_data", "_generated", little_font_package);
             //+放到雲端硬碟
             //+回傳字型檔`${word_hash}-${font_weight}.woff`
@@ -134,7 +143,10 @@ async function find_dynamic_font( //return a R2 url client need
             } else {
                 r2Url = `${state.baseURL}/_generated/${little_font_package}`;
             }
-            return r2Url;
+            return {
+                status: "success",
+                location: r2Url
+            };
         } catch (err) {
             console.error("字體生成失敗:", err);
             throw new Error("Font generation failed", err);

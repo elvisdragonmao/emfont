@@ -13,13 +13,13 @@ class Emfont {
 
         // Check browser support
         if (!this._checkBrowserSupport()) {
-            console.warn("emfont: Your browser may not support all required features. Some functionality may be limited.");
+            console.warn("✏️ Your browser may not support all required features for emfont. Some functionality may be limited.");
             // Fallback to WOFF if WOFF2 is not supported
             if (this.config.format === "woff2" && !this._hasWoff2Support()) {
                 this.config.format = "woff";
             }
         } else {
-            console.log("This website uses emfont: a free Chinese webfont service.");
+            console.log("✏️ This website uses emfont: a free Chinese webfont service.");
         }
     }
 
@@ -96,7 +96,7 @@ class Emfont {
                     .then(response => response.json())
                     .then(async data => {
                         if (data.status === "success") {
-                            if (data.message) console.warn(data.message);
+                            if (data.message) console.warn("✏️ " + data.message);
                             const fontCSSName = data.name;
                             if (this.config.autoApply) {
                                 // Filter matching variants based on base name
@@ -117,11 +117,11 @@ class Emfont {
                                     const loadedFont = await font.load();
                                     document.fonts.add(loadedFont);
                                 } catch (err) {
-                                    console.warn(`Failed to load font from: ${url}`, err);
+                                    console.warn(`✏️ Failed to load font from: ${url}`, err);
                                 }
                             }
                         } else {
-                            console.error(data.message);
+                            console.error("✏️ " + data.message);
                             return Promise.resolve();
                         }
                     });
