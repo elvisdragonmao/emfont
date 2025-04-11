@@ -91,8 +91,13 @@ async function find_dynamic_font( //return a R2 url client need
     // const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);
     // const exist = exist_search.rows[0];
     // //如果存在，回傳字型檔
-    const file_exist = await checkR2FileExists(`${word_hash}-${font_family}-${font_weight}.woff`); //return false or file path
     const little_font_package = `${word_hash}-${font_family}-${font_weight}.woff`;
+    let file_exist;
+    if (state.r2) file_exist = await checkR2FileExists(little_font_package);
+    else {
+        let localPath = path.join(__dirname, "_data", "_generated", little_font_package);
+        file_exist = fs.existsSync(localPath);
+    }
     if (file_exist) {
         console.log("字體已存在!");
         //+回傳字型檔

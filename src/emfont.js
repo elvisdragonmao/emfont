@@ -54,7 +54,7 @@ class Emfont {
                     .split(" ")
                     .filter(name => name.startsWith("emfont-") || name.startsWith("✏️"))
                     .map(name => name.replace(/^(emfont-|✏️)/, ""));
-                originalClasses.push(fontNames);
+                originalClasses.push(...fontNames);
                 const words = element.textContent.trim(); // Custom words from element text
 
                 fontNames.forEach(fontName => {
@@ -77,10 +77,10 @@ class Emfont {
                     .join("");
                 let postFontName = fontName;
                 // check if fontName contains -min
-                const min = fontName.match(/-min/)?.[0];
-                if (min) postFontName = fontName.replace(min, "");
+                const min = fontName.includes("-min");
+                if (min) postFontName = fontName.replace("-min", "");
                 const weight = fontName.match(/-(\d+)/)[1];
-                if (weight) postFontName = fontName.replace("-" + weight, "");
+                if (weight) postFontName = postFontName.replace("-" + weight, "");
                 return fetch("{{BASE_URL}}/g/" + postFontName, {
                     method: "POST",
                     headers: {
@@ -99,9 +99,17 @@ class Emfont {
                             if (data.message) console.warn(data.message);
                             const fontCSSName = data.name;
                             if (this.config.autoApply) {
-                                if (!originalClasses.includes(fontName)) fontName = fontName.split("-")[0];
-                                cssElement.innerHTML += `.emfont-${fontName} { font-family: '${fontCSSName}'; } 
-                                    .✏️${fontName} { font-family: '${fontCSSName}'; }`;
+                                // Filter matching variants based on base name
+                                const baseFontName = fontName.split("-")[0];
+                                const matchedVariants = originalClasses.filter(cls => cls.startsWith(baseFontName));
+                                if (matchedVariants.length === 0) matchedVariants.push(baseFontName);
+                                // Generate CSS for each matched variant
+                                for (const variant of matchedVariants) {
+                                    cssElement.innerHTML += `
+                                    .emfont-${variant} { font-family: '${fontCSSName}'; }
+                                    .✏️${variant} { font-family: '${fontCSSName}'; }
+                                `;
+                                }
                             }
                             for (const url of data.location) {
                                 const font = new FontFace(fontCSSName, `url(${url})`);

@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts (
     last_use TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- text TEXT NOT NULL,這應該放在流水紀錄裡面
-    hash CHAR(10) NOT NULL,
+    hash CHAR(40) NOT NULL,
     FOREIGN KEY (family_id) REFERENCES font_family(id)
 );
 

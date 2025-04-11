@@ -4,10 +4,8 @@ export default async (app, state) => {
     app.post("/g/:font", async (req, res) => {
         try {
             if (req.params.font === "") {
-                //return 404
-                return res.status(404).send("Font not found");
+                return res.status(404).send({ status: "failed", message: "Font not found" });
             }
-            console.log("請求字集:", req.body); // { words: '軟語伴茶',weight: '400', min: 'true', format: 'woff2' }
             await genFont(req, res, state);
         } catch (error) {
             console.error("字體請求錯誤: ", error.stack);
@@ -27,6 +25,92 @@ export default async (app, state) => {
 
     app.get("/bulletin", async (req, res) => {
         res.send({ status: state.alive ? "up" : "down", message: state.bulletin });
+    });
+
+    app.get("/list", async (req, res) => {
+        const q = req.query.q?.trim();
+        const values = [];
+        let whereClause = "";
+
+        if (q) {
+            values.push(`%${q}%`);
+            whereClause = `
+                WHERE id ILIKE $1
+                OR name ILIKE $1
+                OR name_zh ILIKE $1
+                OR name_en ILIKE $1
+                OR EXISTS (
+                    SELECT 1 FROM unnest(authors) AS author WHERE author ILIKE $1
+                )
+            `;
+        }
+
+        try {
+            const { rows } = await db.query(
+                `
+                SELECT id, name, weights, authors 
+                FROM font_family
+                ${whereClause}
+            `,
+                values
+            );
+
+            const fonts = rows.map(row => ({
+                id: row.id,
+                name: row.name,
+                weight: row.weights || [],
+                author: row.authors && row.authors.length > 0 ? row.authors[0] : null
+            }));
+
+            return res.send(fonts);
+        } catch (err) {
+            console.error("讀取字體列表失敗", err.stack);
+            res.status(500).send("Database query failed");
+        }
+    });
+
+    app.get("/info/:fontID", async (req, res) => {
+        const fontID = req.params.fontID;
+
+        try {
+            const { rows } = await db.query(
+                `
+                SELECT id, name, name_zh, name_en, weights, category, tags, family,
+                       version, license, repo_url AS source, authors, description
+                FROM font_family
+                WHERE id = $1
+            `,
+                [fontID]
+            );
+
+            if (rows.length === 0) {
+                return res.status(404).send("Font not found");
+            }
+
+            const font = rows[0];
+
+            const result = {
+                name: {
+                    original: font.name,
+                    zh: font.name_zh,
+                    en: font.name_en
+                },
+                category: font.category,
+                weight: font.weights || [],
+                tag: font.tags || [],
+                family: font.family,
+                version: font.version,
+                license: font.license,
+                source: font.source,
+                author: font.authors?.[0] || null,
+                description: font.description
+            };
+
+            res.send(result);
+        } catch (err) {
+            console.error("讀取字體資訊失敗", err.stack);
+            res.status(500).send("Database query failed");
+        }
     });
 
     // GitHub OAuth callback
