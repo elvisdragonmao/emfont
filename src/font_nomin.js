@@ -172,7 +172,6 @@ async function regenerateAllStaticFont(state) {
                 
                 return gen_static_font(ff_name, support_weights, words, padded_pack, buffer, state.r2)
                     .then(result => {
-                        console.log(`[${padded_pack}] gen_static_font result:`, result);
                         return {
                         success: result.status =="success",
                         res: result,
