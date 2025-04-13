@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand ,ListObjectsV2Command} from "@aws-sdk/client-s3";
 import dotenv from "dotenv";
 import fs from "fs";
 
@@ -15,6 +15,7 @@ const s3Client = new S3Client({
 
 // 初始化 R2
 const initR2 = async state => {
+    listFontsTopLevel();
     try {
         if (!process.env.R2_ENDPOINT || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME) {
             console.log("🏠 R2 沒有設定，會在本地提供字體");
@@ -79,4 +80,41 @@ const checkR2FileExists = async file_name => {
         return false;
     }
 };
+async function listFontsTopLevel() {
+    try {
+      let isTruncated = true;
+      let continuationToken;
+  
+      while (isTruncated) {
+        const command = new ListObjectsV2Command({
+          Bucket: "emfont",//要改成環境變數
+          Prefix: "fonts/",
+          Delimiter: "/", 
+          ContinuationToken: continuationToken,
+        });
+  
+        const response = await s3Client.send(command);
+  
+        // 列出第一層的子資料夾（CommonPrefixes）
+        if (response.CommonPrefixes) {
+          response.CommonPrefixes.forEach(prefixObj => {
+            console.log(`資料夾：${prefixObj.Prefix}`);
+          });
+        }
+  
+        // 列出直接在 fonts/ 下的檔案（不在子資料夾內的）
+        if (response.Contents) {
+          response.Contents.forEach(obj => {
+            console.log(`檔案：${obj.Key}`);
+          });
+        }
+  
+        isTruncated = response.IsTruncated;
+        continuationToken = response.NextContinuationToken;
+      }
+    } catch (err) {
+      console.error("列出檔案時發生錯誤：", err);
+    }
+  }
+  
 export { uploadToR2, checkR2FileExists, initR2 };
