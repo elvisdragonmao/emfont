@@ -1,8 +1,8 @@
 // font-reader.mjs
 // import * as fontkit from 'fontkit';
-// import { writeFile } from 'fs/promises';
+import { writeFile } from 'fs/promises';
 
-const fontPath = 'src/_data/original-fonts/ChenYuLuoYan/100.ttf';
+const fontPath = 'src/_data/original-fonts/UnboundedSans/400.ttf';
 
 // const font = await fontkit.open(fontPath);
 // const supportedCodePoints = Array.from(font.characterSet);
@@ -40,3 +40,6 @@ const supportedChars = Object.keys(cmap)
 console.log(supportedChars);
 const charArray = Object.keys(cmap).map(code => String.fromCodePoint(parseInt(code)));
 console.log(charArray);
+
+await writeFile('output.txt', charArray.join(''), 'utf8');
+console.log('所有字元已寫入 output.txt');
