@@ -46,7 +46,7 @@ async function generateFont(
         ({ buffer, type, success } = await readFontBuffer(originalFontFamily, font_weight));
     }
     if (!success) {
-        return { status: "failed", message: "emfont can't read original font, please try again later." };
+        return { status: "failed", message: "emfont can't read original font, please try again later." ,location: "null"};
     }
 
     // 將文字轉成 Unicode 編碼 (code point)
@@ -116,7 +116,10 @@ async function find_dynamic_font( //return a R2 url client need
         } catch (err) {
             console.error("❌ 資料庫紀錄失敗", err);
         }
-        return file_exist; //if file exist, return checkR2FileExists return file path
+        return {
+            status: "success",
+            location: file_exist
+        };
     }
     //如果不存在，則生成字型檔
     else {
