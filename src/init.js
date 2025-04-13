@@ -13,7 +13,7 @@ const stat = promisify(fs.stat);
 
 dotenv.config();
 const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts");
-
+const sotrge_generated_fontsDir = path.resolve("src/_data/_generated");
 //init check
 
 // 讀取並執行 SQL 腳本檔案
@@ -88,8 +88,32 @@ async function insertFontTypes() {
         throw error;
     }
 }
-//從本地mino空間抓檔案
-
+async function get_generated_static_floders() {//取得已生成放置在本地的靜態字型有哪些
+    const ALL_FONTS_dir = await readdir(sotrge_generated_fontsDir);
+        const fontData = [];
+        for (const one_font_family of ALL_FONTS_dir) {
+            const itemPath = path.join(sotrge_generated_fontsDir, `${one_font_family}`);
+            const stats = await stat(itemPath);
+            //跳過檔案，只取資料夾，這些才是放靜態字型的地方
+            if (stats.isFile()) continue;
+            // 讀取該資料夾的檔名
+                // 配對格式：數字-字串-數字，例如 101-HazyGo975-1 或 700-LXGWWenKaiTCMono-300
+                const match = one_font_family.match(/^(\d+)-([a-zA-Z0-9]+)-(\d+)$/);
+                if (match) {
+                    //[0] 是全部字串
+                    const ver = match[1]; // 取得數字部分作為 version 版本號
+                    const font_id = match[2];
+                    const weight = match[3];
+                    fontData.push({
+                        version:ver,
+                        fontName: font_id, // 字型名稱（資料夾名稱）
+                        weight: weight // 字型的 weight（檔案名稱中的數字）
+                    });
+                } 
+            
+        }
+    return fontData
+}
 async function initCheck(state) {
     try {
         if (!(await initDb())) return false;
@@ -98,7 +122,8 @@ async function initCheck(state) {
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
         await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await insertFontTypes();
-        await regenerateAllStaticFont(state);
+        const have_gen_list = await get_generated_static_floders();
+        await regenerateAllStaticFont(state,have_gen_list);
         state.alive = true;
         return true;
     } catch (err) {

@@ -40,6 +40,7 @@ async function generateFont(
     put_folder = "_data/_generated", //default
     buffer = null
 ) {
+    try{
     // 如果沒提供 buffer，就讀取字型檔
     let type, success;
     if (!buffer) {
@@ -84,6 +85,11 @@ async function generateFont(
         status: "success",
         location: outputPath
     };
+}
+catch(err)
+{
+    console.error(err);
+}
 }
 async function find_dynamic_font( //return a R2 url client need
     word_hash,

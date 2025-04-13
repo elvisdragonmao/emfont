@@ -17,14 +17,10 @@ CREATE TABLE IF NOT EXISTS font_family (
     authors TEXT[] DEFAULT ARRAY[]::TEXT[], -- 作者
     CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'))
 );
-
--- 靜態字型上次更新時間
-CREATE TABLE IF NOT EXISTS pack_status (
-    family TEXT, -- font family 
-    weights INT NOT NULL ,-- font weights
-    last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (family, weights),
-    FOREIGN KEY (family) REFERENCES font_family(id)
+CREATE SEQUENCE IF NOT EXISTS custom_bullet_seq START WITH 100;
+CREATE TABLE IF NOT EXISTS version(
+    bullet int PRIMARY KEY DEFAULT nextval('custom_bullet_seq'),
+    start TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 -- 動態字型對應表格
 CREATE TABLE IF NOT EXISTS dynamic_fonts (
@@ -35,7 +31,7 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts (
     last_use TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- text TEXT NOT NULL,這應該放在流水紀錄裡面
-    hash CHAR(40) NOT NULL,
+    hash CHAR(40) NOT NULL UNIQUE,
     FOREIGN KEY (family_id) REFERENCES font_family(id)
 );
 

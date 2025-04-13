@@ -2,39 +2,66 @@
 //依照字頻表分裝檔案 (開機時重切)
 import { db } from "./database.js";
 import { generateFont, readFontBuffer } from "./font_min.js";
-import { uploadToR2, checkR2FileExists } from "./r2.js";
+import {  checkR2FileExists } from "./r2.js";
 import { Font } from "fonteditor-core";
-import { fileURLToPath } from "url";
-import path from "path";
-async function gen_static_font(ff_name, support_weights, words, pack, r2 = false) {
+async function gen_static_font(ff_name, support_weights, words, pack, version,r2 = false) {
     try {
-        let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${ff_name}-${support_weights}`);
-        if (generated.status === "failed") return generated;
-        if (!r2) return true;
-        const generated_font_path = path.join(path.dirname(fileURLToPath(import.meta.url)), "_data", "_generated", `${ff_name}-${support_weights}`, `${pack}.woff2`);
-        await uploadToR2(generated_font_path, `${ff_name}-${support_weights}/${pack}.woff2`);
+        console.log("生成！",pack)
+        //todo:靜態請求沒有找到檔案也要去重新生成，那邊的請求檔名也要加　version 作為前綴
+        let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${version}-${ff_name}-${support_weights}`);
+        if (generated.status === "failed") 
+            {
+                console.log(generated.message)
+                return generated;
+            }
+        //todo:使用超過　3　次才上傳。靜態請求有時候會要傳本地路徑，還要改give_static_font
+        // if (!r2) return true;
+        // const generated_font_path = path.join(path.dirname(fileURLToPath(import.meta.url)), "_data", "_generated", `${version}-${ff_name}-${support_weights}`, `${pack}.woff2`);
+        // await uploadToR2(generated_font_path, `${ff_name}-${support_weights}/${pack}.woff2`);
         return { status: "success" };
     } catch (err) {
         return new Error(err);
     }
 }
 
-async function regenerateAllStaticFont(state) {
+async function regenerateAllStaticFont(state,have_gen_list) {
+    //!!pack_status　表格已經刪除，須移除相關內容
     // list all have to regenerate fonts family and theirs support weights .
     //regen rules: no record in pack_status history or over 1 month haven't regen
-    const all_need_gen_fonts = (
+    try{
+
+    
+    const all_fonts = (
         await db.query(
             `SELECT ff.id AS ff_name, w AS support_weights
             FROM font_family ff
             JOIN LATERAL unnest(ff.weights) AS w ON true
-            LEFT JOIN pack_status ss
-                ON ff.id = ss.family AND ss.weights = w
-            WHERE ss.family IS NULL
-            OR ss.last_update < NOW() - INTERVAL '1 month';`
+            ;`
         )
     ).rows;
-    for (const { ff_name, support_weights } of all_need_gen_fonts) {
-        // read all font 隨便選一個字重(假設相同字型，不同字重的支援度一樣)
+    const version_num = (
+        await db.query(
+        `
+        SELECT bullet from version order BY start DESC limit 1;
+        `
+    )).rows[0].bullet
+    for (const { ff_name, support_weights } of all_fonts) {
+        const this_font = {
+            version:version_num,
+            fontName: ff_name, // 字型名稱（資料夾名稱）
+            weight: support_weights // 字型的 weight（檔案名稱中的數字）
+        };
+        console.log(this_font)
+        const exists = have_gen_list.some(item =>
+            item.version == this_font.version &&//自動轉型，this_font都是數字，但have_gen_list生成的時候因為讀檔案列表是字串
+            item.fontName === this_font.fontName &&
+            item.weight == this_font.weight
+        );
+        console.log(have_gen_list,exists)
+        if(exists) continue;//如果已經生成過這個靜態字型放在本地就不再生成
+        console.log(`生成 ${ff_name}-${support_weights} 的靜態字型`)
+        //重新生成
+        //檢查本地有沒有此字型的靜態版本
         const fontData = await readFontBuffer(ff_name, support_weights);
         const buffer = fontData.buffer;
         const font = Font.create(buffer, {
@@ -170,7 +197,7 @@ async function regenerateAllStaticFont(state) {
             const tasks = batch.map(({ pack, words }) => {
                 const padded_pack = pack.toString().padStart(2, "0");
                 
-                return gen_static_font(ff_name, support_weights, words, padded_pack, buffer, state.r2)
+                return gen_static_font(ff_name, support_weights, words, padded_pack, version_num,buffer,state.r2)
                     .then(result => {
                         return {
                         success: result.status =="success",
@@ -204,13 +231,8 @@ async function regenerateAllStaticFont(state) {
             const { pack, success, errorMsg } = res;
 
             if (success) {
-                await db.query(
-                    `INSERT INTO pack_status (family, weights, last_update)
-                     VALUES ($1, $2, CURRENT_TIMESTAMP)
-                     ON CONFLICT (family, weights)
-                     DO UPDATE SET last_update = CURRENT_TIMESTAMP;`,
-                    [ff_name, support_weights]
-                );
+                //todo:資料庫更新一下狀態？
+                continue;
             } else {
                 console.log(res);
                 console.log(`${ff_name} ${support_weights} pack ${pack} 生成失敗`);
@@ -220,7 +242,11 @@ async function regenerateAllStaticFont(state) {
         await db.query("COMMIT");
         console.log(`✅ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
     }
-
+    }
+    catch(err)
+    {
+        console.log(err)
+    }
     console.log("✨ 所有靜態字體生成完成！");
 
 }
