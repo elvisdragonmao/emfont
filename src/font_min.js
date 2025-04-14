@@ -79,8 +79,6 @@ async function generateFont(
 
     // 寫入檔案
     fs.writeFileSync(outputPath, outBuffer);
-
-    console.log("✅ 字體生成成功:", outputPath);
     return {
         status: "success",
         location: outputPath
