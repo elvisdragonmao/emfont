@@ -7,9 +7,11 @@ import { Font } from "fonteditor-core";
 import { Worker } from "worker_threads";
 import path from "path";
 import os from "os";
-
+const __dirname = import.meta.dirname;
 const cpuCount = os.cpus().length;
 const runWorker = data => {
+    try
+    {
     return new Promise((resolve, reject) => {
         const worker = new Worker(path.resolve(__dirname, "font_nomin_worker.js"), {
             workerData: data
@@ -27,6 +29,11 @@ const runWorker = data => {
             if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
         });
     });
+}
+catch(err)
+{
+    console.log(err);
+}
 };
 
 async function regenerateAllStaticFont(state, have_gen_list) {
@@ -71,7 +78,6 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             }
             console.log(`╔ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
             //重新生成
-            //檢查本地有沒有此字型的靜態版本
             const fontData = await readFontBuffer(ff_name, support_weights);
             const buffer = fontData.buffer;
             const font = Font.create(buffer, {
@@ -201,7 +207,6 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 
             for (let i = 0; i < word_package_pair.length; i += batchSize) {
                 const batch = word_package_pair.slice(i, i + batchSize);
-
                 const tasks = batch.map(({ pack, words }) => {
                     const padded_pack = pack.toString().padStart(2, "0");
                     return runWorker({
@@ -225,6 +230,12 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 
                 for (const res of settled) {
                     if (res.status === "fulfilled") {
+                        if(res.value.success==false)
+                        {
+                            console.log("生成靜態字型的多執行序發生錯誤！生成中斷！")
+                            throw new Error(JSON.stringify(res.value))
+
+                        }
                         results.push(res.value);
                     } else {
                         results.push({
