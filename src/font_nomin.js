@@ -6,7 +6,7 @@ import { checkR2FileExists } from "./r2.js";
 import { Font } from "fonteditor-core";
 async function gen_static_font(ff_name, support_weights, words, pack, version, r2 = false) {
     try {
-        console.log("生成！", pack);
+        process.stdout.write("\r╚  正在生成第 " + pack + " 包");
         //todo:靜態請求沒有找到檔案也要去重新生成，那邊的請求檔名也要加　version 作為前綴
         let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${version}-${ff_name}-${support_weights}`);
         if (generated.status === "failed") {
@@ -50,11 +50,12 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 const { rows } = await db.query(`SELECT COUNT(DISTINCT pack) AS count FROM static_fonts`);
                 const lastPackCount = rows[0]?.count ?? 0;
                 console.log(exists.files.length, lastPackCount);
-                if (exists.files.length >= lastPackCount) {
+                if (exists.files.length == lastPackCount) {
                     let regenerate = false;
-                    for (let i = 0; i < lastPackCount; i++) {
-                        const pack = (i + 1).toString().padStart(2, "0");
+                    for (let j = 0; j < lastPackCount - 1; j++) {
+                        const pack = (j + 1).toString().padStart(2, "0");
                         if (!exists.files.includes(pack)) {
+                            console.log("╠ ", ff_name, support_weights, "的第", pack, "包不存在，全部重新生成。");
                             regenerate = true;
                             break;
                         }
@@ -62,7 +63,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     if (!regenerate) continue;
                 }
             }
-            console.log(`✅ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
+            console.log(`╔ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
             //重新生成
             //檢查本地有沒有此字型的靜態版本
             const fontData = await readFontBuffer(ff_name, support_weights);
@@ -73,16 +74,11 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 kerning: true
             });
             const fontObject = font.get();
-            // cmap: maps Unicode code points to glyph index
             const cmap = fontObject.cmap;
-
             const charArray = Object.keys(cmap)
                 .map(code => String.fromCodePoint(parseInt(code)))
                 .filter(char => char !== "\x00"); // 過濾掉 0x00 字元
-            console.log(ff_name, support_weights, "有", charArray.length + "個字");
-
-            await db.query("BEGIN");
-
+            console.log("╠ ", ff_name, support_weights, "有", charArray.length, "個字");
             // 1. 查出已經存在的字
             const { rows: existing } = await db.query("SELECT char FROM static_fonts WHERE char = ANY($1)", [charArray]);
             const existingChars = new Set(existing.map(row => row.char));
@@ -90,9 +86,8 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             // 2. 找出還沒出現在資料庫的字
             const newChars = charArray.filter(char => !existingChars.has(char));
             const oldChars = charArray.filter(char => existingChars.has(char));
-
             if (newChars.length === 0) {
-                console.log("沒有新字要插入");
+                console.log("╠ 沒有新字要插入");
             }
 
             // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
@@ -111,6 +106,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 currentPack = parseInt(lastPackRows[0].pack);
                 packCount = parseInt(lastPackRows[0].count);
             }
+            console.log("╠ 目前最大的 pack 編號:", currentPack, "，裡面有", packCount, "個字");
 
             const inserts = [];
 
@@ -176,9 +172,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
       `;
 
             await db.query(updateSQL, bindings);
-            await db.query("COMMIT");
-            console.log(`已更新 ${updateMap.size} 筆字元`);
-
+            console.log("╠  已更新", updateMap.size, "筆字元");
             const word_package_pair = (
                 await db.query(
                     `SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts
@@ -231,6 +225,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     }
                 }
             }
+            console.log("");
 
             for (const res of results) {
                 const { pack, success, errorMsg } = res;
@@ -240,7 +235,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     continue;
                 } else {
                     console.log(res);
-                    console.log(`${ff_name} ${support_weights} pack ${pack} 生成失敗`);
+                    console.error(`${ff_name} ${support_weights} pack ${pack} 生成失敗`);
                 }
             }
             await db.query("COMMIT");

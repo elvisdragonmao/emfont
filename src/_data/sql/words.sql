@@ -1,5 +1,5 @@
 -- delete all data
-DELETE FROM static_fonts;
+-- DELETE FROM static_fonts;
 -- 全形字
 INSERT INTO static_fonts(char, pack) VALUES ('！', 0) ON CONFLICT (char) DO NOTHING;
 INSERT INTO static_fonts(char, pack) VALUES ('＂', 0) ON CONFLICT (char) DO NOTHING;
