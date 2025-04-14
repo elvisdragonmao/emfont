@@ -152,39 +152,44 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     await db.query(`INSERT INTO static_fonts (char, pack, families) VALUES ${values.join(",")}`, params);
                 }
             }
-
             const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
 
             // 建立更新對應 Map<char, updated_families[]>
             const updateMap = new Map();
-
             for (const row of rows) {
                 const set = new Set(row.families); // 避免重複
                 set.add(ff_name); // 加入新字型名
                 updateMap.set(row.char, Array.from(set));
+                
             }
 
             // 準備 SQL VALUES 和綁定參數
             const values = [];
             const bindings = [];
+            const value=[];
+            const chars=[];
             let paramIndex = 1;
-
             for (const [char, families] of updateMap.entries()) {
                 values.push(`($${paramIndex}::text[], $${paramIndex + 1}::text)`);
+                chars.push(char);
+                families.push(families);
                 bindings.push(families);
                 bindings.push(char);
                 paramIndex += 2;
             }
-
+            console.log(values)
+            
+              
             const updateSQL = `
-                UPDATE static_fonts AS sf
-                SET families = v.families
-                FROM (
-                  VALUES
-                    ${values.join(",\n")}
-                ) AS v(families, char)
-                WHERE sf.char = v.char
-              `;
+            UPDATE static_fonts AS sf
+            SET families = ARRAY[unnest.families]
+            FROM (
+              SELECT unnest($1::text[]) AS char, unnest($2::text[]) AS families
+            ) AS unnest
+            WHERE sf.char = unnest.char
+              AND NOT (unnest.families = ANY(sf.families));
+          `;
+              console.log(bindings)
             await db.query(updateSQL, bindings);
 
             console.log("╠  已更新", updateMap.size, "筆字元");
