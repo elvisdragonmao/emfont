@@ -1,0 +1,48 @@
+name: 字體請求 Font Request
+description: 撐爆我們的硬碟吧！Fill our hard drive!
+title: '[Font]: '
+labels: ['font-request']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感謝你花時間推薦我們字體！
+        Thanks for taking the time to recommend us a font!
+  - type: input
+    id: fontname
+    attributes:
+      label: 字體原始名稱 Font Name
+      description: >
+        你推薦的字體名稱是甚麼？ What is the name of the font you recommend?
+      placeholder: '請輸入字體原始名稱，如如果是日文，請輸入日文名稱。Please enter the original name of the font, such as the Japanese name if it is in Japanese.'
+      validations:
+        required: true
+  - type: input
+    id: fontnameTranslation
+    attributes:
+      label: 字體名稱翻譯 Font Name Translation
+      description: >
+        這個字體有中文、英文的名稱嗎？ Does this font have a Chinese or English name?
+      placeholder: '請輸入字體名稱翻譯 Please enter the font name translation'
+  - type: input
+    id: fonturl
+    attributes:
+      label: 字體下載網址 Font Download URL
+      description: >
+        這個字體的下載網址是甚麼？ What is the download URL for this font?
+      placeholder: 'Eg: https://github.com/ButTaiwan/iansui'
+      validations:
+        required: true
+  - type: dropdown
+    id: lisence
+    attributes:
+      label: 字體授權 Font License
+      description: >
+        請確認這個字體是可以免費使用的。
+      multiple: true
+      options:
+        - SIL Open Font License
+        - OFL
+        - Apache License
+        - MIT License
+        - Other
