@@ -1,27 +1,33 @@
 //切割靜態字型檔（非極致壓縮）
 //依照字頻表分裝檔案 (開機時重切)
 import { db } from "./database.js";
-import { generateFont, readFontBuffer } from "./font_min.js";
+import { readFontBuffer } from "./font_min.js";
 import { checkR2FileExists } from "./r2.js";
 import { Font } from "fonteditor-core";
-async function gen_static_font(ff_name, support_weights, words, pack, version, r2 = false) {
-    try {
-        process.stdout.write("\r╚  正在生成第 " + pack + " 包");
-        //todo:靜態請求沒有找到檔案也要去重新生成，那邊的請求檔名也要加　version 作為前綴
-        let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${version}-${ff_name}-${support_weights}`);
-        if (generated.status === "failed") {
-            console.log(generated.message);
-            return generated;
-        }
-        //todo:使用超過　3　次才上傳。靜態請求有時候會要傳本地路徑，還要改give_static_font
-        // if (!r2) return true;
-        // const generated_font_path = path.join(path.dirname(fileURLToPath(import.meta.url)), "_data", "_generated", `${version}-${ff_name}-${support_weights}`, `${pack}.woff2`);
-        // await uploadToR2(generated_font_path, `${ff_name}-${support_weights}/${pack}.woff2`);
-        return { status: "success" };
-    } catch (err) {
-        return new Error(err);
-    }
-}
+import { Worker } from "worker_threads";
+import path from "path";
+import os from "os";
+
+const cpuCount = os.cpus().length;
+const runWorker = data => {
+    return new Promise((resolve, reject) => {
+        const worker = new Worker(path.resolve(__dirname, "font_nomin_worker.js"), {
+            workerData: data
+        });
+
+        worker.on("message", result => {
+            resolve(result);
+        });
+
+        worker.on("error", error => {
+            reject(error);
+        });
+
+        worker.on("exit", code => {
+            if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+        });
+    });
+};
 
 async function regenerateAllStaticFont(state, have_gen_list) {
     //!!pack_status　表格已經刪除，須移除相關內容
@@ -188,29 +194,30 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 
             // 並行生成所有 pack
             const results = [];
-            let batchSize = 3; // 一次處理的包數量
+            let batchSize = cpuCount;
+
             for (let i = 0; i < word_package_pair.length; i += batchSize) {
                 const batch = word_package_pair.slice(i, i + batchSize);
 
                 const tasks = batch.map(({ pack, words }) => {
                     const padded_pack = pack.toString().padStart(2, "0");
-
-                    return gen_static_font(ff_name, support_weights, words, padded_pack, version_num, buffer, state.r2)
-                        .then(result => {
-                            return {
-                                success: result.status == "success",
-                                res: result,
-                                pack: padded_pack,
-                                rawPack: pack
-                            };
-                        })
-                        .catch(error => ({
-                            success: false,
-                            errorMsg: error.message || "Unknown error",
-                            pack: padded_pack,
-                            rawPack: pack
-                        }));
+                    return runWorker({
+                        ff_name,
+                        support_weights,
+                        words,
+                        padded_pack,
+                        version_num,
+                        buffer,
+                        r2: state.r2,
+                        rawPack: pack
+                    }).catch(error => ({
+                        success: false,
+                        errorMsg: error.message || "Unknown error",
+                        pack: padded_pack,
+                        rawPack: pack
+                    }));
                 });
+
                 const settled = await Promise.allSettled(tasks);
 
                 for (const res of settled) {
@@ -225,19 +232,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     }
                 }
             }
-            console.log("");
 
-            for (const res of results) {
-                const { pack, success, errorMsg } = res;
-
-                if (success) {
-                    //todo:資料庫更新一下狀態？
-                    continue;
-                } else {
-                    console.log(res);
-                    console.error(`${ff_name} ${support_weights} pack ${pack} 生成失敗`);
-                }
-            }
             await db.query("COMMIT");
         }
     } catch (err) {

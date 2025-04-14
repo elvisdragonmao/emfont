@@ -36,20 +36,20 @@ export default async state => {
     const stat = promisify(fs.stat);
 
     //刪除本地src/_data/fonts/裡面的所有東西
-    const all_files_in_folder = await readdir(sotrge_original_fontsDir);
+    // const all_files_in_folder = await readdir(sotrge_original_fontsDir);
 
-    // 刪除所有檔案
-    for (const one_font_family of all_files_in_folder) {
-        const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
-        const stats = await stat(itemPath);
-        if (stats.isDirectory()) {
-            await fs.promises.rm(itemPath, { recursive: true, force: true });
-        } else {
-            await fs.promises.unlink(itemPath);
-        }
-    }
+    // // 刪除所有檔案
+    // for (const one_font_family of all_files_in_folder) {
+    //     const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
+    //     const stats = await stat(itemPath);
+    //     if (stats.isDirectory()) {
+    //         await fs.promises.rm(itemPath, { recursive: true, force: true });
+    //     } else {
+    //         await fs.promises.unlink(itemPath);
+    //     }
+    // }
 
-    console.log("✅ 本地字體檔案已清除");
+   // console.log("✅ 本地字體檔案已清除");
 
     // 從 MinIO 抓取檔案，確保下載完成Ｆ
     const prefix = "original-fonts";
@@ -72,6 +72,14 @@ export default async state => {
             listResponse.Contents.map(async file => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
+                const localPath = path.join("src", "_data", fileKey);
+
+                // check if file already exists
+                const localFileExists = fs.existsSync(localPath);
+                if (localFileExists) {
+                    console.log(`✅ ${fileKey} 已經存在，跳過下載`);
+                    return;
+                }
 
                 const getCommand = new GetObjectCommand({
                     Bucket: bucketName,
@@ -79,8 +87,6 @@ export default async state => {
                 });
 
                 const data = await LOCAL_MINIO_CLIENT.send(getCommand);
-
-                const localPath = path.join("src", "_data", fileKey);
                 const localDir = path.dirname(localPath);
                 fs.mkdirSync(localDir, { recursive: true });
 

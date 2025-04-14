@@ -59,31 +59,37 @@ async function insertFontTypes() {
         console.log(`📦 收錄 ${fontData.length} 個字體`);
         if (skipped.length > 0) console.warn(`⏭️ 已跳過: ${skipped.join(", ")}`);
         if (fontData.length === 0) throw new Error("🔍 沒有找到任何字體");
-        //clear avaible font-weight. it will regenerate in for loop below
+
+        // 清空全部 weights
         await db.query("UPDATE font_family SET weights = ARRAY[]::smallint[]");
+
+        // 建立一個暫存物件來聚集每個字體的 weights
+        const fontWeightsMap = new Map();
+
         for (const { fontName, weight } of fontData) {
-            // console.log(fontName, typeof fontName, weight, typeof parseInt(weight));
-            const qresult_font_family = await db.query(
-                // if someone `font-family` row has exist but not this weight, then add this weight to the array
-                `
-                        SELECT id,repo_url from font_family WHERE id= $1;
-                        `,
-                [fontName]
-            ); //表格內目前的字型名稱大小寫和檔案的大小寫不一樣
-            const verify_font_file = qresult_font_family.rows[0]; //can use .id ,.repo_url get vaild value
-            // console.log(typeof(verify_font_file),verify_font_file)
-            if (!verify_font_file) {
-                console.warn(`❔ 資料庫不認識: ${fontName}-${weight}`);
+            if (!fontWeightsMap.has(fontName)) {
+                fontWeightsMap.set(fontName, new Set());
+            }
+            fontWeightsMap.get(fontName).add(parseInt(weight));
+        }
+
+        // 把所有 fontName 一次查詢（避免每次都查一次 DB）
+        const fontNames = Array.from(fontWeightsMap.keys());
+        const result = await db.query(`SELECT id FROM font_family WHERE id = ANY($1)`, [fontNames]);
+
+        const validFontIds = new Set(result.rows.map(row => row.id));
+
+        for (const [fontName, weightsSet] of fontWeightsMap.entries()) {
+            if (!validFontIds.has(fontName)) {
+                console.warn(`❔ 資料庫不認識: ${fontName}`);
                 continue;
             }
-            //if database does't exist this weight record , append it in arrary
-            await db.query(
-                `UPDATE font_family SET weights =
-                                        array_append(COALESCE(weights, '{}'), $1)
-                                        WHERE id = $2 AND NOT ($1 = ANY(weights));`,
-                [weight, fontName]
-            );
+
+            // 把 set 轉成 array，並寫入資料庫
+            const weights = Array.from(weightsSet);
+            await db.query(`UPDATE font_family SET weights = $1 WHERE id = $2`, [weights, fontName]);
         }
+
         console.log("✅ 字體資料已更新");
     } catch (error) {
         console.error(`Error when check font file`, error);

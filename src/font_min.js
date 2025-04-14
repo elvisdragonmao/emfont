@@ -40,54 +40,52 @@ async function generateFont(
     put_folder = "_data/_generated", //default
     buffer = null
 ) {
-    try{
-    // 如果沒提供 buffer，就讀取字型檔
-    let type, success;
-    if (!buffer) {
-        ({ buffer, type, success } = await readFontBuffer(originalFontFamily, font_weight));
+    try {
+        // 如果沒提供 buffer，就讀取字型檔
+        let type, success;
+        if (!buffer) {
+            ({ buffer, type, success } = await readFontBuffer(originalFontFamily, font_weight));
+        }
+        if (!success) {
+            return { status: "failed", message: "emfont can't read original font, please try again later.", location: "null" };
+        }
+
+        // 將文字轉成 Unicode 編碼 (code point)
+        const subsetCodePoints = Array.from(new Set(words)).map(ch => ch.codePointAt(0));
+        await woff2.init(); //  初始化 woff2 WASM 模組
+
+        // 使用 fonteditor-core 讀入字型
+        const font = Font.create(buffer, {
+            type: type,
+            subset: subsetCodePoints,
+            hinting: true,
+            compound2simple: true,
+            inflate: null
+        });
+
+        // 儲存為 .woff 格式的 buffer
+        const outBuffer = font.write({
+            type: "woff2",
+            hinting: false,
+            deflate: woff2.encode
+        });
+
+        // 確保資料夾存在
+        const destFolder = path.join(__dirname, put_folder);
+        fs.mkdirSync(destFolder, { recursive: true });
+
+        // 輸出路徑
+        const outputPath = path.join(destFolder, `${output_name}`);
+
+        // 寫入檔案
+        fs.writeFileSync(outputPath, outBuffer);
+        return {
+            status: "success",
+            location: outputPath
+        };
+    } catch (err) {
+        console.error(err);
     }
-    if (!success) {
-        return { status: "failed", message: "emfont can't read original font, please try again later." ,location: "null"};
-    }
-
-    // 將文字轉成 Unicode 編碼 (code point)
-    const subsetCodePoints = Array.from(new Set(words)).map(ch => ch.codePointAt(0));
-    await woff2.init(); //  初始化 woff2 WASM 模組
-
-    // 使用 fonteditor-core 讀入字型
-    const font = Font.create(buffer, {
-        type: type,
-        subset: subsetCodePoints,
-        hinting: true,
-        compound2simple: true,
-        inflate: null
-    });
-
-    // 儲存為 .woff 格式的 buffer
-    const outBuffer = font.write({
-        type: "woff2",
-        hinting: false,
-        deflate: woff2.encode
-    });
-
-    // 確保資料夾存在
-    const destFolder = path.join(__dirname, put_folder);
-    fs.mkdirSync(destFolder, { recursive: true });
-
-    // 輸出路徑
-    const outputPath = path.join(destFolder, `${output_name}`);
-
-    // 寫入檔案
-    fs.writeFileSync(outputPath, outBuffer);
-    return {
-        status: "success",
-        location: outputPath
-    };
-}
-catch(err)
-{
-    console.error(err);
-}
 }
 async function find_dynamic_font( //return a R2 url client need
     word_hash,
