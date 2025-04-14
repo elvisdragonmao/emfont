@@ -29,6 +29,8 @@ async function executeSQLFile(filePath) {
 //check database
 async function insertFontTypes() {
     try {
+        if (!fs.existsSync(sotrge_original_fontsDir)) fs.mkdirSync(sotrge_original_fontsDir, { recursive: true });
+        if (!fs.existsSync(sotrge_generated_fontsDir)) fs.mkdirSync(sotrge_generated_fontsDir, { recursive: true });
         // 取得 `sotrge_original_fontsDir` 下的所有子項目
         const ALL_FONTS_dir = await readdir(sotrge_original_fontsDir);
         const fontData = [];
@@ -88,31 +90,37 @@ async function insertFontTypes() {
         throw error;
     }
 }
-async function get_generated_static_floders() {//取得已生成放置在本地的靜態字型有哪些
+async function get_generated_static_floders() {
+    //取得已生成放置在本地的靜態字型有哪些
     const ALL_FONTS_dir = await readdir(sotrge_generated_fontsDir);
-        const fontData = [];
-        for (const one_font_family of ALL_FONTS_dir) {
-            const itemPath = path.join(sotrge_generated_fontsDir, `${one_font_family}`);
-            const stats = await stat(itemPath);
-            //跳過檔案，只取資料夾，這些才是放靜態字型的地方
-            if (stats.isFile()) continue;
-            // 讀取該資料夾的檔名
-                // 配對格式：數字-字串-數字，例如 101-HazyGo975-1 或 700-LXGWWenKaiTCMono-300
-                const match = one_font_family.match(/^(\d+)-([a-zA-Z0-9]+)-(\d+)$/);
+    const fontData = [];
+    for (const one_font_family of ALL_FONTS_dir) {
+        const itemPath = path.join(sotrge_generated_fontsDir, `${one_font_family}`);
+        const stats = await stat(itemPath);
+        //跳過檔案，只取資料夾，這些才是放靜態字型的地方
+        if (stats.isFile()) continue;
+        // 讀取該資料夾的檔名
+        // 配對格式：數字-字串-數字，例如 101-HazyGo975-1 或 700-LXGWWenKaiTCMono-300
+        const match = one_font_family.match(/^(\d+)-([a-zA-Z0-9]+)-(\d+)$/);
+        if (match) {
+            // get file list
+            const fontFiles = await readdir(itemPath);
+            // 取得檔名 00.woff2 的數字部分
+            const files = fontFiles.map(file => {
+                const match = file.match(/(\d+)\.woff2$/);
                 if (match) {
-                    //[0] 是全部字串
-                    const ver = match[1]; // 取得數字部分作為 version 版本號
-                    const font_id = match[2];
-                    const weight = match[3];
-                    fontData.push({
-                        version:ver,
-                        fontName: font_id, // 字型名稱（資料夾名稱）
-                        weight: weight // 字型的 weight（檔案名稱中的數字）
-                    });
-                } 
-            
+                    return match[1]; // 取得數字部分
+                }
+            });
+            fontData.push({
+                version: match[1],
+                fontName: match[2], // 字型名稱（資料夾名稱）
+                weight: match[3], // 字型的 weight（檔案名稱中的數字）
+                files
+            });
         }
-    return fontData
+    }
+    return fontData;
 }
 async function initCheck(state) {
     try {
@@ -123,7 +131,7 @@ async function initCheck(state) {
         await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await insertFontTypes();
         const have_gen_list = await get_generated_static_floders();
-        await regenerateAllStaticFont(state,have_gen_list);
+        await regenerateAllStaticFont(state, have_gen_list);
         state.alive = true;
         return true;
     } catch (err) {

@@ -15,7 +15,8 @@ const s3Client = new S3Client({
 
 // 初始化 R2
 const initR2 = async state => {
-    listFontsTopLevel();
+    // 沒用我先註解掉，記得應該要移到 init.js initR2 之後，不是在這裡呼叫。
+   // listFontsTopLevel();
     try {
         if (!process.env.R2_ENDPOINT || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME) {
             console.log("🏠 R2 沒有設定，會在本地提供字體");

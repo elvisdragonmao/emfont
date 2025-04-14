@@ -17,7 +17,9 @@ CREATE TABLE IF NOT EXISTS font_family (
     authors TEXT[] DEFAULT ARRAY[]::TEXT[], -- 作者
     CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'))
 );
+
 CREATE SEQUENCE IF NOT EXISTS custom_bullet_seq START WITH 100;
+
 CREATE TABLE IF NOT EXISTS version(
     bullet int PRIMARY KEY DEFAULT nextval('custom_bullet_seq'),
     start TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
