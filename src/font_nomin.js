@@ -92,9 +92,6 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             // 2. 找出還沒出現在資料庫的字
             const newChars = charArray.filter(char => !existingChars.has(char));
             const oldChars = charArray.filter(char => existingChars.has(char));
-            if (newChars.length === 0) {
-                console.log("╠ 沒有新字要插入");
-            }
 
             // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
             const { rows: lastPackRows } = await db.query(
@@ -114,70 +111,76 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             }
             console.log("╠ 目前最大的 pack 編號:", currentPack, "，裡面有", packCount, "個字");
 
-            const inserts = [];
+            if (newChars.length === 0) {
+                console.log("╠ 沒有新字要插入");
+            } else {
+                const inserts = [];
 
-            for (const char of newChars) {
-                if (packCount >= 90) {
-                    currentPack += 1;
-                    packCount = 0;
+                for (const char of newChars) {
+                    if (packCount >= 90) {
+                        currentPack += 1;
+                        packCount = 0;
+                    }
+
+                    inserts.push({
+                        char,
+                        pack: currentPack,
+                        families: [ff_name]
+                    });
+
+                    packCount += 1;
                 }
 
-                inserts.push({
-                    char,
-                    pack: currentPack,
-                    families: [ff_name]
-                });
+                // 4. 把新字 insert 進去
+                for (let i = 0; i < inserts.length; i += 1000) {
+                    const batch = inserts.slice(i, i + 1000);
+                    const values = [];
+                    const params = [];
 
-                packCount += 1;
-            }
-
-            // 4. 把新字 insert 進去
-            for (let i = 0; i < inserts.length; i += 1000) {
-                const batch = inserts.slice(i, i + 1000);
-                const values = [];
-                const params = [];
-
-                batch.forEach(({ char, pack, families }, index) => {
-                    const baseIndex = index * 3;
-                    values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
-                    params.push(char, pack, families);
-                });
-                //console.log("正在插入第", i, "到", i + batch.length, "個字");
-                await db.query(`INSERT INTO static_fonts (char, pack, families) VALUES ${values.join(",")}`, params);
+                    batch.forEach(({ char, pack, families }, index) => {
+                        const baseIndex = index * 3;
+                        values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
+                        params.push(char, pack, families);
+                    });
+                    //console.log("正在插入第", i, "到", i + batch.length, "個字");
+                    await db.query(`INSERT INTO static_fonts (char, pack, families) VALUES ${values.join(",")}`, params);
+                }
             }
 
             const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
-            // 先處理好合併邏輯
+
+            // 建立更新對應 Map<char, updated_families[]>
             const updateMap = new Map();
 
             for (const row of rows) {
-                const set = new Set(row.families);
-                set.add(ff_name);
+                const set = new Set(row.families); // 避免重複
+                set.add(ff_name); // 加入新字型名
                 updateMap.set(row.char, Array.from(set));
             }
 
-            //  建一個對應用的 VALUES 表格，然後一次更新
+            // 準備 SQL VALUES 和綁定參數
             const values = [];
             const bindings = [];
             let paramIndex = 1;
 
             for (const [char, families] of updateMap.entries()) {
                 values.push(`($${paramIndex}::text[], $${paramIndex + 1}::text)`);
-                bindings.push(families, char);
+                bindings.push(families);
+                bindings.push(char);
                 paramIndex += 2;
             }
 
             const updateSQL = `
-        UPDATE static_fonts AS sf
-        SET families = v.families
-        FROM (
-          VALUES
-            ${values.join(",\n")}
-        ) AS v(families, char)
-        WHERE sf.char = v.char
-      `;
-
+                UPDATE static_fonts AS sf
+                SET families = v.families
+                FROM (
+                  VALUES
+                    ${values.join(",\n")}
+                ) AS v(families, char)
+                WHERE sf.char = v.char
+              `;
             await db.query(updateSQL, bindings);
+
             console.log("╠  已更新", updateMap.size, "筆字元");
             const word_package_pair = (
                 await db.query(
