@@ -54,7 +54,7 @@ a:hover {
 img {
     display: block;
     max-width: 100%;
-    color:transparent;
+    color: transparent;
 }
 
 button {
@@ -453,6 +453,13 @@ body:has(.home) {
 .search-container::-webkit-scrollbar .info-container::-webkit-scrollbar {
     display: none; /* Safari and Chrome */
 }
+.font h1 {
+    margin-bottom: 0.6rem;
+}
+
+.info-container h1 + p {
+    margin-bottom: 1.3rem;
+}
 
 .fonts .header-links::before {
     content: "";
@@ -476,9 +483,24 @@ body:has(.home) {
     color: #43e7f3;
 }
 
+/* a.navigation {
+    padding-left: 1.2rem;
+    position: relative;
+} */
+
 .navigation img {
     width: 0.6875rem;
     margin-right: 0.5rem;
+    transition: all 0.3s ease-out;
+}
+
+.navigation:hover img {
+    transform: translateX(0.3rem);
+    
+}
+
+.font .navigation img {
+    filter: brightness(0%) invert(55%) sepia(46%) saturate(3414%) hue-rotate(194deg) brightness(100%) contrast(101%);
 }
 
 .fonts .search-container > .navigation {
@@ -578,7 +600,7 @@ h2 {
     color: var(--slate-100);
 }
 
-.font-tags > a:hover{
+.font-tags > a:hover {
     background-color: var(--slate-500);
 }
 
@@ -739,8 +761,8 @@ a.font-item:hover {
     cursor: pointer;
     transition: background-color 0.3s ease-out;
 }
-.font-class:hover{
-   --background: var(--slate-600);
+.font-class:hover {
+    --background: var(--slate-600);
 }
 
 .font-class div {
@@ -777,7 +799,6 @@ a.font-item:hover {
     color: transparent;
 }
 
-.font h1,
 .font-tags,
 .font p {
     margin-bottom: 1.2rem;
@@ -929,4 +950,14 @@ footer {
 
 .language {
     color: var(--slate-400);
+}
+
+.section-font-container:has(.no-result) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+}
+.section-font-container {
+    padding: 2rem 3rem 2rem 2rem;
 }
