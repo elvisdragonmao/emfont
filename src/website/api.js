@@ -76,7 +76,6 @@ export default async (app, state) => {
 
     app.get("/info/:fontID", async (req, res) => {
         const fontID = req.params.fontID;
-
         try {
             const { rows } = await db.query(
                 `
@@ -87,14 +86,9 @@ export default async (app, state) => {
             `,
                 [fontID]
             );
-
-            if (rows.length === 0) {
-                return res.status(404).send({ status: "failed", message: "Font not found" });
-            }
-
+            if (rows.length === 0) return res.status(404).send({ status: "failed", message: "Font not found" });
             const font = rows[0];
-
-            const result = {
+            res.send({
                 name: {
                     original: font.name,
                     zh: font.name_zh,
@@ -109,9 +103,7 @@ export default async (app, state) => {
                 source: font.source,
                 author: font.authors?.[0] || null,
                 description: font.description
-            };
-
-            res.send(result);
+            });
         } catch (err) {
             console.error("讀取字體資訊失敗", err.stack);
             res.status(500).send("Database query failed");

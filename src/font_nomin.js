@@ -8,7 +8,7 @@ import { Worker } from "worker_threads";
 import path from "path";
 import os from "os";
 const __dirname = import.meta.dirname;
-const cpuCount = os.cpus().length - 2;
+const cpuCount = os.cpus().length + 4// - 2;
 console.log(cpuCount);
 const runWorker = data => {
     try {

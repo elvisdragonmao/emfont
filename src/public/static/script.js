@@ -1,7 +1,5 @@
 emfont.init({
-    colorTest: true,
-    caseSensitive: true,
-    weight: 100
+    colorTest: true
 });
 
 const marqueeSet = () => {
@@ -21,16 +19,17 @@ window.addEventListener("resize", () => {
 const pages = ["home", "about", "font", "fonts", "login", "logout", "dashboard"];
 const mobileToggle = document.getElementById("mobileToggle");
 
-document.querySelectorAll("a").forEach(link => {
-    link.addEventListener("click", event => {
-        const href = link.getAttribute("href");
-        if (href.startsWith("/")) {
-            if (href.startsWith("/docs")) return;
-            event.preventDefault();
-            updateMain(href);
-            history.pushState({}, "", href);
-        }
-    });
+document.body.addEventListener("click", event => {
+    const link = event.target.closest("a");
+    if (!link) return;
+
+    const href = link.getAttribute("href");
+    if (!href.startsWith("/")) return;
+    if (href.startsWith("/docs")) return;
+
+    event.preventDefault();
+    updateMain(href);
+    history.pushState({}, "", href);
 });
 
 // fetch bppletin, if message is not empty show bulletin
@@ -199,6 +198,7 @@ const loadFontInfo = async fontId => {
     container.innerHTML = `
     <a class="navigation" href="/fonts"> <img src="/static/img/larr.svg" alt="">字型 </a>
     <h1>${font.name.original}</h1>
+    <p>${font.name.zh}</p>
     <div class="font-tags">
         ${font.tag.map(tag => `<a class="tag"  href="/fonts?q=${tag}">${tag}</a>`).join("")}
     </div>
@@ -234,14 +234,17 @@ const loadFontInfo = async fontId => {
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
     const inputText = document.querySelector("#search-test").value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
-    document.querySelector(".font-weights").innerHTML = font.weight
+    //font.weight.push(400);
+    let weightHTML = font.weight
         .map(
             weight =>
                 `<div class="font-item">
             <div class="font-title"><div class="weight">${weightChart[weight][1]} ${weight}</div></div>
-            <div class="font-preview">${inputText}</div></div>`
+            <div class="font-preview emfont-${fontId}-${weight}">${inputText}</div></div>`
         )
         .join("");
+    document.querySelector(".font-weights").innerHTML = weightHTML || `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
+    emfont.init();
     container.querySelector(".font-class").onclick = e => {
         navigator.clipboard.writeText(e.target.innerText).then(() => {
             container.querySelector(".font-class").style.setProperty("--background", "rgb(59, 88, 49)");
@@ -254,16 +257,17 @@ const loadFontInfo = async fontId => {
 };
 
 const updateMain = (path = window.location.pathname) => {
-    const urlParts = path.split("/");
+    const urlParts = path.split("?")[0].split("/");
     let mainClass = urlParts[1].replace("index.html", "") || "";
     if (mainClass == "") mainClass = "home";
     if (!pages.includes(mainClass)) mainClass = "notFound";
     mobileToggle.checked = mainClass == "fonts";
+    document.querySelector(".info-container.fontPage-container").innerHTML = "";
 
     switch (mainClass) {
         case "home":
             let delay = 0;
-            if (window.location.pathname == "/fonts") {
+            if (path == "/fonts") {
                 document.querySelector("main").classList.add("fonts-toHome");
                 delay = 300;
             }
@@ -292,3 +296,8 @@ const updateMain = (path = window.location.pathname) => {
     }
 };
 updateMain();
+
+// listen when press back button and forward button
+window.addEventListener("popstate", () => {
+    updateMain();
+});
