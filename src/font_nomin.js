@@ -69,7 +69,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     else regenerate = true;
                 }
                 if (!regenerate) continue;
-                console.log(`'╔ 正在生成 ${ff_name} ${support_weights} 缺少的 ${lastPackCount - existPack.length} 包的靜態字型`);
+                console.log(`╔ 正在生成 ${ff_name} ${support_weights} 缺少的 ${lastPackCount - existPack.length} 包的靜態字型`);
             } else console.log(`╔ 正在生成 ${ff_name} ${support_weights} 所有的靜態字型`);
 
             //重新生成

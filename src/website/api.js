@@ -89,7 +89,7 @@ export default async (app, state) => {
             );
 
             if (rows.length === 0) {
-                return res.status(404).send("Font not found");
+                return res.status(404).send({ status: "failed", message: "Font not found" });
             }
 
             const font = rows[0];

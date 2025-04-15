@@ -1,10 +1,15 @@
-//emfont.init();
+emfont.init({
+    colorTest: true,
+    caseSensitive: true,
+    weight: 100
+});
+
 const marqueeSet = () => {
     const marquees = document.querySelectorAll("#section-home > div");
     for (const marquee of marquees) {
         const inner = marquee.querySelector("span");
         const marqueeWidth = inner.getBoundingClientRect().width;
-        marquee.style = `--innerWidth: ${-marqueeWidth}px;`;
+        marquee.style.setProperty("--innerWidth", `${-marqueeWidth}px`);
         marquee.innerHTML = "<span>" + inner.innerText + "</span>" + inner.innerText.repeat(Math.ceil(window.outerWidth / marqueeWidth));
     }
 };
@@ -15,46 +20,6 @@ window.addEventListener("resize", () => {
 
 const pages = ["home", "about", "font", "fonts", "login", "logout", "dashboard"];
 const mobileToggle = document.getElementById("mobileToggle");
-
-const updateMain = (path = window.location.pathname) => {
-    const urlParts = path.split("/");
-    let mainClass = urlParts[1].replace("index.html", "") || "";
-    if (mainClass == "") mainClass = "home";
-    if (!pages.includes(mainClass)) mainClass = "notFound";
-    mobileToggle.checked = mainClass == "fonts";
-
-    switch (mainClass) {
-        case "home":
-            let delay = 0;
-            if (window.location.pathname == "/fonts") {
-                document.querySelector("main").classList.add("fonts-toHome");
-                delay = 300;
-            }
-            setTimeout(() => {
-                document.querySelector("main").classList = "home";
-                marqueeSet();
-            }, delay);
-            break;
-        case "fonts":
-            if (urlParts.length > 2 && urlParts[2].length > 0) {
-                document.querySelector("main").classList = "fonts-toFont";
-                document.querySelector("main").classList.add("font");
-                setTimeout(() => {
-                    document.querySelector("main").classList.remove("fonts-toFont");
-                }, 300);
-            } else {
-                document.querySelector("main").classList = "fonts";
-            }
-            const urlParams = new URLSearchParams(window.location.search);
-            document.getElementById("search-input").value = urlParams.get("q");
-            break;
-        default:
-            document.querySelector("main").classList = mainClass;
-            break;
-    }
-};
-
-updateMain();
 
 document.querySelectorAll("a").forEach(link => {
     link.addEventListener("click", event => {
@@ -103,7 +68,16 @@ const families = new Set();
 const tags = new Set();
 const categories = new Set();
 
-const updateFontDisplay = () => {
+const updateFontDisplay = (e, animationOff = false) => {
+    if (e && e.target.classList[0].includes("cat")) {
+        const checkboxes = document.querySelectorAll(".category input:checked");
+        checkboxes.forEach(checkbox => {
+            if (checkbox !== e.target) checkbox.checked = false;
+        });
+    }
+
+    if (!animationOff) window.scrollTo(0, 0);
+
     const tags = [...document.querySelectorAll(".tags input:checked")].map(i => i.classList[0].replace("tag-", ""));
     const categories = [...document.querySelectorAll(".category input:checked")].map(i => i.classList[0].replace("cat-", ""));
     const family = document.getElementById("family").value;
@@ -118,12 +92,10 @@ const updateFontDisplay = () => {
     // 你可以改成要放的地方
     const container = document.getElementById("section-search");
     container.innerHTML = "";
-
     const searchTest = document.querySelector("#search-test");
     const previewText = searchTest.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
-
+    let containerHTML = "";
     filtered.forEach(font => {
-        const div = document.createElement("div");
         const parts = [];
         for (let weight in font.weight) {
             if (weightChart[weight]) {
@@ -131,24 +103,21 @@ const updateFontDisplay = () => {
             } else parts.push(`<span class="l">${weight}</span>`);
         }
         weightStr = parts.join(" ⋅ ");
-
-        div.innerHTML = `
-                <a class="font-item" href="/fonts/${encodeURIComponent(font.id)}">
+        containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
                         <h3>${font.name}</h3>
                         <div class="weight">
                             ${weightStr}&nbsp; | &nbsp;by ${font.author}
                         </div>
                     </div>
-                    <div class="font-preview emfont-${font.id}" style=font-family:"${font.name}">${previewText}</div>
+                    <div class="font-preview" data-class="emfont-${font.id}">${previewText}</div>
                 </a>
             `;
-
-        container.appendChild(div);
     });
-    //  emfont.init();
+    container.innerHTML = containerHTML;
+    addClassToVisibleElements();
     if (container.innerHTML == "") {
-        container.innerHTML = `<div class="no-result"><div class="╯°□°╯">(╯°□°)╯︵ ┻━┻</div>你要求也太苛刻了吧！<br>沒找到想要的字體嗎？歡迎到 GitHub 推薦給我們！</div>`;
+        container.innerHTML = `<div class="no-result"><div class="╯°□°╯">(╯°□°)╯︵ ┻┻</div>你要求太多了吧！<br>沒找到想要的字體嗎？歡迎到 <a href=https://github.com/emfont/emfont/issues/new/choose>GitHub</a> 推薦給我們！</div>`;
     }
 };
 
@@ -180,7 +149,7 @@ const initSearch = async () => {
     const categoryContainer = document.querySelector(".category");
     categories.forEach(cat => {
         const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" class="cat-${cat}" />${cat}`;
+        label.innerHTML = `<input type="checkbox" name="cat" class="cat-${cat}" />${cat}`;
         categoryContainer.appendChild(label);
     });
 
@@ -194,9 +163,132 @@ const initSearch = async () => {
     searchText.addEventListener("input", () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            updateFontDisplay();
+            updateFontDisplay(null, true);
         }, 400);
     });
 };
 initSearch();
 // 綁定 input 事件
+
+function isElementInViewport(el) {
+    const rect = el.getBoundingClientRect();
+    return rect.bottom < -200 || rect.top > window.innerHeight + 200;
+}
+
+function addClassToVisibleElements() {
+    var aosElements = document.querySelectorAll(".font-preview");
+    aosElements.forEach(function (aosElement) {
+        const className = aosElement.getAttribute("data-class");
+        if (!isElementInViewport(aosElement)) aosElement.classList.add(className);
+        else aosElement.classList.remove(className);
+    });
+    emfont.init();
+}
+
+document.addEventListener("scroll", addClassToVisibleElements);
+addClassToVisibleElements();
+
+const loadFontInfo = async fontId => {
+    const res = await fetch(`/info/${fontId}`);
+    const font = await res.json();
+    if (font == { status: "failed", message: "Font not found" }) {
+        document.querySelector("main").classList = "notFound";
+        return;
+    }
+    const container = document.querySelector(".info-container.fontPage-container");
+    container.innerHTML = `
+    <a class="navigation" href="/fonts"> <img src="/static/img/larr.svg" alt="">字型 </a>
+    <h1>${font.name.original}</h1>
+    <div class="font-tags">
+        ${font.tag.map(tag => `<a class="tag"  href="/fonts?q=${tag}">${tag}</a>`).join("")}
+    </div>
+    <div class="font-actions">
+        <div class="font-class">
+            <div>emfont-${fontId}</div>
+            <div id="copyClass"></div>
+        </div>
+        <a href="${font.source}" target="_blank">
+            <img src="/static/img/GitHub-400.svg" alt="GitHub">
+        </a>
+        <a href="${font.source}" target="_blank">
+            <img src="/static/img/download.svg" alt="GitHub">
+        </a>
+    </div>
+    <p class="font-description">${font.description}</p>
+    <p class="font-info">
+        字型家族：<a href="/fonts?q=${font.family}">${font.family}</a><br>
+        作者：<a href="/fonts?q=${font.author}">${font.author}</a><br>
+        版本：${font.version}<br>
+        版權：${font.license}
+    </p>
+    <div class="font-coverage" style="display: none;">
+        <label for="coverage-tc">繁體字 (90%)</label>
+        <div class="coverage-bar" id="coverage-tc" style="--percent: 90%"></div>
+        <label for="coverage-sc">簡體字 (40%)</label>
+        <div class="coverage-bar" id="coverage-sc" style="--percent: 40%"></div>
+        <label for="coverage-en">英文 (100%)</label>
+        <div class="coverage-bar" id="coverage-en" style="--percent: 100%"></div>
+        <label for="coverage-jp">日文 (20%)</label>
+        <div class="coverage-bar" id="coverage-jp" style="--percent: 20%"></div>
+        <label for="coverage-ko">韓文 (30%)</label>
+        <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
+    </div>`;
+    const inputText = document.querySelector("#search-test").value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
+    document.querySelector(".font-weights").innerHTML = font.weight
+        .map(
+            weight =>
+                `<div class="font-item">
+            <div class="font-title"><div class="weight">${weightChart[weight][1]} ${weight}</div></div>
+            <div class="font-preview">${inputText}</div></div>`
+        )
+        .join("");
+    container.querySelector(".font-class").onclick = e => {
+        navigator.clipboard.writeText(e.target.innerText).then(() => {
+            container.querySelector(".font-class").style.setProperty("--background", "rgb(59, 88, 49)");
+            setTimeout(() => {
+                container.querySelector(".font-class").style.setProperty("--background", " var(--slate-700)");
+            }, 2000);
+        });
+    };
+    addClassToVisibleElements();
+};
+
+const updateMain = (path = window.location.pathname) => {
+    const urlParts = path.split("/");
+    let mainClass = urlParts[1].replace("index.html", "") || "";
+    if (mainClass == "") mainClass = "home";
+    if (!pages.includes(mainClass)) mainClass = "notFound";
+    mobileToggle.checked = mainClass == "fonts";
+
+    switch (mainClass) {
+        case "home":
+            let delay = 0;
+            if (window.location.pathname == "/fonts") {
+                document.querySelector("main").classList.add("fonts-toHome");
+                delay = 300;
+            }
+            setTimeout(() => {
+                document.querySelector("main").classList = "home";
+                marqueeSet();
+            }, delay);
+            break;
+        case "fonts":
+            if (urlParts.length > 2 && urlParts[2].length > 0) {
+                document.querySelector("main").classList = "fonts-toFont";
+                document.querySelector("main").classList.add("font");
+                setTimeout(() => {
+                    document.querySelector("main").classList.remove("fonts-toFont");
+                }, 300);
+                loadFontInfo(urlParts[2]);
+            } else {
+                document.querySelector("main").classList = "fonts";
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            document.getElementById("search-input").value = urlParams.get("q");
+            break;
+        default:
+            document.querySelector("main").classList = mainClass;
+            break;
+    }
+};
+updateMain();

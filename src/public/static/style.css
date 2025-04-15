@@ -54,6 +54,7 @@ a:hover {
 img {
     display: block;
     max-width: 100%;
+    color:transparent;
 }
 
 button {
@@ -137,7 +138,7 @@ section > div {
 .fonts #section-search,
 .font .info-container {
     display: block;
-    animation: fadeInBottom 0.3s ease-in-out;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .fonts .search-container,
@@ -146,14 +147,14 @@ section > div {
 }
 
 .fonts .search-container > * {
-    animation: fadeInBottom 0.3s ease-in-out;
+    animation: fadeIn 0.3s ease-in-out;
 }
 .font .header-links-font,
 .login #section-login,
 .notFound #section-404,
 .font #section-font {
     display: flex;
-    animation: fadeInBottom 0.3s ease-in-out;
+    animation: fadeIn 0.3s ease-in-out;
 }
 .font .header-container,
 .fonts .header-container,
@@ -179,7 +180,7 @@ section > div {
 @keyframes fadeInBottom {
     0% {
         opacity: 0;
-        /* transform: translateY(1rem); */
+        transform: translateY(1rem);
     }
     100% {
         opacity: 1;
@@ -537,6 +538,7 @@ select {
     outline: none;
     transition: background-color 0.3s ease-out;
     margin-bottom: 1.5rem;
+    cursor: pointer;
 }
 
 textarea {
@@ -553,7 +555,8 @@ select {
     padding: 0.4rem 0.875rem 0.4rem 2.1rem;
 }
 
-input[type="checkbox"] {
+input[type="checkbox"],
+input[type="radio"] {
     display: none;
 }
 
@@ -564,7 +567,7 @@ h2 {
 }
 
 .search-container label,
-.font-tags > div {
+.font-tags > a {
     padding: 0.5rem 0.75rem;
     background-color: var(--slate-600);
     display: block;
@@ -572,9 +575,15 @@ h2 {
     text-align: center;
     cursor: pointer;
     transition: background-color 0.1s ease-out;
+    color: var(--slate-100);
 }
 
-label:has(input[type="checkbox"]:checked) {
+.font-tags > a:hover{
+    background-color: var(--slate-500);
+}
+
+label:has(input[type="checkbox"]:checked),
+label:has(input[type="radio"]:checked) {
     background-color: var(--slate-400);
 }
 
@@ -618,6 +627,7 @@ label:has(input[type="checkbox"]:checked) {
     color: var(--slate-100);
     transition: background 0.3s ease-out;
     position: relative;
+    animation: fadeInBottom 0.3s ease-in-out;
 }
 
 #section-search .font-item:last-child {
@@ -717,7 +727,8 @@ a.font-item:hover {
 
 .font-class {
     color: var(--slate-400);
-    background-color: var(--slate-700);
+    --background: var(--slate-700);
+    background-color: var(--background);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -725,6 +736,11 @@ a.font-item:hover {
     flex: 1;
     overflow: hidden;
     border-radius: 5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease-out;
+}
+.font-class:hover{
+   --background: var(--slate-600);
 }
 
 .font-class div {
@@ -733,7 +749,7 @@ a.font-item:hover {
     white-space: nowrap;
     position: relative;
 }
-.font-class div::after {
+.font-class div:first-child:after {
     content: "";
     display: block;
     position: absolute;
@@ -741,7 +757,7 @@ a.font-item:hover {
     right: 0;
     width: 2em;
     height: 100%;
-    background: linear-gradient(to left, var(--slate-700) 0%, transparent 100%);
+    background: linear-gradient(to left, var(--background) 0%, transparent 100%);
 }
 
 .font-actions a,
@@ -911,7 +927,6 @@ footer {
     }
 }
 
-
-.language{
+.language {
     color: var(--slate-400);
 }
