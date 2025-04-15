@@ -3,7 +3,7 @@ import { generateFont } from "./font_min.js";
 
 (async () => {
   try {
-    const { ff_name, support_weights, words, padded_pack, version_num, buffer, r2, rawPack } = workerData;
+    const { ff_name, support_weights, words, pack, version_num, buffer, r2 } = workerData;
 
     async function gen_static_font(ff_name, support_weights, words, pack, version, r2 = false) {
         try {
@@ -25,20 +25,18 @@ import { generateFont } from "./font_min.js";
     }
 
 
-    const result = await gen_static_font(ff_name, support_weights, words, padded_pack, version_num, buffer, r2);
+    const result = await gen_static_font(ff_name, support_weights, words, pack, version_num, buffer, r2);
     
     parentPort.postMessage({
       success: result.status === "success",
       res: result,
-      pack: padded_pack,
-      rawPack,
+      pack: pack,
     });
   } catch (error) {
     parentPort.postMessage({
       success: false,
       errorMsg: error.message || "Unknown error",
-      pack: workerData.padded_pack,
-      rawPack: workerData.rawPack,
+      pack: workerData.pack,
     });
   }
 })();

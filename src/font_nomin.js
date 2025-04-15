@@ -8,32 +8,30 @@ import { Worker } from "worker_threads";
 import path from "path";
 import os from "os";
 const __dirname = import.meta.dirname;
-const cpuCount = os.cpus().length;
+const cpuCount = os.cpus().length - 2;
+console.log(cpuCount);
 const runWorker = data => {
-    try
-    {
-    return new Promise((resolve, reject) => {
-        const worker = new Worker(path.resolve(__dirname, "font_nomin_worker.js"), {
-            workerData: data
-        });
+    try {
+        return new Promise((resolve, reject) => {
+            const worker = new Worker(path.resolve(__dirname, "font_nomin_worker.js"), {
+                workerData: data
+            });
 
-        worker.on("message", result => {
-            resolve(result);
-        });
+            worker.on("message", result => {
+                resolve(result);
+            });
 
-        worker.on("error", error => {
-            reject(error);
-        });
+            worker.on("error", error => {
+                reject(error);
+            });
 
-        worker.on("exit", code => {
-            if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+            worker.on("exit", code => {
+                if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+            });
         });
-    });
-}
-catch(err)
-{
-    console.log(err);
-}
+    } catch (err) {
+        console.log(err);
+    }
 };
 
 async function regenerateAllStaticFont(state, have_gen_list) {
@@ -59,24 +57,21 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 weight: support_weights // 字型的 weight（檔案名稱中的數字）
             };
             const exists = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight);
+            const existPack = [];
             if (exists) {
                 const { rows } = await db.query(`SELECT COUNT(DISTINCT pack) AS count FROM static_fonts`);
                 const lastPackCount = rows[0]?.count ?? 0;
                 console.log(exists.files.length, lastPackCount);
-                if (exists.files.length == lastPackCount) {
-                    let regenerate = false;
-                    for (let j = 0; j < lastPackCount - 1; j++) {
-                        const pack = (j + 1).toString().padStart(2, "0");
-                        if (!exists.files.includes(pack)) {
-                            console.log("╠ ", ff_name, support_weights, "的第", pack, "包不存在，全部重新生成。");
-                            regenerate = true;
-                            break;
-                        }
-                    }
-                    if (!regenerate) continue;
+                let regenerate = false;
+                for (let j = 0; j < lastPackCount; j++) {
+                    const pack = (j + 1).toString().padStart(2, "0");
+                    if (exists.files.includes(pack)) existPack.push(j);
+                    else regenerate = true;
                 }
-            }
-            console.log(`╔ 正在生成 ${ff_name} 的靜態字型 (${support_weights})`);
+                if (!regenerate) continue;
+                console.log(`'╔ 正在生成 ${ff_name} ${support_weights} 缺少的 ${lastPackCount - existPack.length} 包的靜態字型`);
+            } else console.log(`╔ 正在生成 ${ff_name} ${support_weights} 所有的靜態字型`);
+
             //重新生成
             const fontData = await readFontBuffer(ff_name, support_weights);
             const buffer = fontData.buffer;
@@ -90,7 +85,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             const charArray = Object.keys(cmap)
                 .map(code => String.fromCodePoint(parseInt(code)))
                 .filter(char => char !== "\x00"); // 過濾掉 0x00 字元
-            console.log("╠ ", ff_name, support_weights, "有", charArray.length, "個字");
+            console.log("╠ " + ff_name + " " + support_weights, "有", charArray.length, "個字");
             // 1. 查出已經存在的字
             const { rows: existing } = await db.query("SELECT char FROM static_fonts WHERE char = ANY($1)", [charArray]);
             const existingChars = new Set(existing.map(row => row.char));
@@ -152,52 +147,50 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     await db.query(`INSERT INTO static_fonts (char, pack, families) VALUES ${values.join(",")}`, params);
                 }
             }
+
             const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
 
-            // 建立更新對應 Map<char, updated_families[]>
+            // 1. 準備更新用 Map<char, updated_families[]>
             const updateMap = new Map();
             for (const row of rows) {
                 const set = new Set(row.families); // 避免重複
-                set.add(ff_name); // 加入新字型名
+                set.add(ff_name); // 加入新字型
                 updateMap.set(row.char, Array.from(set));
-                
             }
 
-            // 準備 SQL VALUES 和綁定參數
-            const values = [];
+            // 2. 組合 SQL 用的 VALUES 和綁定參數
+            const valuesSQL = [];
             const bindings = [];
-            const value=[];
-            const chars=[];
             let paramIndex = 1;
+
             for (const [char, families] of updateMap.entries()) {
-                values.push(`($${paramIndex}::text[], $${paramIndex + 1}::text)`);
-                chars.push(char);
-                families.push(families);
-                bindings.push(families);
+                valuesSQL.push(`($${paramIndex}::text, $${paramIndex + 1}::text[])`);
                 bindings.push(char);
+                bindings.push(families);
+                // 正確：char 是文字，families 是陣列
                 paramIndex += 2;
             }
-            console.log(values)
-            
-              
+
+            // 3. 組合 SQL 語句
             const updateSQL = `
-            UPDATE static_fonts AS sf
-            SET families = ARRAY[unnest.families]
-            FROM (
-              SELECT unnest($1::text[]) AS char, unnest($2::text[]) AS families
-            ) AS unnest
-            WHERE sf.char = unnest.char
-              AND NOT (unnest.families = ANY(sf.families));
-          `;
-              console.log(bindings)
+                UPDATE static_fonts AS sf
+                SET families = updated.families
+                FROM (
+                  VALUES
+                    ${valuesSQL.join(",\n")}
+                ) AS updated(char, families)
+                WHERE sf.char = updated.char
+                  AND NOT (updated.families <@ sf.families);
+              `;
+            // 4. 執行更新
             await db.query(updateSQL, bindings);
 
-            console.log("╠  已更新", updateMap.size, "筆字元");
-            const word_package_pair = (
+            console.log("╠ ", updateSQL.length, "筆資料中我已更新", updateMap.size, "筆字元");
+            let word_package_pair = (
                 await db.query(
                     `SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts
-                                                    WHERE char = ANY($1)
-                                                    GROUP BY pack ORDER BY pack;`,
+                    WHERE char = ANY($1)
+                    GROUP BY pack ORDER BY pack;`,
                     [charArray]
                 )
             ).rows;
@@ -210,24 +203,24 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             const results = [];
             let batchSize = cpuCount;
 
+            // remove the index of existPack in
+            word_package_pair = word_package_pair.filter(entry => !existPack.includes(entry.pack));
+            console.log("╠ 實際上需要生成", word_package_pair.length,"包字體");
             for (let i = 0; i < word_package_pair.length; i += batchSize) {
                 const batch = word_package_pair.slice(i, i + batchSize);
                 const tasks = batch.map(({ pack, words }) => {
-                    const padded_pack = pack.toString().padStart(2, "0");
                     return runWorker({
                         ff_name,
                         support_weights,
                         words,
-                        padded_pack,
+                        pack,
                         version_num,
                         buffer,
-                        r2: state.r2,
-                        rawPack: pack
+                        r2: state.r2
                     }).catch(error => ({
                         success: false,
                         errorMsg: error.message || "Unknown error",
-                        pack: padded_pack,
-                        rawPack: pack
+                        pack
                     }));
                 });
 
@@ -235,11 +228,9 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 
                 for (const res of settled) {
                     if (res.status === "fulfilled") {
-                        if(res.value.success==false)
-                        {
-                            console.log("生成靜態字型的多執行序發生錯誤！生成中斷！")
-                            throw new Error(JSON.stringify(res.value))
-
+                        if (res.value.success == false) {
+                            console.log("生成靜態字型的多執行序發生錯誤！生成中斷！");
+                            throw new Error(JSON.stringify(res.value));
                         }
                         results.push(res.value);
                     } else {
@@ -253,6 +244,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             }
 
             await db.query("COMMIT");
+            console.log("");
         }
     } catch (err) {
         console.log(err);
