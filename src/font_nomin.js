@@ -147,7 +147,6 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     await db.query(`INSERT INTO static_fonts (char, pack, families) VALUES ${values.join(",")}`, params);
                 }
             }
-
             const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
 
             // 1. 準備更新用 Map<char, updated_families[]>
@@ -159,33 +158,38 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             }
 
             // 2. 組合 SQL 用的 VALUES 和綁定參數
-            const valuesSQL = [];
-            const bindings = [];
-            let paramIndex = 1;
+            // const valuesSQL = [];
+            // const bindings = [];
+            // let paramIndex = 1;
+            // const char_family_pair = [];
+            // console.dir(updateMap, {
+            //     depth: null,
+            //     maxArrayLength: null,
+            //     maxStringLength: null,
+            //   });
+              
 
-            for (const [char, families] of updateMap.entries()) {
-                valuesSQL.push(`($${paramIndex}::text, $${paramIndex + 1}::text[])`);
-                bindings.push(char);
-                bindings.push(families);
-                // 正確：char 是文字，families 是陣列
-                paramIndex += 2;
-            }
+            const chars = [...updateMap.keys()];
+            const bindings = [ff_name, ...chars];
+            const placeholders = chars.map((_, i) => `$${i + 2}`).join(', ');//參數化查詢挖空格參數化查詢
+            console.log(placeholders)
+            const update_chars_support_family = `
+              UPDATE static_fonts
+              SET families = array_append(families, $1)
+              WHERE char IN (${placeholders})
+                AND NOT ($1 = ANY(families));
+            `;
+            //查詢舉例，就是把支援某個字元的字型 ff_name 加入該字元的　family 陣列，如果已經存在就略過 
+            // UPDATE static_fonts　SET families = array_append(families, 'ZhuqueFangsong')
+            // WHERE char IN ('9', 'A', 'B')
+            //   AND NOT ('ZhuqueFangsong' = ANY(families));
 
-            // 3. 組合 SQL 語句
-            const updateSQL = `
-                UPDATE static_fonts AS sf
-                SET families = updated.families
-                FROM (
-                  VALUES
-                    ${valuesSQL.join(",\n")}
-                ) AS updated(char, families)
-                WHERE sf.char = updated.char
-                  AND NOT (updated.families <@ sf.families);
-              `;
-            // 4. 執行更新
-            await db.query(updateSQL, bindings);
 
-            console.log("╠ ", updateSQL.length, "筆資料中我已更新", updateMap.size, "筆字元");
+            // 3. 組合 SQL 語句送出
+            await db.query(update_chars_support_family, bindings);
+            // console.log(valuesSQL)
+
+            console.log("╠ ", update_chars_support_family.length, "筆資料中我已更新", updateMap.size, "筆字元");
             let word_package_pair = (
                 await db.query(
                     `SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts
