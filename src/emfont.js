@@ -6,21 +6,19 @@ class Emfont {
             format: "woff2", // woff2, woff, ttf, eot
             autoApply: true,
             cache: true,
-            applyAt: document.head
+            applyAt: document.head,
+            colorTest: false,
+            root: document.documentElement
         }
     ) {
         this.config = config;
 
-        // Check browser support
-        if (!this._checkBrowserSupport()) {
+        if (!this.config.colorTest && !this._checkBrowserSupport()) {
             console.warn("✏️ Your browser may not support all required features for emfont. Some functionality may be limited.");
-            // Fallback to WOFF if WOFF2 is not supported
             if (this.config.format === "woff2" && !this._hasWoff2Support()) {
                 this.config.format = "woff";
             }
-        } else {
-            console.log("✏️ This website uses emfont: a free Chinese webfont service.");
-        }
+        } else console.log("✏️ This website uses emfont: a free Chinese webfont service.");
     }
 
     _checkBrowserSupport() {
@@ -39,16 +37,23 @@ class Emfont {
         }
     }
 
-    // a object to store fonts already loaded
     fonts = {};
 
-    init() {
+    setConfig(newConfig = {}) {
+        this.config = { ...this.config, root: document.documentElement, ...newConfig }; // Merge the new config with the existing one
+    }
+
+    init(newConfig = {}) {
+        this.setConfig(newConfig); // Apply new config before initializing
         return new Promise(resolve => {
-            const elements = document.querySelectorAll("[class*='emfont']");
+            const elements = this.config.root.querySelectorAll("[class*='emfont']");
             let fonts = {};
-            let promises = [];
             let originalClasses = [];
             elements.forEach(element => {
+                if (this.config.colorTest) {
+                    element.style.color = "red";
+                    return;
+                }
                 // Get all font names from element class
                 const fontNames = element.className
                     .split(" ")
