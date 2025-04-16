@@ -60,10 +60,10 @@ async function complete_ff_name_support_font(ff_name, support_weights) {
         // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
         const { rows: lastPackRows } = await db.query(
             `SELECT pack, COUNT(*) AS count 
-   FROM static_fonts 
-   GROUP BY pack 
-   ORDER BY pack DESC 
-   LIMIT 1`
+            FROM static_fonts 
+            GROUP BY pack 
+            ORDER BY pack DESC 
+            LIMIT 1`
         );
 
         let currentPack = 0;
@@ -144,29 +144,11 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             // 包括字型id 、字重和生成的檔案編號，從 have_gen_list（有所有靜態已生成資料夾的屬性） 拆解出來
             const this_ff_have_gen = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight);
             console.log(this_ff_have_gen);
-            const existPack = [];
-            if (this_ff_have_gen) {
-                const { rows } = await db.query(`SELECT COUNT(DISTINCT pack) AS count FROM static_fonts;`);
-                const lastPackCount = rows[0]?.count ?? 0;
-                console.log(`this_ff_have_gen.files.length :${this_ff_have_gen.files.length},lastPackCount:${lastPackCount}`);
-                let regenerate = false;
-                for (let j = 0; j < lastPackCount; j++) {
-                    //確保該字型資料夾底下的檔案沒有缺漏
-                    const pack = (j + 1).toString().padStart(2, "0");
-                    if (this_ff_have_gen.files.includes(pack)) existPack.push(j);
-                    else {
-                        regenerate = true;
-                        // console.log(pack,"有缺少")
-                    }
-                }
-                if (!regenerate) continue;
-                console.log(`╔ 正在生成 ${ff_name}-${support_weights} 缺少的 ${lastPackCount - existPack.length} 包的靜態字型`);
-            } else console.log(`╔ 正在生成 ${ff_name} ${support_weights} 所有的靜態字型`);
+            const existPack = this_ff_have_gen.files;
+            console.log(`╔ ${ff_name}-${support_weights} 本地有 ${existPack.length} 包字體`);
 
             //重新生成
-
             const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
-
             // 1. 準備更新用 Map<char, updated_families[]>
             const updateMap = new Map();
             for (const row of rows) {
@@ -213,7 +195,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 
             // remove the index of existPack in
             word_package_pair = word_package_pair.filter(entry => !existPack.includes(entry.pack));
-            console.log("╠ 實際上需要生成", word_package_pair.length, "包字體");
+            console.log("╠ 需要生成", word_package_pair.length, "包字體");
             for (let i = 0; i < word_package_pair.length; i += batchSize) {
                 const batch = word_package_pair.slice(i, i + batchSize);
                 const tasks = batch.map(({ pack, words }) => {
