@@ -78,7 +78,7 @@ export const genFont = async (req, res, state) => {
         } else {
             //請求靜態字型
             //TODO:確認字型包是否存在r2，若無，怎麼辦
-            const font_pack_you_need = await find_static_font(req_word_set);
+            const font_pack_you_need = await find_static_font(req_word_set,font_family_name);
             const R2font_url = await give_static_font(font_family_name, font_weight, font_pack_you_need, state);
             return res.send({
                 status: "success",

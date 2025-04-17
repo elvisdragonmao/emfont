@@ -248,14 +248,14 @@ async function regenerateAllStaticFont(state, have_gen_list) {
     console.log("✨ 所有靜態字體生成完成！");
 }
 
-async function find_static_font(word_set) {
+async function find_static_font(word_set,font_family_name) {
     // 回傳要用到的字型包編號
     // 字串轉成字元陣列給 SQL 查詢
     try {
         word_set = word_set.split("");
         //查詢請求的字分別散落在哪些字型包中
-        const query = "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[])";
-        const result = await db.query(query, [word_set]);
+        const query = "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[]) and $2 = ANY(families)";
+        const result = await db.query(query, [word_set,font_family_name]);//如果請求的字該字型沒有支援也不用特地去找 pack 了
         const use_packs = result.rows.map(row => Number(row.pack)); // 確保是數字
         console.log(word_set, "散落在", use_packs);
         //查詢請求的字型包是否存在
