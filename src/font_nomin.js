@@ -9,7 +9,7 @@ import path from "path";
 import os from "os";
 const __dirname = import.meta.dirname;
 const cpuCount = os.cpus().length + 4; // - 2;
-console.log(cpuCount);
+console.log("cpuCount",cpuCount);
 const runWorker = data => {
     try {
         return new Promise((resolve, reject) => {
@@ -81,9 +81,8 @@ async function complete_ff_name_support_char_in_db(ff_name,charArray,existingCha
                 const batch = inserts.slice(i, i + 1000);
                 const values = [];
                 const params = [];
-
                 batch.forEach(({ char, pack, families }, index) => {
-                    const baseIndex = index * 3;
+                    const baseIndex = index * 3;//parameterized query count increase 3(char, pack, families) in a for
                     values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
                     params.push(char, pack, families);
                 });
@@ -147,17 +146,16 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             const this_static_font_dir_status = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight && item.version==version_num);
             console.log("this_static_font_dir_status",this_static_font_dir_status);
             const existPack = this_static_font_dir_status.files;
+            let ready_regen=[]//put pack number ready to gen
             if (this_static_font_dir_status) {
                 //查詢這個字型支援字元用到的 pack
                 const all_need_gen_pack = (await db.query(`SELECT pack FROM static_fonts WHERE $1 = ANY(families) GROUP BY pack ORDER BY pack;`,[ff_name])).rows;
                 //all_need_gen_pack=[{ pack: 1 },{ pack: 55 },{ pack: 56 }...]
                 const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(2, "0"));
                 //all_pack_numbers=[00,55,56]
-                console.log(`this_static_font_dir_status.files.length :${this_static_font_dir_status.files.length}`);
                 let regenerate = false;
                 let miss_pack_counter = 0;
                 //確保該字型資料夾底下的該出現的檔案都在
-                let ready_regen=[]
                 all_pack_numbers.forEach(function(pack_num)
                 {
                     
@@ -169,52 +167,24 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                         miss_pack_counter+=1;
                     }
                 }
-                )
+            )
+            console.log("rdr",ready_regen)
                 if (!regenerate) continue;
                 console.log(`╔ ${ff_name}-${support_weights} 應該共有 ${all_need_gen_pack.length} 包字型。本地只有其中 ${existPack.length} 包字體`);
-                console.log(`╔ 正在生成 ${ff_name}-${support_weights} 缺少的 ${ miss_pack_counter } 包的靜態字型`);
+                console.log(`╔ 準備生成 ${ff_name}-${support_weights} 缺少的 ${ miss_pack_counter } 包的靜態字型`);
             }
             else
             {
                 console.log(`╔ 正在生成 ${ff_name} ${support_weights} 所有的 ${miss_pack_counter} 包靜態字型`);
-            } 
-
-
-            //重新生成
-            const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
-            // 1. 準備更新用 Map<char, updated_families[]>
-            const updateMap = new Map();
-            for (const row of rows) {
-                const set = new Set(row.families); // 避免重複
-                set.add(ff_name); // 加入新字型
-                updateMap.set(row.char, Array.from(set));
             }
-            const chars = [...updateMap.keys()];
-            const bindings = [ff_name, ...chars];
-            const placeholders = chars.map((_, i) => `$${i + 2}`).join(", "); //參數化查詢挖空格參數化查詢
-
-            const update_chars_support_family = `
-              UPDATE static_fonts
-              SET families = array_append(families, $1)
-              WHERE char IN (${placeholders})
-                AND NOT ($1 = ANY(families));
-            `;
-            //查詢舉例，就是把支援某個字元的字型 ff_name 加入該字元的　family 陣列，如果已經存在就略過
-            // UPDATE static_fonts　SET families = array_append(families, 'ZhuqueFangsong')
-            // WHERE char IN ('9', 'A', 'B')
-            //   AND NOT ('ZhuqueFangsong' = ANY(families));
-
-            // 3. 組合 SQL 語句送出
-            await db.query(update_chars_support_family, bindings);
-            // console.log(valuesSQL)
-
-            console.log("╠ ", update_chars_support_family.length, "筆資料中我已更新", updateMap.size, "筆字元");
+            //重新生成
             let word_package_pair = (
                 await db.query(
                     `SELECT pack, STRING_AGG(char, '') AS words FROM static_fonts
                     WHERE char = ANY($1)
+                    AND pack = ANY($2::int[])
                     GROUP BY pack ORDER BY pack;`,
-                    [charArray]
+                    [charArray,ready_regen]
                 )
             ).rows;
             // {
@@ -228,7 +198,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 
             // remove the index of existPack in
             word_package_pair = word_package_pair.filter(entry => !existPack.includes(entry.pack));
-            console.log("╠ 需要生成", word_package_pair.length, "包字體");
+            console.log("╠ 正在生成", word_package_pair.length, "包字體");
             for (let i = 0; i < word_package_pair.length; i += batchSize) {
                 const batch = word_package_pair.slice(i, i + batchSize);
                 const tasks = batch.map(({ pack, words }) => {
