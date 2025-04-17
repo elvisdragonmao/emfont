@@ -34,29 +34,10 @@ const runWorker = data => {
     }
 };
 
-async function complete_ff_name_support_font(ff_name, support_weights) {
+async function complete_ff_name_support_char_in_db(ff_name,charArray,existingChars) {
     try {
-        const fontData = await readFontBuffer(ff_name, support_weights);
-        const buffer = fontData.buffer;
-        const font = Font.create(buffer, {
-            type: fontData.type,
-            hinting: true,
-            kerning: true
-        });
-        const fontObject = font.get();
-        const cmap = fontObject.cmap;
-        const charArray = Object.keys(cmap)
-            .map(code => String.fromCodePoint(parseInt(code)))
-            .filter(char => char !== "\x00"); // 過濾掉 0x00 字元
-        console.log("╠ " + ff_name + " " + support_weights, "有", charArray.length, "個字");
-        // 1. 查出已經存在的字
-        const { rows: existing } = await db.query("SELECT char FROM static_fonts WHERE char = ANY($1)", [charArray]);
-        const existingChars = new Set(existing.map(row => row.char));
-
         // 2. 找出還沒出現在資料庫的字
         const newChars = charArray.filter(char => !existingChars.has(char));
-        const oldChars = charArray.filter(char => existingChars.has(char));
-
         // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
         const { rows: lastPackRows } = await db.query(
             `SELECT pack, COUNT(*) AS count 
@@ -110,7 +91,7 @@ async function complete_ff_name_support_font(ff_name, support_weights) {
                 await db.query(`INSERT INTO static_fonts (char, pack, families) VALUES ${values.join(",")}`, params);
             }
         }
-        return oldChars;
+        return true;
     } catch (err) {
         console.error(err);
         return false;
@@ -132,20 +113,72 @@ async function regenerateAllStaticFont(state, have_gen_list) {
         //取得字型版本號，版本號定期更新，所以會自動重切
         let version_num = (await db.query(`SELECT bullet from version order BY start DESC limit 1;`)).rows; //[0].bullet
         version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
-
+        console.log("now version:",version_num)
         for (const { ff_name, support_weights } of all_fonts) {
             const this_font = {
                 version: version_num,
                 fontName: ff_name, // 字型名稱（資料夾名稱）
                 weight: support_weights // 字型的 weight（檔案名稱中的數字）
             };
-            const oldChars = await complete_ff_name_support_font(ff_name, support_weights);
-            //esists 是 ff_name-support_weights 的靜態字型在生成列表中的狀態，
+            //讀字型檔案，取出所有支援的字型
+            const fontData = await readFontBuffer(ff_name, support_weights);
+            const buffer = fontData.buffer;
+            const font = Font.create(buffer, {
+                type: fontData.type,
+                hinting: true,
+                kerning: true
+            });
+            const fontObject = font.get();
+            const cmap = fontObject.cmap;
+            const charArray = Object.keys(cmap)
+                .map(code => String.fromCodePoint(parseInt(code)))
+                .filter(char => char !== "\x00"); // 過濾掉 0x00 字元
+            console.log("╠ " + ff_name + " " + support_weights, "有", charArray.length, "個字");
+            // 1. 查出此字型支援，且資料庫已經有綁定的字
+            const { rows: existing } = await db.query("SELECT char FROM static_fonts WHERE char = ANY($1)", [charArray]);
+            const existingChars = new Set(existing.map(row => row.char));
+    
+
+            const oldChars = charArray.filter(char => existingChars.has(char));
+            //把此字型支援的所有字元裡頭紀錄的支援字型陣列加入這次的字型（如果還沒加入的話）
+            await complete_ff_name_support_char_in_db(ff_name, charArray,existingChars);
+            //this_static_font_dir_status 是 ff_name-support_weights 的靜態字型在生成列表中的狀態，
             // 包括字型id 、字重和生成的檔案編號，從 have_gen_list（有所有靜態已生成資料夾的屬性） 拆解出來
-            const this_ff_have_gen = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight);
-            console.log(this_ff_have_gen);
-            const existPack = this_ff_have_gen.files;
-            console.log(`╔ ${ff_name}-${support_weights} 本地有 ${existPack.length} 包字體`);
+            const this_static_font_dir_status = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight && item.version==version_num);
+            console.log("this_static_font_dir_status",this_static_font_dir_status);
+            const existPack = this_static_font_dir_status.files;
+            if (this_static_font_dir_status) {
+                //查詢這個字型支援字元用到的 pack
+                const all_need_gen_pack = (await db.query(`SELECT pack FROM static_fonts WHERE $1 = ANY(families) GROUP BY pack ORDER BY pack;`,[ff_name])).rows;
+                //all_need_gen_pack=[{ pack: 1 },{ pack: 55 },{ pack: 56 }...]
+                const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(2, "0"));
+                //all_pack_numbers=[00,55,56]
+                console.log(`this_static_font_dir_status.files.length :${this_static_font_dir_status.files.length}`);
+                let regenerate = false;
+                let miss_pack_counter = 0;
+                //確保該字型資料夾底下的該出現的檔案都在
+                let ready_regen=[]
+                all_pack_numbers.forEach(function(pack_num)
+                {
+                    
+                    if (!this_static_font_dir_status.files.includes(pack_num))
+                    {
+                        ready_regen.push(pack_num)
+                        regenerate = true;
+                        // console.log(`miss ${pack_num}`)
+                        miss_pack_counter+=1;
+                    }
+                }
+                )
+                if (!regenerate) continue;
+                console.log(`╔ ${ff_name}-${support_weights} 應該共有 ${all_need_gen_pack.length} 包字型。本地只有其中 ${existPack.length} 包字體`);
+                console.log(`╔ 正在生成 ${ff_name}-${support_weights} 缺少的 ${ miss_pack_counter } 包的靜態字型`);
+            }
+            else
+            {
+                console.log(`╔ 正在生成 ${ff_name} ${support_weights} 所有的 ${miss_pack_counter} 包靜態字型`);
+            } 
+
 
             //重新生成
             const { rows } = await db.query(`SELECT char, families FROM static_fonts WHERE char = ANY($1::text[])`, [oldChars]);
