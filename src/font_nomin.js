@@ -272,12 +272,18 @@ async function give_static_font(font_family, font_weight, packs, state) {
         }
         packs = packs.map(pack => pack.toString().padStart(3, "0")); // 顯示時補零
         // 回傳字型包路徑
+        let version_num = (await db.query(`SELECT bullet from version order BY start DESC limit 1;`)).rows; //[0].bullet
+        version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
         const results = await Promise.all(
             packs.map(async pack => {
-                const filename = `${font_family}-${font_weight}/${pack}.woff2`;
+                const filename = `${version_num}-${font_family}-${font_weight}/${pack}.woff2`;
                 let real_r2_path;
-                if (state.r2) real_r2_path = await checkR2FileExists(filename);
-                else real_r2_path = `${state.baseURL}/_generated/${filename}`;
+                // if (state.r2) real_r2_path = await checkR2FileExists(filename);
+                // else 
+                // {
+                    real_r2_path = `${state.baseURL}/_generated/${filename}`;
+                    console.log(real_r2_path)
+
                 return { pack, real_r2_path };
             })
         );
