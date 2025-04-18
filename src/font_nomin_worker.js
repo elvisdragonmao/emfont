@@ -9,7 +9,7 @@ import { generateFont } from "./font_min.js";
         try {
             process.stdout.write("\r╚  正在生成第 " + pack + " 包");
             //todo:靜態請求沒有找到檔案也要去重新生成，那邊的請求檔名也要加　version 作為前綴
-            pack= pack.toString().padStart(2, "0");
+            pack= pack.toString().padStart(3, "0");
             let generated = await generateFont(ff_name, support_weights, words, `${pack}.woff2`, `_data/_generated/${version}-${ff_name}-${support_weights}`);
             if (generated.status === "failed") {
                 console.log(generated.message);
