@@ -161,7 +161,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 //查詢這個字型支援字元用到的 pack
                 const all_need_gen_pack = (await db.query(`SELECT pack FROM static_fonts WHERE $1 = ANY(families) GROUP BY pack ORDER BY pack;`, [ff_name])).rows;
                 //all_need_gen_pack=[{ pack: 1 },{ pack: 55 },{ pack: 56 }...]
-                const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(2, "0"));
+                const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(3, "0"));
                 //all_pack_numbers=[00,55,56]
                 let regenerate = false;
                 let miss_pack_counter = 0;
@@ -270,7 +270,7 @@ async function give_static_font(font_family, font_weight, packs, state) {
         if (!Array.isArray(packs) || !packs.every(Number.isInteger)) {
             throw new TypeError("packs must be an array of integers");
         }
-        packs = packs.map(pack => pack.toString().padStart(2, "0")); // 顯示時補零
+        packs = packs.map(pack => pack.toString().padStart(3, "0")); // 顯示時補零
         // 回傳字型包路徑
         const results = await Promise.all(
             packs.map(async pack => {

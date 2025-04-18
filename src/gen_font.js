@@ -33,7 +33,7 @@ async function checkFormat(WORD_SET, FONT_NAME) {
     return font_id; // 如果沒問題，就回傳字型編號
 }
 
-export const genFont = async (req, res, state) => {
+export const genFont = async (req, res, state) => {//tate 是決定要不要傳 R2>。state.r2 = true 代表前面 init R2 測試成功，後面才會傳
     //檢查字集格式
     try {
         if (!req.body || !req.body.words) {
