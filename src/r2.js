@@ -81,41 +81,49 @@ const checkR2FileExists = async file_name => {
         return false;
     }
 };
-async function listFontsTopLevel() {
-    try {
-      let isTruncated = true;
-      let continuationToken;
-  
-      while (isTruncated) {
-        const command = new ListObjectsV2Command({
-          Bucket: "emfont",//要改成環境變數
-          Prefix: "fonts/",
-          Delimiter: "/", 
-          ContinuationToken: continuationToken,
-        });
-  
-        const response = await s3Client.send(command);
-  
-        // 列出第一層的子資料夾（CommonPrefixes）
-        if (response.CommonPrefixes) {
-          response.CommonPrefixes.forEach(prefixObj => {
-            console.log(`資料夾：${prefixObj.Prefix}`);
-          });
+async function listFontsRecursive(prefix = "fonts/",allFontRecords=[]) {
+  try {
+    let isTruncated = true;
+    let continuationToken;
+
+    while (isTruncated) {
+      const command = new ListObjectsV2Command({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Prefix: prefix,
+        Delimiter: "/",
+        ContinuationToken: continuationToken,
+      });
+
+      const response = await s3Client.send(command);
+
+      // 遞迴子資料夾
+      if (response.CommonPrefixes) {
+        for (const prefixObj of response.CommonPrefixes) {
+          await listFontsRecursive(prefixObj.Prefix,allFontRecords);
         }
-  
-        // 列出直接在 fonts/ 下的檔案（不在子資料夾內的）
-        if (response.Contents) {
-          response.Contents.forEach(obj => {
-            console.log(`檔案：${obj.Key}`);
-          });
-        }
-  
-        isTruncated = response.IsTruncated;
-        continuationToken = response.NextContinuationToken;
       }
-    } catch (err) {
-      console.error("列出檔案時發生錯誤：", err);
+
+      // 收集這層的檔案
+      if (response.Contents) {
+        for (const obj of response.Contents) {
+          if (obj.Key !== prefix) {
+            const key = obj.Key; // 例："fonts/abc/hello.ttf"
+            const fileName = key.split("/").pop(); // 取得檔名 "hello.ttf"
+            allFontRecords.push({
+                prefix:prefix,//檔案夾路徑
+                fileName:fileName,
+              lastModified: obj.LastModified
+            });
+          }
+        }
+      }
+
+      isTruncated = response.IsTruncated;
+      continuationToken = response.NextContinuationToken;
+      return allFontRecords;
     }
+  } catch (err) {
+    console.error("列出檔案時發生錯誤：", err);
   }
-  
-export { uploadToR2, checkR2FileExists, initR2 };
+}
+export { uploadToR2, checkR2FileExists, initR2 ,listFontsRecursive};
