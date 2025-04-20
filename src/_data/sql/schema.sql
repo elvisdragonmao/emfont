@@ -36,7 +36,12 @@ CREATE TABLE IF NOT EXISTS dynamic_fonts (
     hash CHAR(40) NOT NULL UNIQUE,
     FOREIGN KEY (family_id) REFERENCES font_family(id)
 );
-
+CREATE TABLE IF NOT EXISTS r2_files(
+    prefix text, -- r2 資料夾位置
+    file_name text, -- r2 檔名
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY key(prefix,file_name)
+);
 
 -- 文字對應表格 (每周更新一次)
 CREATE TABLE IF NOT EXISTS static_fonts (

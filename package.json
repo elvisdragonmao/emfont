@@ -8,7 +8,7 @@
         "test": "echo \"Error: no test specified\" && exit 1",
         "dev": "nodemon src/app.js --ignore public/*",
         "front": "nodemon src/front.js --ignore public/*",
-        "test_f": "node src/list_font.js",
+        "test_f": "node src/r2.js",
         "start": "node src/app.js"
     },
     "keywords": [],
