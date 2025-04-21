@@ -81,8 +81,9 @@ const checkR2FileExists = async file_name => {
         return false;
     }
 };
-async function listFontsRecursive(prefix = "fonts/",allFontRecords=[]) {
+async function listFontsRecursive(state ,prefix = "fonts/",allFontRecords=[]) {
   try {
+    if (state.r2 == false) return [];//r2 沒連上就不用試著去要 r2 的檔案狀態了
     let isTruncated = true;
     let continuationToken;
 

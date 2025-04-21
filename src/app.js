@@ -16,7 +16,7 @@ import registerApi from "./website/api.js";
 import registerStatic from "./website/static.js";
 
 dotenv.config();
-const state = { alive: false, bulletin: process.env.BULLETIN || "", local: true, r2: false };
+const state = { alive: false, bulletin: process.env.BULLETIN || "", local: true, r2: false };//預設很保守，預設都是關閉，會在init過程中打開
 const port = process.env.RUN_PORT || 3000;
 state.baseURL = process.env.BASE_URL || `http://localhost:${port}`;
 

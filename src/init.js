@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import { db, initDb } from "./database.js";
 import { regenerateAllStaticFont } from "./font_nomin.js";
 import fetchMinio from "./fetch_minio.js";
-import { initR2,listFontsRecursive } from "./r2.js";
+import { initR2, listFontsRecursive } from "./r2.js";
 
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
@@ -128,25 +128,25 @@ async function get_generated_static_floders() {
     }
     return fontData;
 }
-async function sync_r2_and_db(fontRecords,state) {
+async function sync_r2_and_db(state,fontRecords) {
     try {
-    await db.query(`delete from r2_files;`)
-    const query = `
+        await db.query(`DELETE FROM r2_files;`);
+        if (state.r2 == false) return;//r2 沒連上就不用同步了
+        const query = `
       INSERT INTO r2_files (prefix, file_name,update_time)
       VALUES ${fontRecords.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2},$${i * 3 + 3})`).join(", ")};
     `;
-    const values = fontRecords.flatMap(record => [record.prefix,record.fileName,record.lastModified]);
-    await db.query(query, values);
+        const values = fontRecords.flatMap(record => [record.prefix, record.fileName, record.lastModified]);
+        await db.query(query, values);
     } catch (err) {
-      console.error("同步資料庫、r2 時發生錯誤：", err);
-      throw err;
+        console.error("同步資料庫、r2 時發生錯誤：", err);
+        throw err;
     }
-  }
-  
+}
+
 async function initCheck(state) {
     try {
         if (!(await initDb())) return false;
-        console.log(state);
         await fetchMinio(state);
         await initR2(state);
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
@@ -154,8 +154,8 @@ async function initCheck(state) {
         await insertFontTypes();
         const have_gen_list = await get_generated_static_floders();
         await regenerateAllStaticFont(state, have_gen_list);
-        const all_file_on_r2 = await listFontsRecursive()
-        await sync_r2_and_db(all_file_on_r2,state);
+        const all_file_on_r2 = await listFontsRecursive(state);
+        await sync_r2_and_db(state,all_file_on_r2);
         state.alive = true;
         return true;
     } catch (err) {
