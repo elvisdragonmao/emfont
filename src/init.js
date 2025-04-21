@@ -138,6 +138,7 @@ async function sync_r2_and_db(state,fontRecords) {
     `;
         const values = fontRecords.flatMap(record => [record.prefix, record.fileName, record.lastModified]);
         await db.query(query, values);
+        console.log("✅ R2 、資料庫同步成功")
     } catch (err) {
         console.error("同步資料庫、r2 時發生錯誤：", err);
         throw err;

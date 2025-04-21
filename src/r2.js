@@ -100,7 +100,7 @@ async function listFontsRecursive(state ,prefix = "fonts/",allFontRecords=[]) {
       // 遞迴子資料夾
       if (response.CommonPrefixes) {
         for (const prefixObj of response.CommonPrefixes) {
-          await listFontsRecursive(prefixObj.Prefix,allFontRecords);
+          await listFontsRecursive(state,prefixObj.Prefix,allFontRecords);
         }
       }
 
