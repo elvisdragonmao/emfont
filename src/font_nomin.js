@@ -5,6 +5,8 @@ import { readFontBuffer } from "./font_min.js";
 import { checkR2FileExists } from "./r2.js";
 import { Font } from "fonteditor-core";
 import { Worker } from "worker_threads";
+import dotenv from "dotenv"
+dotenv.config();
 import path from "path";
 import os from "os";
 const __dirname = import.meta.dirname;
@@ -276,28 +278,35 @@ async function give_static_font(font_family, font_weight, packs, state) {
         version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
         const results = await Promise.all(
             packs.map(async pack => {
-                const filename = `${version_num}-${font_family}-${font_weight}/${pack}.woff2`;
-                let real_r2_path;
-                // if (state.r2) real_r2_path = await checkR2FileExists(filename);
-                // else 
-                // {
-                    real_r2_path = `${state.baseURL}/_generated/${filename}`;
-                    console.log(real_r2_path)
-
-                return { pack, real_r2_path };
+                const prefix =`${version_num}-${font_family}-${font_weight}/`;
+                const prefix_key =`fonts/${version_num}-${font_family}-${font_weight}/`;//r2 上的路徑還有一個 /font 前綴
+                const filename = `${pack}.woff2`;
+                const existsRes = await db.query(
+                    `SELECT EXISTS (SELECT 1 FROM r2_files WHERE prefix = $1 AND file_name = $2) AS exists`,
+                    [prefix_key, filename]
+                  );
+                  let real_path;
+                  if (existsRes.rows[0].exists) {
+                    //r2 有，回傳 r2 路徑
+                    real_path = `${process.env.R2_PUB_URL_BASE}/${prefix_key}${filename}`
+                  } else {
+                    //不存在 r2 ，回傳本地路徑
+                    real_path = `${state.baseURL}/_generated/${prefix}${filename}`;
+                  }
+                return { pack, real_path };
             })
         );
 
-        const missing = results.filter(result => !result.real_r2_path);
+        const missing = results.filter(result => !result.real_path);
 
         if (missing.length > 0) {
-            const missingPaths = missing.map(m => m.real_r2_path).join(", ");
+            const missingPaths = missing.map(m => m.real_path).join(", ");
             // TODO如果有缺少的字型檔，是不是要試著重新生成？
             throw new Error(`Missing font files: ${missingPaths}`);
         }
 
         // 全部存在的話就可以繼續
-        return results.map(r => r.real_r2_path);
+        return results.map(r => r.real_path);
     } catch (error) {
         console.error("Error inserting font types:", error);
         throw error;
