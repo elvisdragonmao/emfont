@@ -8,6 +8,7 @@ async function hashString(str) {
     const hashBuffer = await crypto.subtle.digest("SHA-1", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const fullHash = hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
+    console.log(str,fullHash)
     return fullHash;
 }
 
@@ -60,12 +61,12 @@ export const genFont = async (req, res, state) => {//tate 是決定要不要傳 
 
         if (min_flag) {
             console.log(`正在生成動態字體`);
-            const summery = {
-                wordSet: req_word_set,
+            const summery = {// This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
+                fontFamily: font_family_name,
                 fontWeight: font_weight,
-                fontFamily: font_family_name
+                wordSet: req_word_set
             };
-            const hash = await hashString(summery);
+            const hash = await hashString(JSON.stringify(summery));
             const file_path = await find_dynamic_font(hash, font_id, font_family_name, font_weight, req_word_set, req_source, state);
             console.log(file_path);
             if (file_path.status === "failed") res.code(400).send(file_path);
