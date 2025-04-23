@@ -1,7 +1,6 @@
 // website
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-//import { users } from "./schema.js";
 //import fastifyCookie from "@fastify/cookie";
 //import fastifyJwt from "@fastify/jwt";
 //import axios from "axios";

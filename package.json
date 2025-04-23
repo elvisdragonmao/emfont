@@ -12,7 +12,7 @@
         "start": "node src/app.js"
     },
     "keywords": [],
-    "repository": "https://github.com/Edit-Mr/emfont.git",
+    "repository": "https://github.com/emfont/emfont.git",
     "author": "Elvis Mao <info@elvismao.com>",
     "license": "Apache-2.0",
     "packageManager": "pnpm@10.5.2",
@@ -29,14 +29,8 @@
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
-        "drizzle-orm": "^0.40.0",
         "fastify": "^5.2.1",
         "fonteditor-core": "^2.4.1",
-        "fontmin": "^2.0.0",
-        "gulp-rename": "^2.0.0",
-        "ioredis": "^5.5.0",
-        "jsonwebtoken": "^9.0.2",
-        "multer": "1.4.5-lts.2",
         "pg": "^8.13.3"
     },
     "pnpm": {

@@ -42,7 +42,7 @@ git clone https://github.com/Edit-Mr/emfont.git
 pnpm install
 ```
 
-可以考慮安裝 [minIO](https://min.io/) ([S3](https://aws.amazon.com/tw/pm/serv-s3/), [R2](https://www.cloudflare.com/zh-tw/developer-platform/products/r2/))、[Redis](https://redis.io/) 並設定環境變數來提升性能。
+可以考慮安裝 [minIO](https://min.io/) ([S3](https://aws.amazon.com/tw/pm/serv-s3/), [R2](https://www.cloudflare.com/zh-tw/developer-platform/products/r2/)) 並設定環境變數來提升性能。
 
 也可以順便自己架設 [說明文件](https://github.com/emfont/doc) 以及 [caddy](https://zeabur.com/zh-TW/templates/FFDLWU) 來控制路由。
 
