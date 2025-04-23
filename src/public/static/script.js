@@ -1,5 +1,5 @@
 emfont.init({
-    colorTest: true
+   // colorTest: true
 });
 
 const marqueeSet = () => {
@@ -109,7 +109,7 @@ const updateFontDisplay = (e, animationOff = false) => {
                             ${weightStr}&nbsp; | &nbsp;by ${font.author}
                         </div>
                     </div>
-                    <div class="font-preview" data-class="emfont-${font.id}">${previewText}</div>
+                    <div class="font-preview" data-class="emfont-${font.id}-min">${previewText}</div>
                 </a>
             `;
     });
@@ -240,7 +240,7 @@ const loadFontInfo = async fontId => {
             weight =>
                 `<div class="font-item">
             <div class="font-title"><div class="weight">${weightChart[weight][1]} ${weight}</div></div>
-            <div class="font-preview emfont-${fontId}-${weight}">${inputText}</div></div>`
+            <div class="font-preview emfont-${fontId}-${weight}-min">${inputText}</div></div>`
         )
         .join("");
     document.querySelector(".font-weights").innerHTML = weightHTML || `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
