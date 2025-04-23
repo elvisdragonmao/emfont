@@ -52,7 +52,7 @@ export const genFont = async (req, res, state) => {//tate 是決定要不要傳 
         const font_family_name = req.params.font;
         const font_id = await checkFormat(req_word_set, font_family_name);
         if (!font_id) {
-            return res.code(404).send({
+            return res.status(404).send({
                 status: "failed",
                 message: `${font_family_name} doesn't exist`
             });
@@ -68,7 +68,7 @@ export const genFont = async (req, res, state) => {//tate 是決定要不要傳 
             const hash = await hashString(JSON.stringify(summery));
             const file_path = await find_dynamic_font(hash, font_id, font_family_name, font_weight, req_word_set, req_source, state);
             console.log(file_path);
-            if (file_path.status === "failed") res.code(400).send(file_path);
+            if (file_path.status === "failed") res.status(400).send(file_path);
             return res.send({
                 status: "success",
                 message: "",
