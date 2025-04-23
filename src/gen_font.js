@@ -8,7 +8,6 @@ async function hashString(str) {
     const hashBuffer = await crypto.subtle.digest("SHA-1", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const fullHash = hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
-    console.log(str,fullHash)
     return fullHash;
 }
 
