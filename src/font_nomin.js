@@ -156,14 +156,14 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             //this_static_font_dir_status 是 ff_name-support_weights 的靜態字型在生成列表中的狀態，
             // 包括字型id 、字重和生成的檔案編號，從 have_gen_list（有所有靜態已生成資料夾的屬性） 拆解出來
             const this_static_font_dir_status = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight && item.version == version_num);
-
-            const existPack = this_static_font_dir_status.files;
+            let existPack = [];
             let ready_regen = []; //put pack number ready to gen
+              //查詢這個字型支援字元用到的 pack
+              const all_need_gen_pack = (await db.query(`SELECT pack FROM static_fonts WHERE $1 = ANY(families) GROUP BY pack ORDER BY pack;`, [ff_name])).rows;
+              //all_need_gen_pack=[{ pack: 1 },{ pack: 55 },{ pack: 56 }...]
+              const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(3, "0"));
             if (this_static_font_dir_status) {
-                //查詢這個字型支援字元用到的 pack
-                const all_need_gen_pack = (await db.query(`SELECT pack FROM static_fonts WHERE $1 = ANY(families) GROUP BY pack ORDER BY pack;`, [ff_name])).rows;
-                //all_need_gen_pack=[{ pack: 1 },{ pack: 55 },{ pack: 56 }...]
-                const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(3, "0"));
+                existPack = this_static_font_dir_status.files;
                 //all_pack_numbers=[00,55,56]
                 let regenerate = false;
                 let miss_pack_counter = 0;
@@ -180,7 +180,8 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 console.log(`╔ ${ff_name}-${support_weights} 應該共有 ${all_need_gen_pack.length} 包字型。本地只有其中 ${existPack.length} 包字體`);
                 console.log(`╔ 準備生成 ${ff_name}-${support_weights} 缺少的 ${miss_pack_counter} 包的靜態字型`);
             } else {
-                console.log(`╔ 正在生成 ${ff_name} ${support_weights} 所有的 ${miss_pack_counter} 包靜態字型`);
+                ready_regen = all_pack_numbers;
+                console.log(`╔ 正在生成 ${ff_name} ${support_weights} 所有的靜態字型`);
             }
             //重新生成
             let word_package_pair = (

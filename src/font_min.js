@@ -117,7 +117,7 @@ async function find_dynamic_font( //return a R2 url client need
         }
         return {
             status: "success",
-            location: file_exist
+            location: `${state.baseURL}/_generated/${little_font_package}`
         };
     }
     //如果不存在，則生成字型檔
