@@ -101,8 +101,12 @@ class Emfont {
                 let postFontName = fontName;
                 const min = fontName.includes("-min");
                 if (min) postFontName = fontName.replace("-min", "");
-                const weight = fontName.match(/-(\d+)/);
-                if (weight) postFontName = postFontName.replace("-" + weight[1], "");
+                let weight = fontName.match(/-(\d+)/);
+                if (weight) {
+                    postFontName = postFontName.replace("-" + weight[1], "");
+                    weight = weight[1];
+                }
+
                 return fetch("{{BASE_URL}}/g/" + postFontName, {
                     method: "POST",
                     headers: {
