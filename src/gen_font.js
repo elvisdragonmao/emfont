@@ -33,22 +33,17 @@ async function checkFormat(WORD_SET, FONT_NAME) {
     return font_id; // 如果沒問題，就回傳字型編號
 }
 
-export const genFont = async (req, res, state) => {//tate 是決定要不要傳 R2>。state.r2 = true 代表前面 init R2 測試成功，後面才會傳
+export const genFont = async (req, res, state) => {
+    //tate 是決定要不要傳 R2>。state.r2 = true 代表前面 init R2 測試成功，後面才會傳
     //檢查字集格式
     try {
         if (!req.body || !req.body.words) {
             return res.status(400).json({ status: "failed", message: "Missing words parameter" });
         }
-        //req.body.word 是使用者請求的字集
-        const req_word_set = req.body.words;
-        //req.body.min 是否使用專用壓縮字型
-        const min_flag = req.body.min;
-        //請求字重
-        const font_weight = req.body.weight || 400;
         //req_word_set,min_flag,font_weight 有可能是 undefined
+        const req_word_set = req.body.words;
+        const min_flag = req.body.min;
         const req_source = req.headers.referer || req.headers.origin || "unknown"; //請求網域
-
-        //font tag 是使用者請求的字型名稱，例如ZhuQueFangSong（朱雀仿宋）等等
         const font_family_name = req.params.font;
         const font_id = await checkFormat(req_word_set, font_family_name);
         if (!font_id) {
@@ -57,10 +52,31 @@ export const genFont = async (req, res, state) => {//tate 是決定要不要傳 
                 message: `${font_family_name} doesn't exist`
             });
         }
+        //req.body.word 是使用者請求的字集
+        //請求字重
+        let font_weight = req.body.weight;
+        if (!font_weight || font_weight == "null") {
+            const { rows } = await db.query(
+                `
+                SELECT id, name, name_zh, name_en, weights, category, tags, family,
+                       version, license, repo_url AS source, authors, description
+                FROM font_family
+                WHERE id = $1
+            `,
+                [font_id]
+            );
+            if (rows.length === 0) return res.status(404).send({ status: "failed", message: "Font not found" });
+            const allWeights = rows[0].weights;
+            // find the one closest to 400
+            font_weight = allWeights.reduce((prev, curr) => {
+                return Math.abs(curr - 400) < Math.abs(prev - 400) ? curr : prev;
+            });
+        }
 
         if (min_flag) {
             console.log(`正在生成動態字體`);
-            const summery = {// This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
+            const summery = {
+                // This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
                 fontFamily: font_family_name,
                 fontWeight: font_weight,
                 wordSet: req_word_set
@@ -78,7 +94,7 @@ export const genFont = async (req, res, state) => {//tate 是決定要不要傳 
         } else {
             //請求靜態字型
             //TODO:確認字型包是否存在r2，若無，怎麼辦
-            const font_pack_you_need = await find_static_font(req_word_set,font_family_name);
+            const font_pack_you_need = await find_static_font(req_word_set, font_family_name);
             const R2font_url = await give_static_font(font_family_name, font_weight, font_pack_you_need, state);
             return res.send({
                 status: "success",

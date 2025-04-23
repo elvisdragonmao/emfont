@@ -128,17 +128,17 @@ async function get_generated_static_floders() {
     }
     return fontData;
 }
-async function sync_r2_and_db(state,fontRecords) {
+async function sync_r2_and_db(state, fontRecords) {
     try {
         await db.query(`DELETE FROM r2_files;`);
-        if (state.r2 == false) return;//r2 沒連上就不用同步了
+        if (state.r2 == false) return; //r2 沒連上就不用同步了
         const query = `
       INSERT INTO r2_files (prefix, file_name,update_time)
       VALUES ${fontRecords.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2},$${i * 3 + 3})`).join(", ")};
     `;
         const values = fontRecords.flatMap(record => [record.prefix, record.fileName, record.lastModified]);
         await db.query(query, values);
-        console.log("✅ R2 、資料庫同步成功")
+        console.log("✅ R2 、資料庫同步成功");
     } catch (err) {
         console.error("同步資料庫、r2 時發生錯誤：", err);
         throw err;
@@ -147,6 +147,8 @@ async function sync_r2_and_db(state,fontRecords) {
 
 async function initCheck(state) {
     try {
+        let originalBulletin = state.bulletin;
+        state.bulletin = "🔁 正在初始化中，請稍後...";
         if (!(await initDb())) return false;
         await fetchMinio(state);
         await initR2(state);
@@ -154,10 +156,13 @@ async function initCheck(state) {
         await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await insertFontTypes();
         const have_gen_list = await get_generated_static_floders();
+        state.bulletin = "📠 正在生成靜態字型，請稍後...";
         await regenerateAllStaticFont(state, have_gen_list);
         const all_file_on_r2 = await listFontsRecursive(state);
-        await sync_r2_and_db(state,all_file_on_r2);
+        await sync_r2_and_db(state, all_file_on_r2);
         state.alive = true;
+        state.bulletin = originalBulletin;
+        console.log("✅ 初始化完成");
         return true;
     } catch (err) {
         console.error("❌ 初始化失敗:", err);

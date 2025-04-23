@@ -2,7 +2,7 @@ class Emfont {
     constructor(
         config = {
             caseSensitive: false,
-            weight: 400,
+            weight: null,
             format: "woff2", // woff2, woff, ttf, eot
             autoApply: true,
             cache: true,
@@ -64,7 +64,7 @@ class Emfont {
                 fontNames.forEach(fontName => {
                     if (fontName && words) {
                         const settedWeight = !!fontName.match(/-(\d+)/);
-                        if (!settedWeight) fontName += "-" + (element.style.fontWeight || this.config.weight);
+                        if (!settedWeight) fontName += element.style.fontWeight ? "-" + element.style.fontWeight : this.config.weight ? "-" + this.config.weight : "";
                         const text = (newFonts[fontName] ? newFonts[fontName] : "") + words;
                         newFonts[fontName] = Array.from(new Set(text.split("")))
                             .sort()
@@ -100,8 +100,9 @@ class Emfont {
                 let postFontName = fontName;
                 const min = fontName.includes("-min");
                 if (min) postFontName = fontName.replace("-min", "");
-                const weight = fontName.match(/-(\d+)/)[1];
-                if (weight) postFontName = postFontName.replace("-" + weight, "");
+                const weight = fontName.match(/-(\d+)/);
+                console.log(weight);
+                if (weight) postFontName = postFontName.replace("-" + weight[1], "");
                 return fetch("{{BASE_URL}}/g/" + postFontName, {
                     method: "POST",
                     headers: {
