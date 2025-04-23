@@ -125,8 +125,12 @@ async function regenerateAllStaticFont(state, have_gen_list) {
         let version_num = (await db.query(`SELECT bullet from version order BY start DESC limit 1;`)).rows; //[0].bullet
         version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
         console.log("目前版本: ", version_num);
+        // get length of all_fonts
+        const all_fonts_length = all_fonts.length;
+        let currentIndex = 0;
         for (const { ff_name, support_weights } of all_fonts) {
-            state.bulletin = "📠 正在生成 " + ff_name + " 的靜態字型";
+            currentIndex++;
+            state.bulletin = "⌨️ 正在生成 " + ff_name + " 的靜態字型 (總進度 " + currentIndex + "/" + all_fonts_length + ")";
             const this_font = {
                 version: version_num,
                 fontName: ff_name, // 字型名稱（資料夾名稱）

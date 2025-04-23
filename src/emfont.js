@@ -84,24 +84,24 @@ class Emfont {
                         delete newFonts[fontName];
                     }
                 });
-
-                Object.keys(newFonts).forEach(fontName => {
-                    if (this.fonts[fontName]) {
-                        this.fonts[fontName] = Array.from(new Set((this.fonts[fontName] + newFonts[fontName]).split("")))
-                            .sort()
-                            .join("");
-                    } else {
-                        this.fonts[fontName] = newFonts[fontName];
-                    }
-                });
             }
+            let willAddCSS = false;
+            Object.keys(newFonts).forEach(fontName => {
+                if (this.fonts[fontName]) {
+                    this.fonts[fontName] = Array.from(new Set((this.fonts[fontName] + newFonts[fontName]).split("")))
+                        .sort()
+                        .join("");
+                } else {
+                    this.fonts[fontName] = newFonts[fontName];
+                    willAddCSS = true;
+                }
+            });
 
             const fetchPromises = Object.entries(newFonts).map(([fontName, words]) => {
                 let postFontName = fontName;
                 const min = fontName.includes("-min");
                 if (min) postFontName = fontName.replace("-min", "");
                 const weight = fontName.match(/-(\d+)/);
-                console.log(weight);
                 if (weight) postFontName = postFontName.replace("-" + weight[1], "");
                 return fetch("{{BASE_URL}}/g/" + postFontName, {
                     method: "POST",
@@ -125,7 +125,6 @@ class Emfont {
                                 const matchedVariants = originalClasses.filter(cls => cls.startsWith(baseFontName));
                                 if (matchedVariants.length === 0) matchedVariants.push(baseFontName);
                                 const uniqueVariants = [...new Set(matchedVariants)];
-                                this._styleElement.innerHTML = "";
                                 this._styleElement.innerHTML += uniqueVariants
                                     .map(
                                         variant => `

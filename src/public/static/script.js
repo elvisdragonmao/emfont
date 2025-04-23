@@ -66,7 +66,7 @@ let fontList = {};
 const families = new Set();
 const tags = new Set();
 const categories = new Set();
-
+const searchText = document.querySelector("#search-test");
 const updateFontDisplay = (e, animationOff = false) => {
     if (e && e.target.classList[0].includes("cat")) {
         const checkboxes = document.querySelectorAll(".category input:checked");
@@ -91,12 +91,10 @@ const updateFontDisplay = (e, animationOff = false) => {
     // 你可以改成要放的地方
     const container = document.getElementById("section-search");
     container.innerHTML = "";
-    const searchTest = document.querySelector("#search-test");
-    const previewText = searchTest.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
+    const previewText = searchText.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
     let containerHTML = "";
     filtered.forEach(font => {
         const parts = [];
-        console.log(font.weight);
         for (let weight in font.weight) {
             weight = font.weight[weight];
             if (weightChart[weight]) {
@@ -104,7 +102,7 @@ const updateFontDisplay = (e, animationOff = false) => {
             } else parts.push(`<span>${weight}</span>`);
         }
         weightStr = parts.join(" ⋅ ");
-        if(!weightStr) weightStr = "暫時無法使用";
+        if (!weightStr) weightStr = "暫時無法使用";
         containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
                         <h3>${font.name}</h3>
@@ -160,7 +158,6 @@ const initSearch = async () => {
         input.addEventListener("change", updateFontDisplay);
     });
 
-    const searchText = document.getElementById("search-test");
     let debounceTimer;
     searchText.addEventListener("input", () => {
         clearTimeout(debounceTimer);
@@ -178,6 +175,7 @@ function isElementInViewport(el) {
 }
 
 function addClassToVisibleElements() {
+    if (!document.querySelector("main").classList.contains("fonts")) return;
     var aosElements = document.querySelectorAll(".font-preview");
     aosElements.forEach(function (aosElement) {
         const className = aosElement.getAttribute("data-class");
