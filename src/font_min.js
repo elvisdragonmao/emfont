@@ -1,7 +1,4 @@
-// dynamic font generation useage function
 import fs from "fs";
-// import rename from "gulp-rename";
-// import Fontmin from "fontmin";
 import { Font, woff2 } from "fonteditor-core";
 import path from "path";
 import { db } from "./database.js";
