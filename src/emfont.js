@@ -40,48 +40,64 @@ class Emfont {
     fonts = {};
 
     setConfig(newConfig = {}) {
-        this.config = { ...this.config, root: document.documentElement, ...newConfig }; // Merge the new config with the existing one
+        this.config = { ...this.config, root: document.documentElement, ...newConfig };
     }
 
     init(newConfig = {}) {
-        this.setConfig(newConfig); // Apply new config before initializing
+        let newFonts = {};
+        this.setConfig(newConfig);
         return new Promise(resolve => {
             const elements = this.config.root.querySelectorAll("[class*='emfont']");
-            let fonts = {};
             let originalClasses = [];
             elements.forEach(element => {
                 if (this.config.colorTest) {
                     element.style.color = "red";
                     return;
                 }
-                // Get all font names from element class
                 const fontNames = element.className
                     .split(" ")
                     .filter(name => name.startsWith("emfont-") || name.startsWith("✏️"))
                     .map(name => name.replace(/^(emfont-|✏️)/, ""));
                 originalClasses.push(...fontNames);
-                const words = element.textContent.trim(); // Custom words from element text
+                const words = element.textContent.trim();
 
                 fontNames.forEach(fontName => {
                     if (fontName && words) {
-                        // check if there are -500, -500, -900, etc. in class name, must start with -
                         const settedWeight = !!fontName.match(/-(\d+)/);
                         if (!settedWeight) fontName += "-" + (element.style.fontWeight || this.config.weight);
-                        fonts[fontName] = (fonts[fontName] ? fonts[fontName] : "") + words;
+                        const text = (newFonts[fontName] ? newFonts[fontName] : "") + words;
+                        newFonts[fontName] = Array.from(new Set(text.split("")))
+                            .sort()
+                            .join("");
                     }
                 });
             });
 
-            const cssElement = document.createElement("style");
-            if (this.config.autoApply) this.config.applyAt.appendChild(cssElement);
+            if (!this._styleElement) {
+                this._styleElement = document.createElement("style");
+                if (this.config.autoApply) this.config.applyAt.appendChild(this._styleElement);
+            }
 
-            // Load custom fonts
-            const fetchPromises = Object.entries(fonts).map(([fontName, text]) => {
-                const words = Array.from(new Set(text.split("")))
-                    .sort()
-                    .join("");
+            if (this.config.cache) {
+                Object.keys(this.fonts).forEach(fontName => {
+                    if (newFonts[fontName]) {
+                        delete newFonts[fontName];
+                    }
+                });
+
+                Object.keys(newFonts).forEach(fontName => {
+                    if (this.fonts[fontName]) {
+                        this.fonts[fontName] = Array.from(new Set((this.fonts[fontName] + newFonts[fontName]).split("")))
+                            .sort()
+                            .join("");
+                    } else {
+                        this.fonts[fontName] = newFonts[fontName];
+                    }
+                });
+            }
+
+            const fetchPromises = Object.entries(newFonts).map(([fontName, words]) => {
                 let postFontName = fontName;
-                // check if fontName contains -min
                 const min = fontName.includes("-min");
                 if (min) postFontName = fontName.replace("-min", "");
                 const weight = fontName.match(/-(\d+)/)[1];
@@ -104,17 +120,17 @@ class Emfont {
                             if (data.message) console.warn("✏️ " + data.message);
                             const fontCSSName = data.name;
                             if (this.config.autoApply) {
-                                // Filter matching variants based on base name
                                 const baseFontName = fontName.split("-")[0];
                                 const matchedVariants = originalClasses.filter(cls => cls.startsWith(baseFontName));
                                 if (matchedVariants.length === 0) matchedVariants.push(baseFontName);
-                                // Generate CSS for each matched variant
-                                for (const variant of matchedVariants) {
-                                    cssElement.innerHTML += `
-                                    .emfont-${variant} { font-family: '${fontCSSName}'; }
-                                    .✏️${variant} { font-family: '${fontCSSName}'; }
-                                `;
-                                }
+                                const uniqueVariants = [...new Set(matchedVariants)];
+                                this._styleElement.innerHTML = "";
+                                this._styleElement.innerHTML += uniqueVariants
+                                    .map(
+                                        variant => `
+                                    .emfont-${variant}, .✏️${variant} { font-family: '${fontCSSName}'; }`
+                                    )
+                                    .join("\n");
                             }
                             for (const url of data.location) {
                                 const font = new FontFace(fontCSSName, `url(${url})`);
@@ -131,7 +147,6 @@ class Emfont {
                         }
                     });
             });
-            // Wait for all fonts to load
             Promise.all(fetchPromises).then(() => {
                 resolve();
             });
