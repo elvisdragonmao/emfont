@@ -5,13 +5,12 @@ import { readFontBuffer } from "./font_min.js";
 import { checkR2FileExists } from "./r2.js";
 import { Font } from "fonteditor-core";
 import { Worker } from "worker_threads";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 dotenv.config();
 import path from "path";
 import os from "os";
 const __dirname = import.meta.dirname;
-const cpuCount = os.cpus().length + 4; // - 2;
-console.log("cpuCount", cpuCount);
+const cpuCount = os.cpus().length + parseInt(process.env.THREADS); // - 2;
 const runWorker = data => {
     try {
         return new Promise((resolve, reject) => {
@@ -100,7 +99,7 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
                          )
                        )`,
                     params
-                  );
+                );
             }
         }
         return true;
@@ -158,10 +157,10 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             const this_static_font_dir_status = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight && item.version == version_num);
             let existPack = [];
             let ready_regen = []; //put pack number ready to gen
-              //查詢這個字型支援字元用到的 pack
-              const all_need_gen_pack = (await db.query(`SELECT pack FROM static_fonts WHERE $1 = ANY(families) GROUP BY pack ORDER BY pack;`, [ff_name])).rows;
-              //all_need_gen_pack=[{ pack: 1 },{ pack: 55 },{ pack: 56 }...]
-              const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(3, "0"));
+            //查詢這個字型支援字元用到的 pack
+            const all_need_gen_pack = (await db.query(`SELECT pack FROM static_fonts WHERE $1 = ANY(families) GROUP BY pack ORDER BY pack;`, [ff_name])).rows;
+            //all_need_gen_pack=[{ pack: 1 },{ pack: 55 },{ pack: 56 }...]
+            const all_pack_numbers = all_need_gen_pack.map(item => item.pack.toString().padStart(3, "0"));
             if (this_static_font_dir_status) {
                 existPack = this_static_font_dir_status.files;
                 //all_pack_numbers=[00,55,56]
@@ -251,14 +250,14 @@ async function regenerateAllStaticFont(state, have_gen_list) {
     console.log("✨ 所有靜態字體生成完成！");
 }
 
-async function find_static_font(word_set,font_family_name) {
+async function find_static_font(word_set, font_family_name) {
     // 回傳要用到的字型包編號
     // 字串轉成字元陣列給 SQL 查詢
     try {
         word_set = word_set.split("");
         //查詢請求的字分別散落在哪些字型包中
         const query = "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[]) and $2 = ANY(families)";
-        const result = await db.query(query, [word_set,font_family_name]);//如果請求的字該字型沒有支援也不用特地去找 pack 了
+        const result = await db.query(query, [word_set, font_family_name]); //如果請求的字該字型沒有支援也不用特地去找 pack 了
         const use_packs = result.rows.map(row => Number(row.pack)); // 確保是數字
         console.log(word_set, "散落在", use_packs);
         //查詢請求的字型包是否存在
@@ -279,21 +278,18 @@ async function give_static_font(font_family, font_weight, packs, state) {
         version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
         const results = await Promise.all(
             packs.map(async pack => {
-                const prefix =`${version_num}-${font_family}-${font_weight}/`;
-                const prefix_key =`fonts/${version_num}-${font_family}-${font_weight}/`;//r2 上的路徑還有一個 /font 前綴
+                const prefix = `${version_num}-${font_family}-${font_weight}/`;
+                const prefix_key = `fonts/${version_num}-${font_family}-${font_weight}/`; //r2 上的路徑還有一個 /font 前綴
                 const filename = `${pack}.woff2`;
-                const existsRes = await db.query(
-                    `SELECT EXISTS (SELECT 1 FROM r2_files WHERE prefix = $1 AND file_name = $2) AS exists`,
-                    [prefix_key, filename]
-                  );
-                  let real_path;
-                  if (existsRes.rows[0].exists) {
+                const existsRes = await db.query(`SELECT EXISTS (SELECT 1 FROM r2_files WHERE prefix = $1 AND file_name = $2) AS exists`, [prefix_key, filename]);
+                let real_path;
+                if (existsRes.rows[0].exists) {
                     //r2 有，回傳 r2 路徑
-                    real_path = `${process.env.R2_PUB_URL_BASE}/${prefix_key}${filename}`
-                  } else {
+                    real_path = `${process.env.R2_PUB_URL_BASE}/${prefix_key}${filename}`;
+                } else {
                     //不存在 r2 ，回傳本地路徑
                     real_path = `${state.baseURL}/_generated/${prefix}${filename}`;
-                  }
+                }
                 return { pack, real_path };
             })
         );
