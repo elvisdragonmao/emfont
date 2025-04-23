@@ -1,5 +1,5 @@
 emfont.init({
-   // colorTest: true
+    // colorTest: true
 });
 
 const marqueeSet = () => {
@@ -96,12 +96,15 @@ const updateFontDisplay = (e, animationOff = false) => {
     let containerHTML = "";
     filtered.forEach(font => {
         const parts = [];
+        console.log(font.weight);
         for (let weight in font.weight) {
+            weight = font.weight[weight];
             if (weightChart[weight]) {
-                parts.push(`<span class="l">${weightChart[weight][0]}</span>`);
-            } else parts.push(`<span class="l">${weight}</span>`);
+                parts.push(`<span class="${weightChart[weight][0]}">${weightChart[weight][0]}</span>`);
+            } else parts.push(`<span>${weight}</span>`);
         }
         weightStr = parts.join(" ⋅ ");
+        if(!weightStr) weightStr = "暫時無法使用";
         containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
                         <h3>${font.name}</h3>

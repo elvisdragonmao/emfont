@@ -29,7 +29,6 @@ async function checkFormat(WORD_SET, FONT_NAME) {
         return false;
     }
     const font_id = result.rows[0].id; // Extracting the id value
-    console.log(FONT_NAME, "的 ID 是", font_id);
     return font_id; // 如果沒問題，就回傳字型編號
 }
 
@@ -67,7 +66,7 @@ export const genFont = async (req, res, state) => {
             );
             if (rows.length === 0) return res.status(404).send({ status: "failed", message: "Font not found" });
             const allWeights = rows[0].weights;
-            // find the one closest to 400
+            if (allWeights.length === 0) return res.status(404).send({ status: "failed", message: "Font missing, temporary can't be use." });
             font_weight = allWeights.reduce((prev, curr) => {
                 return Math.abs(curr - 400) < Math.abs(prev - 400) ? curr : prev;
             });
