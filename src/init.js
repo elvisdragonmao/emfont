@@ -149,10 +149,10 @@ async function initCheck(state) {
         let originalBulletin = state.bulletin;
         state.bulletin = "🔁 正在初始化中，請稍後...";
         if (!(await initDb())) return false;
-        await fetchMinio(state);
-        await initR2(state);
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
         await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
+        await fetchMinio(state);
+        await initR2(state);
         await insertFontTypes();
         const have_gen_list = await get_generated_static_floders();
         state.bulletin = "📠 正在生成靜態字型，請稍後...";

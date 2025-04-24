@@ -15,7 +15,7 @@ import registerApi from "./website/api.js";
 import registerStatic from "./website/static.js";
 
 dotenv.config();
-const state = { alive: false, bulletin: process.env.BULLETIN || "", local: true, r2: false };//預設很保守，預設都是關閉，會在init過程中打開
+const state = { alive: false, bulletin: process.env.BULLETIN || "", local: true, r2: false }; //預設很保守，預設都是關閉，會在init過程中打開
 const port = process.env.PORT ?? 3000;
 state.baseURL = process.env.BASE_URL ?? `http://localhost:${port}`;
 
@@ -56,6 +56,6 @@ app.ready().then(async () => {
         console.log("🎉 初始化成功，服務已啟動");
     } else {
         console.log("🤨 初始化失敗，網頁仍在運行");
-        if (!state.bulletin) state.bulletin = "emfont 啟動失敗，暫時無法使用。";
+        if (!state.bulletin) state.bulletin += "<br>😭emfont 啟動失敗，暫時無法使用。<br>";
     }
 });

@@ -31,49 +31,28 @@ export default async state => {
         return;
     }
 
-    const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts");
-    const readdir = promisify(fs.readdir);
-    const stat = promisify(fs.stat);
-
-    //刪除本地src/_data/fonts/裡面的所有東西
-    // const all_files_in_folder = await readdir(sotrge_original_fontsDir);
-
-    // // 刪除所有檔案
-    // for (const one_font_family of all_files_in_folder) {
-    //     const itemPath = path.join(sotrge_original_fontsDir, one_font_family);
-    //     const stats = await stat(itemPath);
-    //     if (stats.isDirectory()) {
-    //         await fs.promises.rm(itemPath, { recursive: true, force: true });
-    //     } else {
-    //         await fs.promises.unlink(itemPath);
-    //     }
-    // }
-
-    // console.log("✅ 本地字體檔案已清除");
-
-    // 從 MinIO 抓取檔案，確保下載完成Ｆ;
     try {
         const listResponse = await LOCAL_MINIO_CLIENT.send(
             new ListObjectsV2Command({
                 Bucket: bucketName,
-                Prefix:"original-fonts"
+                Prefix: "original-fonts"
             })
         );
 
         const listGenerated = await LOCAL_MINIO_CLIENT.send(
             new ListObjectsV2Command({
                 Bucket: bucketName,
-                Prefix:  "_generated"
+                Prefix: "_generated"
             })
         );
 
-    if(!listResponse.Contents) listResponse.Contents = [];
-    if(!listGenerated.Contents) listGenerated.Contents = [];
+        if (!listResponse.Contents) listResponse.Contents = [];
+        if (!listGenerated.Contents) listGenerated.Contents = [];
 
         console.log(`🔄 找到 ${listResponse.Contents.length} 個原始字體，${listGenerated.Contents.length} 個分割好的，開始下載...`);
 
         await Promise.all(
-          [  ...listResponse.Contents, ...listGenerated.Contents].map(async file => {
+            [...listResponse.Contents, ...listGenerated.Contents].map(async file => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
                 const localPath = path.join("src", "_data", fileKey);

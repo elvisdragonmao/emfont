@@ -27,6 +27,14 @@ export default async (app, state) => {
         res.send({ status: state.alive ? "up" : "down", message: state.bulletin });
     });
 
+    app.post("/bulletin", async (req, res) => {
+        const { bulletin, token } = req.body;
+        if (token !== process.env.PASSWORD) return res.status(403).send({ status: "failed", message: "Invalid token" });
+        if (!bulletin) return res.status(400).send({ status: "failed", message: "No bulletin provided" });
+        state.bulletin = bulletin;
+        res.send({ status: "success", message: "Bulletin updated" });
+    });
+
     app.get("/list", async (req, res) => {
         const q = req.query.q?.trim();
         const values = [];
