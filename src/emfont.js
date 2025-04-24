@@ -8,17 +8,19 @@ class Emfont {
             cache: true,
             applyAt: document.head,
             colorTest: false,
-            root: document.documentElement
+            root: document.documentElement,
+            log: false,
+            hideAd: false
         }
     ) {
         this.config = config;
 
-        if (!this.config.colorTest && !this._checkBrowserSupport()) {
-            console.warn("✏️ Your browser may not support all required features for emfont. Some functionality may be limited.");
+        if (!this.config.colorTest && !this._checkBrowserSupport() && false) {
+            if (this.config.log) console.warn("✏️ Your browser may not support all required features for emfont. Some functionality may be limited.");
             if (this.config.format === "woff2" && !this._hasWoff2Support()) {
                 this.config.format = "woff";
             }
-        } else console.log("✏️ This website uses emfont: a free Chinese webfont service.");
+        } else if (!this.config.hideAd) console.log("✏️ This website uses emfont: a free Chinese webfont service.");
     }
 
     _checkBrowserSupport() {
@@ -47,7 +49,9 @@ class Emfont {
         let newFonts = {};
         this.setConfig(newConfig);
         return new Promise(resolve => {
-            const elements = this.config.root.querySelectorAll("[class*='emfont']");
+            let elements = this.config.root.querySelectorAll("[class*='emfont']");
+            // if root element has class add it too
+            if (this.config.root.className.includes("emfont")) elements = [this.config.root, ...elements];
             let originalClasses = [];
             elements.forEach(element => {
                 if (this.config.colorTest) {
@@ -77,15 +81,16 @@ class Emfont {
                 this._styleElement = document.createElement("style");
                 if (this.config.autoApply) this.config.applyAt.appendChild(this._styleElement);
             }
-
+            let skippedList = [];
             if (this.config.cache) {
                 Object.keys(this.fonts).forEach(fontName => {
                     if (newFonts[fontName]) {
                         delete newFonts[fontName];
+                        skippedList.push({ name: fontName, status: "skipped", reason: "Already loaded" });
                     }
                 });
             }
-            let willAddCSS = false;
+            let willAddCSS = [];
             Object.keys(newFonts).forEach(fontName => {
                 if (this.fonts[fontName]) {
                     this.fonts[fontName] = Array.from(new Set((this.fonts[fontName] + newFonts[fontName]).split("")))
@@ -93,7 +98,7 @@ class Emfont {
                         .join("");
                 } else {
                     this.fonts[fontName] = newFonts[fontName];
-                    willAddCSS = true;
+                    willAddCSS.push(fontName);
                 }
             });
 
@@ -119,12 +124,16 @@ class Emfont {
                         format: this.config.format
                     })
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                        return response.json();
+                    })
                     .then(async data => {
                         if (data.status === "success") {
                             if (data.message) console.warn("✏️ " + data.message);
                             const fontCSSName = data.name;
-                            if (this.config.autoApply) {
+
+                            if (this.config.autoApply && willAddCSS.includes(fontName)) {
                                 const baseFontName = fontName.split("-")[0];
                                 const matchedVariants = originalClasses.filter(cls => cls.startsWith(baseFontName));
                                 if (matchedVariants.length === 0) matchedVariants.push(baseFontName);
@@ -132,12 +141,15 @@ class Emfont {
                                 this._styleElement.innerHTML += uniqueVariants
                                     .map(
                                         variant => `
-                                    .emfont-${variant}, .✏️${variant} { font-family: '${fontCSSName}'; }`
+                                        .emfont-${variant}, .✏️${variant} { font-family: '${fontCSSName}'; }`
                                     )
                                     .join("\n");
                             }
+
                             for (const url of data.location) {
-                                const font = new FontFace(fontCSSName, `url(${url})`);
+                                const font = new FontFace(fontCSSName, `url(${url})`, {
+                                    weight: weight || this.config.weight || "normal"
+                                });
                                 try {
                                     const loadedFont = await font.load();
                                     document.fonts.add(loadedFont);
@@ -145,14 +157,28 @@ class Emfont {
                                     console.warn(`✏️ Failed to load font from: ${url}`, err);
                                 }
                             }
+                            return { name: fontName, status: "fulfilled" };
                         } else {
-                            console.error("✏️ " + data.message);
-                            return Promise.resolve();
+                            return { name: fontName, status: "rejected", reason: data.message };
                         }
+                    })
+                    .catch(err => {
+                        // Catch network or fetch errors like no internet
+                        return { name: fontName, status: "rejected", reason: err.message };
                     });
             });
-            Promise.all(fetchPromises).then(() => {
-                resolve();
+
+            Promise.all(fetchPromises).then(results => {
+                results = [...results, ...skippedList];
+                if (this.config.log)
+                    results.forEach(result => {
+                        if (result.status === "fulfilled") {
+                            console.log(`✅ ${result.name} loaded successfully`);
+                        } else {
+                            console.warn(`❌ ${result.name} failed: ${result.reason}`);
+                        }
+                    });
+                resolve(results);
             });
         });
     }

@@ -67,7 +67,9 @@ const families = new Set();
 const tags = new Set();
 const categories = new Set();
 const searchText = document.querySelector("#search-test");
+const container = document.getElementById("section-search");
 const updateFontDisplay = (e, animationOff = false) => {
+    console.log(e);
     if (e && e.target.classList[0].includes("cat")) {
         const checkboxes = document.querySelectorAll(".category input:checked");
         checkboxes.forEach(checkbox => {
@@ -80,16 +82,15 @@ const updateFontDisplay = (e, animationOff = false) => {
     const tags = [...document.querySelectorAll(".tags input:checked")].map(i => i.classList[0].replace("tag-", ""));
     const categories = [...document.querySelectorAll(".category input:checked")].map(i => i.classList[0].replace("cat-", ""));
     const family = document.getElementById("family").value;
-
+    const searchText = document.getElementById("search-input").value;
     const filtered = fontList.filter(font => {
+        const matchName = !searchText || (font.id + font.name_zh + font.name_en + font.name).includes(searchText);
         const matchFamily = family === "all" || font.family === family;
         const matchCategory = categories.length === 0 || categories.includes(font.category);
         const matchTags = tags.length === 0 || tags.every(tag => font.tags.includes(tag));
-        return matchFamily && matchCategory && matchTags;
+        return matchName && matchFamily && matchCategory && matchTags;
     });
 
-    // 你可以改成要放的地方
-    const container = document.getElementById("section-search");
     container.innerHTML = "";
     const previewText = searchText.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
     let containerHTML = "";
@@ -118,6 +119,10 @@ const updateFontDisplay = (e, animationOff = false) => {
     addClassToVisibleElements();
     if (container.innerHTML == "") {
         container.innerHTML = `<div class="no-result"><div class="╯°□°╯">(╯°□°)╯︵ ┻┻</div>你要求太多了吧！<br>沒找到想要的字體嗎？歡迎到 <a href=https://github.com/emfont/emfont/issues/new/choose>GitHub</a> 推薦給我們！</div>`;
+    } else {
+        setTimeout(() => {
+            addClassToVisibleElements();
+        }, 300);
     }
 };
 
@@ -155,7 +160,7 @@ const initSearch = async () => {
 
     updateFontDisplay();
     document.querySelectorAll(".search-container input, .search-container select").forEach(input => {
-        input.addEventListener("change", updateFontDisplay);
+        input.addEventListener("change", () => updateFontDisplay()); // 要用箭頭不然 e 會進去壞掉
     });
 
     let debounceTimer;
@@ -179,10 +184,25 @@ function addClassToVisibleElements() {
     var aosElements = document.querySelectorAll(".font-preview");
     aosElements.forEach(function (aosElement) {
         const className = aosElement.getAttribute("data-class");
-        if (!isElementInViewport(aosElement)) aosElement.classList.add(className);
-        else aosElement.classList.remove(className);
+        if (!isElementInViewport(aosElement) && !aosElement.classList.contains(className)) {
+            aosElement.classList.add(className);
+            aosElement.style.color = "transparent";
+            emfont
+                .init({
+                    root: aosElement,
+                    cache: false
+                })
+                .then(results => {
+                    results.forEach(result => {
+                        if (result.status === "fulfilled") {
+                            aosElement.style.color = "var(--slate-100)";
+                        } else if (result.status === "rejected") {
+                            aosElement.style.color = "#702525";
+                        }
+                    });
+                });
+        }
     });
-    emfont.init();
 }
 
 document.addEventListener("scroll", addClassToVisibleElements);
@@ -236,16 +256,32 @@ const loadFontInfo = async fontId => {
     </div>`;
     const inputText = document.querySelector("#search-test").value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
     //font.weight.push(400);
-    let weightHTML = font.weight
-        .map(
-            weight =>
-                `<div class="font-item">
+    const weightContainer = document.querySelector(".font-weights");
+    weightContainer.innerHTML = "";
+    font.weight.map(weight => {
+        const weightDiv = document.createElement("div");
+        weightDiv.innerHTML = `<div class="font-item">
             <div class="font-title"><div class="weight">${weightChart[weight][1]} ${weight}</div></div>
-            <div class="font-preview emfont-${fontId}-${weight}-min">${inputText}</div></div>`
-        )
-        .join("");
-    document.querySelector(".font-weights").innerHTML = weightHTML || `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
-    emfont.init();
+            <div class="font-preview emfont-${fontId}-${weight}-min">${inputText}</div></div>`;
+        weightContainer.appendChild(weightDiv);
+        const weightDivPreview = weightDiv.querySelector(".font-preview");
+        weightDivPreview.style.color = "translarent";
+        emfont
+            .init({
+                root: weightDiv,
+                cache: false
+            })
+            .then(result => {
+                console.log(result);
+                if (result[0].status === "fulfilled") {
+                    weightDivPreview.style.color = "var(--slate-100)";
+                } else if (result[0].status === "rejected") {
+                    weightDivPreview.style.color = "#702525";
+                }
+            });
+    });
+    if (!weightContainer.innerHTML) weightContainer.innerHTML = `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
+
     container.querySelector(".font-class").onclick = e => {
         navigator.clipboard.writeText(e.target.innerText).then(() => {
             container.querySelector(".font-class").style.setProperty("--background", "rgb(59, 88, 49)");
@@ -254,7 +290,7 @@ const loadFontInfo = async fontId => {
             }, 2000);
         });
     };
-    addClassToVisibleElements();
+    //  addClassToVisibleElements();
 };
 
 const updateMain = (path = window.location.pathname) => {
@@ -287,6 +323,7 @@ const updateMain = (path = window.location.pathname) => {
                 loadFontInfo(urlParts[2]);
             } else {
                 document.querySelector("main").classList = "fonts";
+                addClassToVisibleElements();
             }
             const urlParams = new URLSearchParams(window.location.search);
             document.getElementById("search-input").value = urlParams.get("q");

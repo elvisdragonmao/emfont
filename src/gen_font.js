@@ -66,7 +66,7 @@ export const genFont = async (req, res, state) => {
             );
             if (rows.length === 0) return res.status(404).send({ status: "failed", message: "Font not found" });
             const allWeights = rows[0].weights;
-            if (allWeights.length === 0) return res.status(404).send({ status: "failed", message: "Font missing, temporary can't be use." });
+            if (allWeights.length === 0) return res.status(503).send({ status: "failed", message: "Font missing, temporary can't be use." });
             font_weight = allWeights.reduce((prev, curr) => {
                 return Math.abs(curr - 400) < Math.abs(prev - 400) ? curr : prev;
             });
