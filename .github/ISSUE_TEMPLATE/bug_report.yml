@@ -30,8 +30,6 @@ body:
   - type: checkboxes
     id: pullrequest
     attributes:
-      label: 你願意提交 PR 來解決這個問題嗎？ Do you want to submit a PR to fix this issue?
-      description: >
-        
+      label: 你願意提交 PR 來解決這個問題嗎？ Do you want to submit a PR to fix this issue?        
       options:
         - label: 'Yes'

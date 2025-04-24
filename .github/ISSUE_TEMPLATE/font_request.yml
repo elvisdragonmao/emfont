@@ -15,8 +15,8 @@ body:
       description: >
         你推薦的字體名稱是甚麼？ What is the name of the font you recommend?
       placeholder: '請輸入字體原始名稱，如如果是日文，請輸入日文名稱。Please enter the original name of the font, such as the Japanese name if it is in Japanese.'
-      validations:
-        required: true
+    validations:
+      required: true
   - type: input
     id: fontnameTranslation
     attributes:
@@ -31,8 +31,8 @@ body:
       description: >
         這個字體的下載網址是甚麼？ What is the download URL for this font?
       placeholder: 'Eg: https://github.com/ButTaiwan/iansui'
-      validations:
-        required: true
+    validations:
+      required: true
   - type: dropdown
     id: lisence
     attributes:

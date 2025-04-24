@@ -22,7 +22,5 @@ body:
     id: pullrequest
     attributes:
       label: 你願意提交 PR 來製作這個功能嗎？ Do you want to submit a PR to implement this feature?
-      description: >
-        
       options:
         - label: 'Yes'
