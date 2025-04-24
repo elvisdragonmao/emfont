@@ -49,27 +49,31 @@ export default async state => {
     //     }
     // }
 
-   // console.log("✅ 本地字體檔案已清除");
+    // console.log("✅ 本地字體檔案已清除");
 
-    // 從 MinIO 抓取檔案，確保下載完成Ｆ
-    const prefix = "original-fonts";
+    // 從 MinIO 抓取檔案，確保下載完成Ｆ;
     try {
-        const listCommand = new ListObjectsV2Command({
-            Bucket: bucketName,
-            Prefix: prefix
-        });
+        const listResponse = await LOCAL_MINIO_CLIENT.send(
+            new ListObjectsV2Command({
+                Bucket: bucketName,
+                Prefix:"original-fonts"
+            })
+        );
 
-        const listResponse = await LOCAL_MINIO_CLIENT.send(listCommand);
+        const listGenerated = await LOCAL_MINIO_CLIENT.send(
+            new ListObjectsV2Command({
+                Bucket: bucketName,
+                Prefix:  "_generated"
+            })
+        );
 
-        if (!listResponse.Contents || listResponse.Contents.length === 0) {
-            console.log(`在 ${bucketName}/original-fonts/ 沒有找到任何字體`);
-            return;
-        }
+    if(!listResponse.Contents) listResponse.Contents = [];
+    if(!listGenerated.Contents) listGenerated.Contents = [];
 
-        console.log(`🔄 找到 ${listResponse.Contents.length} 個字體文件，開始下載...`);
+        console.log(`🔄 找到 ${listResponse.Contents.length} 個原始字體，${listGenerated.Contents.length} 個分割好的，開始下載...`);
 
         await Promise.all(
-            listResponse.Contents.map(async file => {
+          [  ...listResponse.Contents, ...listGenerated.Contents].map(async file => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
                 const localPath = path.join("src", "_data", fileKey);

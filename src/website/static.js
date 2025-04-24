@@ -19,7 +19,7 @@ export default async (app, state) => {
     });
 
     app.get("/emfont.min.js", async (req, res) => {
-        return res.redirect(301, "/emfont.js");
+        return res.redirect("/emfont.js");
     });
     let content = await readFile(join(import.meta.dirname, "../emfont.js"), "utf-8");
     content = content.replace(/{{BASE_URL}}/g, state.baseURL);
