@@ -3,6 +3,11 @@ import fastifyStatic from "@fastify/static";
 import { readFile, writeFile } from "fs/promises";
 
 export default async (app, state) => {
+    
+    let content = await readFile(join(import.meta.dirname, "../emfont.js"), "utf-8");
+    content = content.replace(/{{BASE_URL}}/g, state.baseURL);
+    await writeFile(join(import.meta.dirname, "../public/emfont.js"), content);
+
     app.register(fastifyStatic, {
         root: join(import.meta.dirname, "../public"),
         prefix: "/"
@@ -21,7 +26,4 @@ export default async (app, state) => {
     app.get("/emfont.min.js", async (req, res) => {
         return res.redirect("/emfont.js");
     });
-    let content = await readFile(join(import.meta.dirname, "../emfont.js"), "utf-8");
-    content = content.replace(/{{BASE_URL}}/g, state.baseURL);
-    await writeFile(join(import.meta.dirname, "../public/emfont.js"), content);
 };

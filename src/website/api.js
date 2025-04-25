@@ -1,6 +1,25 @@
 import { genFont } from "../gen_font.js";
 import { db } from "../database.js";
-export default async (app, state) => {
+import { writeFile } from "fs/promises";
+import { join } from "path";
+
+const generateSitemap = async state => {
+    const { rows } = await db.query(`SELECT id FROM font_family`);
+    const content = rows.map(row => `<url><loc>${state.baseURL}/fonts/${row.id}/</loc></url>`).join("\n");
+    let pageList = ["", "/about", "fonts", "login", "about", "dashboard"];
+    const pages = pageList.map(row => `<url><loc>${state.baseURL}${row}/</loc></url>`).join("\n");
+    await writeFile(
+        join(import.meta.dirname, "../public/sitemap.xml"),
+        `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${content}
+${pages}
+</urlset>`
+    );
+};
+
+const registerApi = async (app, state) => {
+    generateSitemap(state);
     app.post("/g/:font", async (req, res) => {
         try {
             if (req.params.font === "") {
@@ -154,3 +173,5 @@ export default async (app, state) => {
     //     }
     // });
 };
+
+export default registerApi;

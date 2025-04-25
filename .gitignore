@@ -2,6 +2,7 @@
 .idea
 
 src/public/emfont.js
+src/public/sitemap.xml
 
 # Logs
 logs
