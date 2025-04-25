@@ -81,9 +81,9 @@ const updateFontDisplay = (e, animationOff = false) => {
     const tags = [...document.querySelectorAll(".tags input:checked")].map(i => i.classList[0].replace("tag-", ""));
     const categories = [...document.querySelectorAll(".category input:checked")].map(i => i.classList[0].replace("cat-", ""));
     const family = document.getElementById("family").value;
-    const searchText = document.getElementById("search-input").value;
+    const searchFont = document.getElementById("search-input").value;
     const filtered = fontList.filter(font => {
-        const matchName = !searchText || (font.id + font.name_zh + font.name_en + font.name).toLowerCase().includes(searchText.toLowerCase());
+        const matchName = !searchFont || (font.id + font.name_zh + font.name_en + font.name).toLowerCase().includes(searchFont.toLowerCase());
         const matchFamily = family === "all" || font.family === family;
         const matchCategory = categories.length === 0 || categories.includes(font.category);
         const matchTags = tags.length === 0 || tags.every(tag => font.tags.includes(tag));
@@ -253,8 +253,7 @@ const loadFontInfo = async fontId => {
         <label for="coverage-ko">韓文 (30%)</label>
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
-    const inputText = document.querySelector("#search-test").value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
-    //font.weight.push(400);
+    const inputText = searchText.value ?? "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
     const weightContainer = document.querySelector(".font-weights");
     weightContainer.innerHTML = "";
     font.weight.map(weight => {
