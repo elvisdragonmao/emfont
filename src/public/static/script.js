@@ -83,7 +83,7 @@ const updateFontDisplay = (e, animationOff = false) => {
     const family = document.getElementById("family").value;
     const searchText = document.getElementById("search-input").value;
     const filtered = fontList.filter(font => {
-        const matchName = !searchText || (font.id + font.name_zh + font.name_en + font.name).includes(searchText);
+        const matchName = !searchText || (font.id + font.name_zh + font.name_en + font.name).toLowerCase().includes(searchText.toLowerCase());
         const matchFamily = family === "all" || font.family === family;
         const matchCategory = categories.length === 0 || categories.includes(font.category);
         const matchTags = tags.length === 0 || tags.every(tag => font.tags.includes(tag));
