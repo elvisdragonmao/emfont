@@ -72,7 +72,7 @@ export const genFont = async (req, res, state) => {
             });
         }
 
-        if (min_flag) {
+        if (min_flag || process.env.FORCE_MIN) {
             const summery = {
                 // This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
                 fontFamily: font_family_name,

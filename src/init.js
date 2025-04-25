@@ -154,9 +154,13 @@ async function initCheck(state) {
         await fetchMinio(state);
         await initR2(state);
         await insertFontTypes();
-        const have_gen_list = await get_generated_static_floders();
-        state.bulletin = "📠 正在生成靜態字型，請稍後...";
-        await regenerateAllStaticFont(state, have_gen_list);
+        if (process.env.FORCE_MIN) {
+            console.log("⚠️  跳過靜態字體生成");
+        } else {
+            const have_gen_list = await get_generated_static_floders();
+            state.bulletin = "📠 正在生成靜態字型，請稍後...";
+            await regenerateAllStaticFont(state, have_gen_list);
+        }
         const all_file_on_r2 = await listFontsRecursive(state);
         await sync_r2_and_db(state, all_file_on_r2);
         state.alive = true;
