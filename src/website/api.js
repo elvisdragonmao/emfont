@@ -6,12 +6,12 @@ import { join } from "path";
 const generateSitemap = async state => {
     const { rows } = await db.query(`SELECT id FROM font_family`);
     const content = rows.map(row => `<url><loc>${state.baseURL}/fonts/${row.id}/</loc></url>`).join("\n");
-    let pageList = ["", "/about", "fonts", "login", "about", "dashboard"];
+    let pageList = ["", "/about", "/fonts", "/login", "/about", "/dashboard"];
     const pages = pageList.map(row => `<url><loc>${state.baseURL}${row}/</loc></url>`).join("\n");
     await writeFile(
         join(import.meta.dirname, "../public/sitemap.xml"),
         `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${content}
 ${pages}
 </urlset>`
