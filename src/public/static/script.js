@@ -24,12 +24,12 @@ document.body.addEventListener("click", event => {
     if (!link) return;
 
     const href = link.getAttribute("href");
+    if (event.ctrlKey || event.metaKey) return;
     if (!href.startsWith("/")) return;
     if (href.startsWith("/docs")) return;
-
     event.preventDefault();
-    updateMain(href);
     history.pushState({}, "", href);
+    updateMain(href);
 });
 
 // fetch bppletin, if message is not empty show bulletin
@@ -280,7 +280,7 @@ const loadFontInfo = async fontId => {
     if (!weightContainer.innerHTML) weightContainer.innerHTML = `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
 
     container.querySelector(".font-class").onclick = e => {
-        navigator.clipboard.writeText(e.target.innerText).then(() => {
+        navigator.clipboard.writeText(e.currentTarget.innerText).then(() => {
             container.querySelector(".font-class").style.setProperty("--background", "rgb(59, 88, 49)");
             setTimeout(() => {
                 container.querySelector(".font-class").style.setProperty("--background", " var(--slate-700)");
