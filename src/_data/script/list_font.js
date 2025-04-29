@@ -1,13 +1,13 @@
 // font-reader.mjs
-// import * as fontkit from 'fontkit';
+import * as fontkit from 'fontkit';
 import { writeFile } from 'fs/promises';
 
-const fontPath = 'src/_data/original-fonts/UnboundedSans/400.ttf';
+const fontPath = 'src/_data/original-fonts/GenKiGothicTW/200.otf';
 
-// const font = await fontkit.open(fontPath);
-// const supportedCodePoints = Array.from(font.characterSet);
-// const characters = supportedCodePoints.map(cp => String.fromCodePoint(cp));
-
+const font = await fontkit.open(fontPath);
+const supportedCodePoints = Array.from(font.characterSet);
+const characters = supportedCodePoints.map(cp => String.fromCodePoint(cp));
+console.log(supportedCodePoints)
 // console.log(`字元總數: ${characters.length}`);
 // console.log('前 200 個字元：');
 // console.log(characters);
@@ -17,29 +17,29 @@ const fontPath = 'src/_data/original-fonts/UnboundedSans/400.ttf';
 
 
 
-import {Font} from 'fonteditor-core';
-import fs from 'fs';
+// import {Font} from 'fonteditor-core';
+// import fs from 'fs';
 
-const buffer = fs.readFileSync(fontPath);
+// const buffer = fs.readFileSync(fontPath);
 
-const font = Font.create(buffer, {
-    type: 'ttf',
-    hinting: true,
-    kerning: true,
-});
+// const font = Font.create(buffer, {
+//     type: 'ttf',
+//     hinting: true,
+//     kerning: true,
+// });
 
-const fontObject = font.get();
+// const fontObject = font.get();
 
-// cmap: maps Unicode code points to glyph index
-const cmap = fontObject.cmap;
+// // cmap: maps Unicode code points to glyph index
+// const cmap = fontObject.cmap;
 
-const supportedChars = Object.keys(cmap)
-    .map(code => String.fromCodePoint(parseInt(code)))
-    .join('');
+// const supportedChars = Object.keys(cmap)
+//     .map(code => String.fromCodePoint(parseInt(code)))
+//     .join('');
 
-console.log(supportedChars);
-const charArray = Object.keys(cmap).map(code => String.fromCodePoint(parseInt(code)));
-console.log(charArray);
+// console.log(supportedChars);
+// const charArray = Object.keys(cmap).map(code => String.fromCodePoint(parseInt(code)));
+// console.log(charArray);
 
-await writeFile('output.txt', charArray.join(''), 'utf8');
-console.log('所有字元已寫入 output.txt');
+// await writeFile('output.txt', charArray.join(''), 'utf8');
+// console.log('所有字元已寫入 output.txt');

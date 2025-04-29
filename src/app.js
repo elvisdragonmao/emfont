@@ -18,6 +18,7 @@ dotenv.config();
 const state = { alive: false, bulletin: process.env.BULLETIN || "", local: true, r2: false }; //預設很保守，預設都是關閉，會在init過程中打開
 const port = process.env.PORT ?? 3000;
 state.baseURL = process.env.BASE_URL ?? `http://localhost:${port}`;
+state.R2_PUB_URL_BASE = process.env.R2_PUB_URL_BASE ?? '';
 
 const user = {};
 const app = Fastify({ logger: { level: "error" }, ignoreTrailingSlash: true });

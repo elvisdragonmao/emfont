@@ -71,7 +71,7 @@ export const genFont = async (req, res, state) => {
                 return Math.abs(curr - 400) < Math.abs(prev - 400) ? curr : prev;
             });
         }
-
+        await db.query(`INSERT INTO usage_log (family_id ,weight,referer,text,min) VALUES ($1,$2,$3,$4,$5)`, [font_id, font_weight, req_source, req_word_set, min_flag]);
         if (min_flag || process.env.FORCE_MIN) {
             const summery = {
                 // This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
@@ -80,7 +80,7 @@ export const genFont = async (req, res, state) => {
                 wordSet: req_word_set
             };
             const hash = await hashString(JSON.stringify(summery));
-            const file_path = await find_dynamic_font(hash, font_id, font_family_name, font_weight, req_word_set, req_source, state);
+            const file_path = await find_dynamic_font(hash, font_id, font_family_name, font_weight, req_word_set, state);
             if (file_path.status === "failed") res.status(400).send(file_path);
             return res.send({
                 status: "success",

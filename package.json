@@ -30,7 +30,7 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
         "fastify": "^5.2.1",
-        "fonteditor-core": "^2.4.1",
+        "fontkit": "^2.0.4",
         "pg": "^8.13.3"
     },
     "pnpm": {

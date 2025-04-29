@@ -2,8 +2,6 @@
 //依照字頻表分裝檔案 (開機時重切)
 import { db } from "./database.js";
 import { readFontBuffer } from "./font_min.js";
-import { checkR2FileExists } from "./r2.js";
-import { Font } from "fonteditor-core";
 import { Worker } from "worker_threads";
 import dotenv from "dotenv";
 dotenv.config();
@@ -46,10 +44,10 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
         }
         // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
         const { rows: lastPackRows } = await db.query(
-            `SELECT pack, COUNT(*) AS count
-            FROM static_fonts
-            GROUP BY pack
-            ORDER BY pack DESC
+            `SELECT pack, COUNT(*) AS count 
+            FROM static_fonts 
+            GROUP BY pack 
+            ORDER BY pack DESC 
             LIMIT 1`
         );
 
@@ -61,36 +59,36 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
             packCount = parseInt(lastPackRows[0].count);
         }
         // console.log("╠ 目前最大的 pack 編號:", currentPack, "，裡面有", packCount, "個字");
-        const inserts = [];
-        for (const char of newChars) {
-            if (packCount >= 90) {
-                currentPack += 1;
-                packCount = 0;
+            const inserts = [];
+            for (const char of newChars) {
+                if (packCount >= 90) {
+                    currentPack += 1;
+                    packCount = 0;
+                }
+
+                inserts.push({
+                    char,
+                    pack: currentPack,
+                    families: [ff_name]
+                });
+
+                packCount += 1;
             }
 
-            inserts.push({
-                char,
-                pack: currentPack,
-                families: [ff_name]
-            });
-
-            packCount += 1;
-        }
-
-        // 4. 把新字 insert 進去
-        for (let i = 0; i < inserts.length; i += 1000) {
-            const batch = inserts.slice(i, i + 1000);
-            const values = [];
-            const params = [];
-            batch.forEach(({ char, pack, families }, index) => {
-                const baseIndex = index * 3; //parameterized query count increase 3(char, pack, families) in a for
-                values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
-                params.push(char, pack, families);
-            });
-            //console.log("正在插入第", i, "到", i + batch.length, "個字");
-            //如果主鍵（或唯一鍵）衝突，就將 families 陣列中「尚未存在的字型」加進去。
-            await db.query(
-                `INSERT INTO static_fonts (char, pack, families)
+            // 4. 把新字 insert 進去
+            for (let i = 0; i < inserts.length; i += 1000) {
+                const batch = inserts.slice(i, i + 1000);
+                const values = [];
+                const params = [];
+                batch.forEach(({ char, pack, families }, index) => {
+                    const baseIndex = index * 3; //parameterized query count increase 3(char, pack, families) in a for
+                    values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
+                    params.push(char, pack, families);
+                });
+                //console.log("正在插入第", i, "到", i + batch.length, "個字");
+                //如果主鍵（或唯一鍵）衝突，就將 families 陣列中「尚未存在的字型」加進去。
+                await db.query(
+                    `INSERT INTO static_fonts (char, pack, families)
                      VALUES ${values.join(",")}
                      ON CONFLICT (char) DO UPDATE
                        SET families = (
@@ -98,10 +96,10 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
                            SELECT DISTINCT unnest(static_fonts.families || EXCLUDED.families)
                          )
                        )`,
-                params
-            );
-        }
-
+                    params
+                );
+            }
+        
         return true;
     } catch (err) {
         console.error(err);
@@ -132,43 +130,26 @@ async function regenerateAllStaticFont(state, have_gen_list) {
         for (const { ff_name, support_weights } of all_fonts) {
             currentIndex++;
             state.bulletin = "⌨️ 正在生成 " + ff_name + " 的靜態字型 (總進度 " + currentIndex + "/" + all_fonts_length + ")";
-            // if (currentIndex<3)continue
-
+            const this_font = {
+                version: version_num,
+                fontName: ff_name, // 字型名稱（資料夾名稱）
+                weight: support_weights // 字型的 weight（檔案名稱中的數字）
+            };
             //讀字型檔案，取出所有支援的字型
-            const fontData = await readFontBuffer(ff_name, support_weights);
-            const buffer = fontData.buffer;
-            let cmap;
-            try {
-                const font = Font.create(buffer, {
-                    type: fontData.type,
-                    hinting: true,
-                    kerning: true
-                });
-                cmap = font.get().cmap;
-                // ...處理 cmap 和字元
-            } catch (err) {
-                console.error(`⚠️ 處理字型 ${ff_name} ${support_weights} 發生錯誤:`, err.message);
-                continue; // 跳過這個錯誤字型
-            }
-            const charArray = Object.keys(cmap)
-                .map(code => String.fromCodePoint(parseInt(code)))
-                .filter(char => char !== "\x00"); // 過濾掉 0x00 字元
+            const readFile_res = await readFontBuffer(ff_name, support_weights);
+            const fontfile = readFile_res.fontfile
+            const supportedCodePoints = Array.from(fontfile.characterSet);
+            const charArray = supportedCodePoints.map(cp => String.fromCodePoint(cp)).filter(char => char !== "\x00");
             console.log("╔ " + ff_name + " " + support_weights, "有", charArray.length, "個字");
             // 1. 查出此字型支援，且資料庫已經有綁定的字
             const { rows: existing } = await db.query("SELECT char FROM static_fonts WHERE char = ANY($1) AND  $2 =  any(families) ", [charArray, ff_name]);
             const existingChars = new Set(existing.map(row => row.char));
 
             // const oldChars = charArray.filter(char => existingChars.has(char));
-
             //把此字型支援的所有字元裡頭紀錄的支援字型陣列加入這次的字型（如果還沒加入的話）
             await complete_ff_name_support_char_in_db(ff_name, charArray, existingChars);
             //this_static_font_dir_status 是 ff_name-support_weights 的靜態字型在生成列表中的狀態，
             // 包括字型id 、字重和生成的檔案編號，從 have_gen_list（有所有靜態已生成資料夾的屬性） 拆解出來
-            const this_font = {
-                version: version_num,
-                fontName: ff_name, // 字型名稱（資料夾名稱）
-                weight: support_weights // 字型的 weight（檔案名稱中的數字）
-            };
             const this_static_font_dir_status = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight && item.version == version_num);
             let existPack = [];
             let ready_regen = []; //put pack number ready to gen
@@ -190,10 +171,9 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 if (!regenerate) continue; //全部存在，跳過重新生成
                 console.log(`╠ ${ff_name}-${support_weights} 應該共有 ${all_need_gen_pack.length} 包字型。本地只有其中 ${existPack.length} 包字體`);
             } else {
-                //全部都要重新生成
                 ready_regen = all_pack_numbers;
             }
-            console.log(`╠ 正在生成 ${ff_name} ${support_weights} 缺少的 ${all_pack_numbers.length} 包靜態字型`);
+            console.log(`╠ 正在生成 ${ff_name} ${support_weights} 缺少的 ${all_pack_numbers.length-existPack.length} 包靜態字型`);
             //重新生成
             let word_package_pair = (
                 await db.query(
@@ -203,7 +183,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     GROUP BY pack ORDER BY pack;`,
                     [charArray, ready_regen]
                 )
-            ).rows;
+            ).rows;   
             // {
             //     1:'一堆字',
             //     2:'另一堆字'
@@ -225,7 +205,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                         words,
                         pack,
                         version_num,
-                        buffer,
+                        fontfile,
                         r2: state.r2
                     }).catch(error => ({
                         success: false,
