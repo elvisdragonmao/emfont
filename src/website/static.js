@@ -1,12 +1,15 @@
 import { join } from "path";
 import fastifyStatic from "@fastify/static";
 import { readFile, writeFile } from "fs/promises";
+import { minify } from "terser";
 
 export default async (app, state) => {
-    
     let content = await readFile(join(import.meta.dirname, "../emfont.js"), "utf-8");
-    content = content.replace(/{{BASE_URL}}/g, state.baseURL);
-    await writeFile(join(import.meta.dirname, "../public/emfont.js"), content);
+    content = await minify(content.replace(/{{BASE_URL}}/g, state.baseURL) + "", {
+        compress: true,
+        mangle: true
+    });
+    await writeFile(join(import.meta.dirname, "../public/emfont.js"), content.code);
 
     app.register(fastifyStatic, {
         root: join(import.meta.dirname, "../public"),

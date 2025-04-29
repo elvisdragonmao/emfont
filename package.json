@@ -31,7 +31,8 @@
         "dotenv": "^16.4.7",
         "fastify": "^5.2.1",
         "fontkit": "^2.0.4",
-        "pg": "^8.13.3"
+        "pg": "^8.13.3",
+        "terser": "^5.39.0"
     },
     "pnpm": {
         "onlyBuiltDependencies": [
