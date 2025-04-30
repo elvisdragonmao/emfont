@@ -25,6 +25,7 @@
         "@fastify/cors": "^11.0.1",
         "@fastify/jwt": "^9.0.4",
         "@fastify/static": "^8.1.1",
+        "@types/subset-font": "^2.3.0",
         "axios": "^1.8.1",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
@@ -32,6 +33,7 @@
         "fastify": "^5.2.1",
         "fontkit": "^2.0.4",
         "pg": "^8.13.3",
+        "subset-font": "^2.4.0",
         "terser": "^5.39.0"
     },
     "pnpm": {

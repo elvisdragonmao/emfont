@@ -136,7 +136,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 weight: support_weights // 字型的 weight（檔案名稱中的數字）
             };
             //讀字型檔案，取出所有支援的字型
-            const readFile_res = await readFontBuffer(ff_name, support_weights);
+            const readFile_res = await readFontBuffer(ff_name, support_weights,true);
             const fontfile = readFile_res.fontfile
             const supportedCodePoints = Array.from(fontfile.characterSet);
             const charArray = supportedCodePoints.map(cp => String.fromCodePoint(cp)).filter(char => char !== "\x00");

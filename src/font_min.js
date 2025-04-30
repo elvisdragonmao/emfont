@@ -3,11 +3,12 @@ import * as fontkit from 'fontkit';
 import path from "path";
 import { db } from "./database.js";
 import { uploadToR2, checkR2FileExists } from "./r2.js";
+import subsetFont from 'subset-font';
 
 const __dirname = import.meta.dirname;
 const __Font_storge_path_base = path.join(__dirname, "_data", "original-fonts"); //projectroot/src/_data/original-fonts/
 
-async function readFontBuffer(originalFontFamily, font_weight) {
+async function readFontBuffer(originalFontFamily, font_weight,use_fontkit=false) {
     let success = false,
         fontfile,
         type;
@@ -24,9 +25,15 @@ async function readFontBuffer(originalFontFamily, font_weight) {
     } else {
         success = true;
         type = file_found.ext;
-        // fontfile = await fs.readFile(file_found.fullPath);
-        // fontfile is a fontkit object
-        fontfile = await fontkit.open(file_found.fullPath);
+        if(use_fontkit){
+            fontfile = fs.readFile(file_found.fullPath);
+            // fontfile is a fontkit object
+            fontfile = await fontkit.open(file_found.fullPath);
+        }
+        else{
+            fontfile = fs.readFileSync(file_found.fullPath);
+        }
+
     }
     return { fontfile, type, success };
 }
@@ -48,26 +55,30 @@ async function generateFont(
         if (!success) {
             return { status: "failed", message: "emfont can't read original font, please try again later.", location: "null" };
         }
-        //fontkit
-        var run = fontfile.layout(words);
-        // create a font subset
-        var subset = fontfile.createSubset();
-        run.glyphs.forEach(function(glyph) {
-        subset.includeGlyph(glyph);
-        });
-        let outBuffer = subset.encode();
-        // 確保資料夾存在
+        // // 確保資料夾存在
         const destFolder = path.join(__dirname, put_folder);
         fs.mkdirSync(destFolder, { recursive: true });
 
-        // 輸出路徑
+        // // 輸出路徑
+        
+        // // 寫入檔案
+        // fs.writeFileSync(outputPath, outBuffer);
+        console.log(typeof(words),words)
         const outputPath = path.join(destFolder, `${output_name}`);
-
-        // 寫入檔案
-        fs.writeFileSync(outputPath, outBuffer);
+        await subsetFont(fontfile, words,{
+            targetFormat: 'woff2',
+            
+            // output: path.join(destFolder, output_name), // Set custom output file path
+        }).then((resultBuffer) => {
+            // ✅ 寫入結果到檔案
+            fs.writeFileSync(outputPath, resultBuffer);
+            console.log('Subset font written to', outputPath);
+        }).catch((err) => {
+            console.error('Error creating subset font:', err);
+          });
         return {
             status: "success",
-            location: outputPath
+            location: `${state.baseURL}/_generated/${output_name}`
         };
     } catch (err) {
         console.error(err);
@@ -85,7 +96,7 @@ async function find_dynamic_font( //return a R2 url client need
     // const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);
     // const exist = exist_search.rows[0];
     // //如果存在，回傳字型檔
-    const little_font_package = `${word_hash}-${font_family}-${font_weight}.woff`;
+    const little_font_package = `${word_hash}-${font_family}-${font_weight}.woff2`;
     let file_exist;
     // if (state.r2) file_exist = await checkR2FileExists(little_font_package);
     // else {
@@ -138,11 +149,6 @@ async function find_dynamic_font( //return a R2 url client need
     else {
         try {
             await db.query("INSERT INTO dynamic_fonts (hash, family_id,weight) VALUES ($1, $2,$3) ON CONFLICT (hash) DO NOTHING", [word_hash, font_id, font_weight]);
-        } catch (err) {
-            console.error("❌ error during insert new font record:", err);
-            console.warn(`可能是資料庫已經有這筆資料，但R2上沒有字型檔${file_exist}。已重新生成，下次不會再有這個錯誤，若重複出現同一個字型檔報錯，請檢查資料庫`);
-        }
-        try {
             //+生成字型檔
             let generated = await generateFont(font_family, font_weight, original_word_set, little_font_package);
             if (generated.status === "failed") {
@@ -150,7 +156,7 @@ async function find_dynamic_font( //return a R2 url client need
             }
             return {
                 status: "success",
-                location: file_url
+                location: generated.location
             };
         } catch (err) {
             console.error("字體生成失敗:", err);
