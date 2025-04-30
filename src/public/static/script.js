@@ -260,7 +260,7 @@ const loadFontInfo = async fontId => {
         const weightDiv = document.createElement("div");
         weightDiv.innerHTML = `<div class="font-item">
             <div class="font-title"><div class="weight">${weightChart[weight][1]} ${weight}</div></div>
-            <div class="font-preview emfont-${fontId}-${weight}-min">${inputText}</div></div>`;
+            <div class="font-preview emfont-${fontId}-${weight}">${inputText}</div></div>`;
         weightContainer.appendChild(weightDiv);
         const weightDivPreview = weightDiv.querySelector(".font-preview");
         weightDivPreview.style.color = "translarent";
