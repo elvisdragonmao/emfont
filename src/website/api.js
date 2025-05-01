@@ -39,9 +39,19 @@ const registerApi = async (app, state) => {
 
     app.get("/css/:font", async (req, res) => {
         try {
-            if (req.params.font === "") {
-                return res.status(404).send("/* Please enter font name */");
+            if (req.params.font === "") return res.status(404).send("/* Please enter font name */");
+            if (req.query.display === "block" && !req.query.content) {
+                let params = "";
+                for (const [key, value] of Object.entries(req.query)) params += key + "=" + value + "&";
+                return res.type("text/css").send(`@import url('${state.baseURL}/css/${req.params.font}?${params}content=true')
+
+@font-face {
+    font-family: '${req.params.font}';
+    font-display: ${req.query.display ?? "auto"};
+}
+`);
             }
+
             req.body = {};
             req.body.min = req.query.min?.trim() ?? false;
             req.body.weight = req.query.weight?.trim() ?? null;
@@ -51,11 +61,11 @@ const registerApi = async (app, state) => {
 
             if (response.code == 200) {
                 const urls = response.location.map(font => `url('${font}') format('woff2')`).join(",\n");
-                return res.send(`@font-face {
-  font-family: '${response.name}';
+                return res.type("text/css").send(`@font-face {
+  font-family: '${req.params.font}';
   src: ${urls};
   font-weight: ${req.params.weight || "normal"};
-  font-display: swap;
+  font-display: ${req.params.display ?? "auto"};
 }
 `);
             } else res.status(response.code).send(response);

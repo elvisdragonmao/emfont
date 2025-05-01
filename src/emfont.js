@@ -129,7 +129,8 @@
                 const fetchPromises = Object.entries(newFonts).map(([fontName, words]) => {
                     let postFontName = fontName;
                     const min = fontName.includes("-min");
-                    if (min) postFontName = fontName.replace("-min", "");
+                    const block = fontName.includes("-block");
+                    postFontName = fontName.replace("-min", "").replace("-block", "");
                     let weight = fontName.match(/-(\d+)/);
                     if (weight) {
                         postFontName = postFontName.replace("-" + weight[1], "");
@@ -172,7 +173,8 @@
 
                                 for (const url of data.location) {
                                     const font = new FontFace(fontCSSName, `url(${url})`, {
-                                        weight: weight || this.config.weight || "normal"
+                                        weight: weight || this.config.weight || "normal",
+                                        fontDisplay: block ? "block" : "swap"
                                     });
                                     try {
                                         const loadedFont = await font.load();
