@@ -4,6 +4,7 @@ import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } 
 import pLimit from "p-limit";
 import { promisify } from "util";
 import dotenv from "dotenv";
+import os from 'os';
 dotenv.config();
 // 設定同時最多下載執行序
 const limit = pLimit(os.cpus().length + parseInt(process.env.THREADS ?? 0));
