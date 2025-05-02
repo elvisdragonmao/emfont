@@ -87,7 +87,7 @@ export const genFont = async (req, res, state) => {
             });
         }
         await db.query(`INSERT INTO usage_log (family_id ,weight,referer,text,min) VALUES ($1,$2,$3,$4,$5)`, [font_id, font_weight, req_source, req_word_set, min_flag]);
-        if (min_flag || process.env.FORCE_MIN) {
+        if (min_flag || process.env.FORCE_MIN=="true") {
             const summery = {
                 // This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
                 fontFamily: font_family_name,
