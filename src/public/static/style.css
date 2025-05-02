@@ -11,17 +11,22 @@
     --slate-800: #1e293b;
     --slate-900: #0f172a;
     --slate-950: #020617;
-    --slate-50: oklch(0.984 0.003 247.858);
-    --slate-100: oklch(0.968 0.007 247.896);
-    --slate-200: oklch(0.929 0.013 255.508);
-    --slate-300: oklch(0.869 0.022 252.894);
-    --slate-400: oklch(0.704 0.04 256.788);
-    --slate-500: oklch(0.554 0.046 257.417);
-    --slate-600: oklch(0.446 0.043 257.281);
-    --slate-700: oklch(0.372 0.044 257.287);
-    --slate-800: oklch(0.279 0.041 260.031);
-    --slate-900: oklch(0.208 0.042 265.755);
-    --slate-950: oklch(0.129 0.042 264.695);
+}
+
+@supports (color: oklch(0% 0 0)) {
+    :root {
+        --slate-50: oklch(0.984 0.003 247.858);
+        --slate-100: oklch(0.968 0.007 247.896);
+        --slate-200: oklch(0.929 0.013 255.508);
+        --slate-300: oklch(0.869 0.022 252.894);
+        --slate-400: oklch(0.704 0.04 256.788);
+        --slate-500: oklch(0.554 0.046 257.417);
+        --slate-600: oklch(0.446 0.043 257.281);
+        --slate-700: oklch(0.372 0.044 257.287);
+        --slate-800: oklch(0.279 0.041 260.031);
+        --slate-900: oklch(0.208 0.042 265.755);
+        --slate-950: oklch(0.129 0.042 264.695);
+    }
 }
 
 * {
@@ -981,7 +986,7 @@ footer {
     animation: loading 1s linear infinite alternate;
     color: transparent;
     background-color: var(--slate-800);
-    border-radius: .5rem;
+    border-radius: 0.5rem;
 }
 .loading .font-class {
     color: transparent;
@@ -990,7 +995,7 @@ footer {
     height: 3rem;
 }
 
-.loading .font-description{
+.loading .font-description {
     display: inline;
 }
 
