@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import pLimit from "p-limit";
 import { promisify } from "util";
+// 設定同時最多 10 個下載
+const limit = pLimit(10);
 async function listAllObjects(client, bucket, prefix) {
     let allObjects = [];
     let continuationToken;
@@ -54,7 +57,7 @@ export default async state => {
         const generatedFonts = await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "_generated");
         console.log(`🔄 找到 ${originalFonts.length} 個原始字體，${generatedFonts.length} 個分割好的，開始下載...`);
         const allFiles = [...originalFonts, ...generatedFonts]; //把兩個陣列展開，合併成一個新的陣列。
-        await Promise.all(
+        limit(async ()=>{await Promise.all(
             allFiles.map(async file => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
@@ -98,7 +101,7 @@ export default async state => {
                 }
             })
         );
-
+    })
         console.log("✅ 所有字體下載完成");
     } catch (err) {
         console.error("❌ 下載檔案失敗:", err);
