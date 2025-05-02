@@ -51,7 +51,7 @@ export default async state => {
     try {
         console.log("🛒 正在取得 MinIO 內的檔案清單");
         const originalFonts = await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "original-fonts");
-        const generatedFonts = [];
+        const generatedFonts = await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "_generated");
         console.log(`🔄 找到 ${originalFonts.length} 個原始字體，${generatedFonts.length} 個分割好的，開始下載...`);
         const allFiles = [...originalFonts, ...generatedFonts]; //把兩個陣列展開，合併成一個新的陣列。
         await Promise.all(
