@@ -49,20 +49,20 @@ export default async state => {
     }
 
     try {
-        console.log("🛒 正在取得 MinIO 內的檔案清單")
-        const listResponse = await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "original-fonts");
-        const listGenerated = await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "_generated")
-
-        console.log(`🔄 找到 ${listResponse.Contents.length} 個原始字體，${listGenerated.Contents.length} 個分割好的，開始下載...`);
+        console.log("🛒 正在取得 MinIO 內的檔案清單");
+        const originalFonts = await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "original-fonts");
+        const generatedFonts = [];
+        console.log(`🔄 找到 ${originalFonts.length} 個原始字體，${generatedFonts.length} 個分割好的，開始下載...`);
+        const allFiles = [...originalFonts, ...generatedFonts]; //把兩個陣列展開，合併成一個新的陣列。
         await Promise.all(
-            [...listResponse.Contents, ...listGenerated.Contents].map(async file => {
+            allFiles.map(async file => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
+
                 const localPath = path.join("src", "_data", fileKey);
 
-                // check if file already exists
-                const localFileExists = fs.existsSync(localPath);
-                if (localFileExists) {
+                // 檢查檔案是否已存在
+                if (fs.existsSync(localPath)) {
                     console.log(`✅ ${fileKey} 已經存在，跳過下載`);
                     return;
                 }
@@ -72,25 +72,30 @@ export default async state => {
                     Key: fileKey
                 });
 
-                const data = await LOCAL_MINIO_CLIENT.send(getCommand);
-                const localDir = path.dirname(localPath);
-                fs.mkdirSync(localDir, { recursive: true });
+                try {
+                    const data = await LOCAL_MINIO_CLIENT.send(getCommand);
+                    const localDir = path.dirname(localPath);
+                    fs.mkdirSync(localDir, { recursive: true });
 
-                // **使用 Promise 等待檔案寫入完成**
-                await new Promise((resolve, reject) => {
-                    //Pipe the stream from S3 to the local file
-                    const fileStream = fs.createWriteStream(localPath);
-                    data.Body.pipe(fileStream);
+                    // **使用 Promise 等待檔案寫入完成**
+                    await new Promise((resolve, reject) => {
+                        //Pipe the stream from S3 to the local file
+                        const fileStream = fs.createWriteStream(localPath);
+                        data.Body.pipe(fileStream);
 
-                    fileStream.on("finish", () => {
-                        resolve();
+                        fileStream.on("finish", () => {
+                            console.log(`⬇️ 已下載: ${fileKey}`);
+                            resolve();
+                        });
+
+                        fileStream.on("error", err => {
+                            console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
+                            reject(err);
+                        });
                     });
-
-                    fileStream.on("error", err => {
-                        console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
-                        reject(err);
-                    });
-                });
+                } catch (err) {
+                    console.error(`❌ 無法下載檔案: ${fileKey}`, err);
+                }
             })
         );
 
