@@ -26,9 +26,8 @@ async function readFontBuffer(originalFontFamily, font_weight,use_fontkit=false)
         success = true;
         type = file_found.ext;
         if(use_fontkit){
-            fontfile = fs.readFile(file_found.fullPath);
+            fontfile = fontkit.openSync(file_found.fullPath);
             // fontfile is a fontkit object
-            fontfile = await fontkit.open(file_found.fullPath);
         }
         else{
             fontfile = fs.readFileSync(file_found.fullPath);
