@@ -3,8 +3,10 @@ import path from "path";
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
 import pLimit from "p-limit";
 import { promisify } from "util";
-// 設定同時最多 10 個下載
-const limit = pLimit(10);
+import dotenv from "dotenv";
+dotenv.config();
+// 設定同時最多下載執行序
+const limit = pLimit(os.cpus().length + parseInt(process.env.THREADS ?? 0));
 async function listAllObjects(client, bucket, prefix) {
     let allObjects = [];
     let continuationToken;
