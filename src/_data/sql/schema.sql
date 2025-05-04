@@ -43,14 +43,23 @@ CREATE TABLE IF NOT EXISTS r2_files(
     PRIMARY key(prefix,file_name)
 );
 
--- 文字對應表格 (每周更新一次)
+-- 文字對應表格
 CREATE TABLE IF NOT EXISTS static_fonts (
     char VARCHAR(2) PRIMARY KEY,
     pack SMALLINT NOT NULL,
     families TEXT[] DEFAULT ARRAY[]::TEXT[], -- 有哪些字型有這個字
     use_count INT NOT NULL DEFAULT 0
 );
-
+-- 某個字型某個包裡面有哪些字
+-- 快取好的「包 + 字型 + weight」對應的陣列
+CREATE TABLE IF NOT EXISTS static_font_packs (
+    id SERIAL PRIMARY KEY,
+    pack INTEGER NOT NULL,
+    family TEXT NOT NULL REFERENCES font_family(id),
+    weight INTEGER NOT NULL,
+    chars TEXT[] NOT NULL,
+    UNIQUE (pack, family, weight)
+);
 -- 流水紀錄
 CREATE TABLE IF NOT EXISTS usage_log (
     id SERIAL PRIMARY KEY,

@@ -48,7 +48,7 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
       pg:
-        specifier: ^8.15.6
+        specifier: ^8.13.3
         version: 8.15.6
       subset-font:
         specifier: ^2.4.0
