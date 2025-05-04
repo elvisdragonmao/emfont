@@ -232,19 +232,6 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             }
 
             await db.query("COMMIT");
-            // 建立快取好的「包 + 字型 + weight」對應的陣列
-            await db.query(`
-                INSERT INTO static_font_packs (pack, family, weight, chars)
-                    SELECT
-                        sf.pack,
-                        ff.id AS family,
-                        w AS weight,
-                        array_agg(sf.char ORDER BY sf.char) AS chars
-                    FROM static_fonts sf
-                    JOIN font_family ff ON ff.id = ANY(sf.families)
-                    JOIN LATERAL unnest(ff.weights) AS w ON true
-                    GROUP BY sf.pack, ff.id, w
-                    ORDER BY sf.pack, ff.id, w;`);
             console.log("");
         }
     } catch (err) {
@@ -252,78 +239,32 @@ async function regenerateAllStaticFont(state, have_gen_list) {
     }
     console.log("✨ 所有靜態字體生成完成！");
 }
-
-// async function find_static_font(word_set, font_family_name) {
-//     // 回傳要用到的字型包編號
-//     // 字串轉成字元陣列給 SQL 查詢
-//     try {
-//         word_set = word_set.split("");
-//         //查詢請求的字分別散落在哪些字型包中
-//         const query = "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[]) and $2 = ANY(families)";
-//         const result = await db.query(query, [word_set, font_family_name]); //如果請求的字該字型沒有支援也不用特地去找 pack 了
-//         const use_packs = result.rows.map(row => Number(row.pack)); // 確保是數字
-//         //查詢請求的字型包是否存在
-//         return use_packs; // 如果沒問題，就回傳原始值
-//     } catch (error) {
-//         console.error("靜態字體位置查詢失敗:", error);
-//         throw error;
-//     }
-// }
 async function find_static_font(word_set, font_family_name) {
     // 回傳要用到的字型包編號
     try
     {
         //載入該字型支援的所有字和對應的 pack
-        const res = await db.query("SELECT pack, chars FROM static_font_packs WHERE family = $1", [font_family_name]);
-        const wordSet = new Set(word_set.split(""));
+        word_set = word_set.split("");
+        //查詢請求的字分別散落在哪些字型包中
+        const query = "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[]) and $2 = ANY(families)";
+        const res = await db.query(query, [word_set, font_family_name]);
+
         // 查請求的字需要在哪些 pack
-        const use_packs = res.rows
-            .filter(row => row.chars.some(c => wordSet.has(c)))
-            .map(row => row.pack);
-        return use_packs;
+        return res.rows.map(row => String(row.pack).padStart(3, "0"));
     } catch (error) {
         console.error("靜態字體位置查詢失敗:", error);
         throw error;
     }
 }
-async function give_static_font(font_family, font_weight, packs, state,version_num) {
-    try {
-        if (!Array.isArray(packs) || !packs.every(Number.isInteger)) {
-            throw new TypeError("packs must be an array of integers");
-        }
-        packs = packs.map(pack => pack.toString().padStart(3, "0")); // 顯示時補零
+function give_static_font(font_family, font_weight, packs, state) {
         // 回傳字型包路徑
-        const results = await Promise.all(
-            packs.map(async pack => {
-                const prefix = `${version_num}-${font_family}-${font_weight}/`;
-                const prefix_key = `fonts/${version_num}-${font_family}-${font_weight}/`; //r2 上的路徑還有一個 /font 前綴
-                const filename = `${pack}.woff2`;
-                const existsRes = await db.query(`SELECT EXISTS (SELECT 1 FROM r2_files WHERE prefix = $1 AND file_name = $2) AS exists`, [prefix_key, filename]);
-                let real_path;
-                if (existsRes.rows[0].exists) {
-                    //r2 有，回傳 r2 路徑
-                    real_path = `${process.env.R2_PUB_URL_BASE}/${prefix_key}${filename}`;
-                } else {
-                    //不存在 r2 ，回傳本地路徑
-                    real_path = `${state.baseURL}/_generated/${prefix}${filename}`;
-                }
-                return { pack, real_path };
-            })
-        );
-
-        const missing = results.filter(result => !result.real_path);
-
-        if (missing.length > 0) {
-            const missingPaths = missing.map(m => m.real_path).join(", ");
-            // TODO如果有缺少的字型檔，是不是要試著重新生成？
-            throw new Error(`Missing font files: ${missingPaths}`);
-        }
-
-        // 全部存在的話就可以繼續
-        return results.map(r => r.real_path);
-    } catch (error) {
-        console.error("Error inserting font types:", error);
-        throw error;
-    }
+        const version_num = state.static_font_version;       
+        const prefix = `${version_num}-${font_family}-${font_weight}/`;
+        const results = packs.map(pack => {
+            const filename = `${pack}.woff2`;
+            return `${state.baseURL}/_generated/${prefix}${filename}`;
+        });
+        // 直接回傳陣列
+        return results;
 }
 export { find_static_font, give_static_font, regenerateAllStaticFont };
