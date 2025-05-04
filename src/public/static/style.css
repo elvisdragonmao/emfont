@@ -973,6 +973,7 @@ footer {
         z-index: -1;
         transition: opacity 0.3s ease-in-out;
         opacity: 0;
+        pointer-events: none;
     }
     #mobileToggle:checked + header::after {
         opacity: 0.8;
