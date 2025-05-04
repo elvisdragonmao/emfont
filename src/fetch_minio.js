@@ -1,31 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
-import pLimit from "p-limit";
 import { promisify } from "util";
-import dotenv from "dotenv";
-import os from 'os';
-dotenv.config();
-// 設定同時最多下載執行序
-const limit = pLimit(os.cpus().length + parseInt(process.env.THREADS ?? 0));
-async function listAllObjects(client, bucket, prefix) {
-    let allObjects = [];
-    let continuationToken;
-    do {
-        const response = await client.send(
-            new ListObjectsV2Command({
-                Bucket: bucket,
-                Prefix: prefix,
-                ContinuationToken: continuationToken
-            })
-        );
-        if (response.Contents) {
-            allObjects = allObjects.concat(response.Contents);
-        }
-        continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
-    } while (continuationToken);
-    return allObjects;
-}
+
 export default async state => {
     const bucketName = process.env.MINIO_BUCKET;
     if (!bucketName) {
@@ -55,24 +32,26 @@ export default async state => {
     }
 
     try {
-        console.log("🛒 正在取得 MinIO 內的檔案清單");
-        let generatedFonts=[];
-        if(state.MINIO_redirect=="false"){
-            //下載靜態字型到本地測試
-            generatedFonts = await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "_generated");
-        }
-        const originalFonts= await listAllObjects(LOCAL_MINIO_CLIENT, bucketName, "original-fonts");
-        console.log(`🔄 找到 ${originalFonts.length} 個原始字體，${generatedFonts.length} 個分割好的，開始下載...`);
-        const allFiles = [...originalFonts, ...generatedFonts]; //把兩個陣列展開，合併成一個新的陣列。
-        limit(async ()=>{await Promise.all(
-            allFiles.map(async file => {
+        const listResponse = await LOCAL_MINIO_CLIENT.send(
+            new ListObjectsV2Command({
+                Bucket: bucketName,
+                Prefix: "original-fonts"
+            })
+        );
+        if (!listResponse.Contents) listResponse.Contents = [];
+
+
+        console.log(`🔄 找到 ${listResponse.Contents.length} 個原始字體`);
+
+        await Promise.all(
+            [...listResponse.Contents].map(async file => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
-
                 const localPath = path.join("src", "_data", fileKey);
 
-                // 檢查檔案是否已存在
-                if (fs.existsSync(localPath)) {
+                // check if file already exists
+                const localFileExists = fs.existsSync(localPath);
+                if (localFileExists) {
                     console.log(`✅ ${fileKey} 已經存在，跳過下載`);
                     return;
                 }
@@ -82,33 +61,28 @@ export default async state => {
                     Key: fileKey
                 });
 
-                try {
-                    const data = await LOCAL_MINIO_CLIENT.send(getCommand);
-                    const localDir = path.dirname(localPath);
-                    fs.mkdirSync(localDir, { recursive: true });
+                const data = await LOCAL_MINIO_CLIENT.send(getCommand);
+                const localDir = path.dirname(localPath);
+                fs.mkdirSync(localDir, { recursive: true });
 
-                    // **使用 Promise 等待檔案寫入完成**
-                    await new Promise((resolve, reject) => {
-                        //Pipe the stream from S3 to the local file
-                        const fileStream = fs.createWriteStream(localPath);
-                        data.Body.pipe(fileStream);
+                // **使用 Promise 等待檔案寫入完成**
+                await new Promise((resolve, reject) => {
+                    //Pipe the stream from S3 to the local file
+                    const fileStream = fs.createWriteStream(localPath);
+                    data.Body.pipe(fileStream);
 
-                        fileStream.on("finish", () => {
-                            console.log(`⬇️ 已下載: ${fileKey}`);
-                            resolve();
-                        });
-
-                        fileStream.on("error", err => {
-                            console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
-                            reject(err);
-                        });
+                    fileStream.on("finish", () => {
+                        resolve();
                     });
-                } catch (err) {
-                    console.error(`❌ 無法下載檔案: ${fileKey}`, err);
-                }
+
+                    fileStream.on("error", err => {
+                        console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
+                        reject(err);
+                    });
+                });
             })
         );
-    })
+
         console.log("✅ 所有字體下載完成");
     } catch (err) {
         console.error("❌ 下載檔案失敗:", err);
