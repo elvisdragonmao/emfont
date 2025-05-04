@@ -92,6 +92,11 @@ const updateFontDisplay = (e, animationOff = false) => {
 
     const previewText = searchText.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
     let containerHTML = "";
+    // if filtered length is same as fontList length
+    console.log(filtered.length, fontList.length);
+    if (filtered.length == fontList.length) {
+        filtered.sort(() => Math.random() - 0.5);
+    }
     filtered.forEach(font => {
         const parts = [];
         for (let weight in font.weight) {
@@ -250,6 +255,7 @@ const loadFontInfo = async fontId => {
         document.querySelector("main").classList = "notFound";
         return;
     }
+    document.title = `${font.name.original} - emfont`;
     container.innerHTML = `<a class="navigation" href="/fonts"> <img src="/static/img/larr.svg" alt="">字型 </a>
     <h1>${font.name.original}</h1>
     <p>${font.name.zh}</p>
@@ -352,6 +358,7 @@ const updateMain = (path = window.location.pathname) => {
                 document.querySelector("main").classList = "home";
                 marqueeSet();
             }, delay);
+            document.title = "emfont - 免費中文字體 Webfont 服務";
             break;
         case "fonts":
             if (urlParts.length > 2 && urlParts[2].length > 0) {
@@ -364,6 +371,7 @@ const updateMain = (path = window.location.pathname) => {
             } else {
                 document.querySelector("main").classList = "fonts";
                 addClassToVisibleElements();
+                document.title = "字體 - emfont";
             }
             if (fontList) {
                 paramFromUrl();
@@ -371,6 +379,15 @@ const updateMain = (path = window.location.pathname) => {
             }
             break;
         default:
+            if (mainClass == "notFound") {
+                document.title = "找不到頁面 - emfont";
+            } else if (mainClass == "login") {
+                document.title = "登入 - emfont";
+            } else if (mainClass == "about") {
+                document.title = "關於 - emfont";
+            } else {
+                document.title = `${mainClass} - emfont`;
+            }
             document.querySelector("main").classList = mainClass;
             break;
     }
