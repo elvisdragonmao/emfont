@@ -161,7 +161,7 @@ async function initCheck(state) {
         if (!(await initDb())) return false;
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
         await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
-        await fetchMinio(state);
+        // await fetchMinio(state);
         await initR2(state);
         if (!process.env.SKIP_FONT_CHECK) await insertFontTypes();
         else console.log("⚠️  跳過字體檢查");
