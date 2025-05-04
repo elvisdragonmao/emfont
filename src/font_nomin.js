@@ -262,7 +262,7 @@ function give_static_font(font_family, font_weight, packs, state) {
         const prefix = `${version_num}-${font_family}-${font_weight}/`;
         const results = packs.map(pack => {
             const filename = `${pack}.woff2`;
-            return `${state.baseURL}/_generated/${prefix}${filename}`;
+            return `${state.static_font_base}/${prefix}${filename}`;
         });
         // 直接回傳陣列
         return results;
