@@ -135,6 +135,10 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             };
             //讀字型檔案，取出所有支援的字型
             const readFile_res = await readFontBuffer(ff_name, support_weights, true);
+            if (readFile_res.success == false) {
+                console.warn("讀取字型檔案失敗！");
+                continue;
+            }
             const fontfile = readFile_res.fontfile;
             const supportedCodePoints = Array.from(fontfile.characterSet);
             const charArray = supportedCodePoints.map(cp => String.fromCodePoint(cp)).filter(char => char !== "\x00");
@@ -241,8 +245,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 }
 async function find_static_font(word_set, font_family_name) {
     // 回傳要用到的字型包編號
-    try
-    {
+    try {
         //載入該字型支援的所有字和對應的 pack
         word_set = word_set.split("");
         //查詢請求的字分別散落在哪些字型包中
@@ -257,14 +260,14 @@ async function find_static_font(word_set, font_family_name) {
     }
 }
 function give_static_font(font_family, font_weight, packs, state) {
-        // 回傳字型包路徑
-        const version_num = state.static_font_version;       
-        const prefix = `${version_num}-${font_family}-${font_weight}/`;
-        const results = packs.map(pack => {
-            const filename = `${pack}.woff2`;
-            return `${state.static_font_base}/${prefix}${filename}`;
-        });
-        // 直接回傳陣列
-        return results;
+    // 回傳字型包路徑
+    const version_num = state.static_font_version;
+    const prefix = `${version_num}-${font_family}-${font_weight}/`;
+    const results = packs.map(pack => {
+        const filename = `${pack}.woff2`;
+        return `${state.static_font_base}/${prefix}${filename}`;
+    });
+    // 直接回傳陣列
+    return results;
 }
 export { find_static_font, give_static_font, regenerateAllStaticFont };
