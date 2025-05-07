@@ -165,7 +165,7 @@
                                     this._styleElement.innerHTML += uniqueVariants
                                         .map(
                                             variant => `
-                                        .emfont-${variant}, .✏️${variant} { font-family: '${fontCSSName}'; }`
+                                        .emfont-${variant}, .✏️${variant} { font-family: '${fontCSSName}'; font-weight: ${weight || "normal"};}`
                                         )
                                         .join("\n");
                                 }
