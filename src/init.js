@@ -165,7 +165,7 @@ async function initCheck(state) {
         await initR2(state);
         if (!process.env.SKIP_FONT_CHECK) await insertFontTypes();
         else console.log("⚠️  跳過字體檢查");
-        if (process.env.SKIP_REGEN) {
+        if (state.SKIP_REGEN) {
             console.log("⚠️  跳過靜態字體生成");
         } else {
             const have_gen_list = await get_generated_static_floders();
