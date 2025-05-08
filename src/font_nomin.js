@@ -59,36 +59,36 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
             packCount = parseInt(lastPackRows[0].count);
         }
         // console.log("╠ 目前最大的 pack 編號:", currentPack, "，裡面有", packCount, "個字");
-            const inserts = [];
-            for (const char of newChars) {
-                if (packCount >= 90) {
-                    currentPack += 1;
-                    packCount = 0;
-                }
-
-                inserts.push({
-                    char,
-                    pack: currentPack,
-                    families: [ff_name]
-                });
-
-                packCount += 1;
+        const inserts = [];
+        for (const char of newChars) {
+            if (packCount >= 90) {
+                currentPack += 1;
+                packCount = 0;
             }
 
-            // 4. 把新字 insert 進去
-            for (let i = 0; i < inserts.length; i += 1000) {
-                const batch = inserts.slice(i, i + 1000);
-                const values = [];
-                const params = [];
-                batch.forEach(({ char, pack, families }, index) => {
-                    const baseIndex = index * 3; //parameterized query count increase 3(char, pack, families) in a for
-                    values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
-                    params.push(char, pack, families);
-                });
-                //console.log("正在插入第", i, "到", i + batch.length, "個字");
-                //如果主鍵（或唯一鍵）衝突，就將 families 陣列中「尚未存在的字型」加進去。
-                await db.query(
-                    `INSERT INTO static_fonts (char, pack, families)
+            inserts.push({
+                char,
+                pack: currentPack,
+                families: [ff_name]
+            });
+
+            packCount += 1;
+        }
+
+        // 4. 把新字 insert 進去
+        for (let i = 0; i < inserts.length; i += 1000) {
+            const batch = inserts.slice(i, i + 1000);
+            const values = [];
+            const params = [];
+            batch.forEach(({ char, pack, families }, index) => {
+                const baseIndex = index * 3; //parameterized query count increase 3(char, pack, families) in a for
+                values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
+                params.push(char, pack, families);
+            });
+            //console.log("正在插入第", i, "到", i + batch.length, "個字");
+            //如果主鍵（或唯一鍵）衝突，就將 families 陣列中「尚未存在的字型」加進去。
+            await db.query(
+                `INSERT INTO static_fonts (char, pack, families)
                      VALUES ${values.join(",")}
                      ON CONFLICT (char) DO UPDATE
                        SET families = (
@@ -96,10 +96,10 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
                            SELECT DISTINCT unnest(static_fonts.families || EXCLUDED.families)
                          )
                        )`,
-                    params
-                );
-            }
-        
+                params
+            );
+        }
+
         return true;
     } catch (err) {
         console.error(err);
@@ -107,9 +107,7 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
     }
 }
 async function regenerateAllStaticFont(state, have_gen_list) {
-    //!!pack_status　表格已經刪除，須移除相關內容
     // list all have to regenerate fonts family and theirs support weights .
-    //regen rules: no record in pack_status history or over 1 month haven't regen
     try {
         const all_fonts = (
             await db.query(
@@ -136,8 +134,12 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                 weight: support_weights // 字型的 weight（檔案名稱中的數字）
             };
             //讀字型檔案，取出所有支援的字型
-            const readFile_res = await readFontBuffer(ff_name, support_weights,true);
-            const fontfile = readFile_res.fontfile
+            const readFile_res = await readFontBuffer(ff_name, support_weights, true);
+            if (readFile_res.success == false) {
+                console.warn("讀取字型檔案失敗！");
+                continue;
+            }
+            const fontfile = readFile_res.fontfile;
             const supportedCodePoints = Array.from(fontfile.characterSet);
             const charArray = supportedCodePoints.map(cp => String.fromCodePoint(cp)).filter(char => char !== "\x00");
             console.log("╔ " + ff_name + " " + support_weights, "有", charArray.length, "個字");
@@ -173,7 +175,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             } else {
                 ready_regen = all_pack_numbers;
             }
-            console.log(`╠ 正在生成 ${ff_name} ${support_weights} 缺少的 ${all_pack_numbers.length-existPack.length} 包靜態字型`);
+            console.log(`╠ 正在生成 ${ff_name} ${support_weights} 缺少的 ${all_pack_numbers.length - existPack.length} 包靜態字型`);
             //重新生成
             let word_package_pair = (
                 await db.query(
@@ -183,7 +185,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
                     GROUP BY pack ORDER BY pack;`,
                     [charArray, ready_regen]
                 )
-            ).rows;   
+            ).rows;
             // {
             //     1:'一堆字',
             //     2:'另一堆字'
@@ -241,63 +243,31 @@ async function regenerateAllStaticFont(state, have_gen_list) {
     }
     console.log("✨ 所有靜態字體生成完成！");
 }
-
 async function find_static_font(word_set, font_family_name) {
     // 回傳要用到的字型包編號
-    // 字串轉成字元陣列給 SQL 查詢
     try {
+        //載入該字型支援的所有字和對應的 pack
         word_set = word_set.split("");
         //查詢請求的字分別散落在哪些字型包中
         const query = "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[]) and $2 = ANY(families)";
-        const result = await db.query(query, [word_set, font_family_name]); //如果請求的字該字型沒有支援也不用特地去找 pack 了
-        const use_packs = result.rows.map(row => Number(row.pack)); // 確保是數字
-        //查詢請求的字型包是否存在
-        return use_packs; // 如果沒問題，就回傳原始值
+        const res = await db.query(query, [word_set, font_family_name]);
+
+        // 查請求的字需要在哪些 pack
+        return res.rows.map(row => String(row.pack).padStart(3, "0"));
     } catch (error) {
         console.error("靜態字體位置查詢失敗:", error);
         throw error;
     }
 }
-async function give_static_font(font_family, font_weight, packs, state) {
-    try {
-        if (!Array.isArray(packs) || !packs.every(Number.isInteger)) {
-            throw new TypeError("packs must be an array of integers");
-        }
-        packs = packs.map(pack => pack.toString().padStart(3, "0")); // 顯示時補零
-        // 回傳字型包路徑
-        let version_num = (await db.query(`SELECT bullet from version order BY start DESC limit 1;`)).rows; //[0].bullet
-        version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
-        const results = await Promise.all(
-            packs.map(async pack => {
-                const prefix = `${version_num}-${font_family}-${font_weight}/`;
-                const prefix_key = `fonts/${version_num}-${font_family}-${font_weight}/`; //r2 上的路徑還有一個 /font 前綴
-                const filename = `${pack}.woff2`;
-                const existsRes = await db.query(`SELECT EXISTS (SELECT 1 FROM r2_files WHERE prefix = $1 AND file_name = $2) AS exists`, [prefix_key, filename]);
-                let real_path;
-                if (existsRes.rows[0].exists) {
-                    //r2 有，回傳 r2 路徑
-                    real_path = `${process.env.R2_PUB_URL_BASE}/${prefix_key}${filename}`;
-                } else {
-                    //不存在 r2 ，回傳本地路徑
-                    real_path = `${state.baseURL}/_generated/${prefix}${filename}`;
-                }
-                return { pack, real_path };
-            })
-        );
-
-        const missing = results.filter(result => !result.real_path);
-
-        if (missing.length > 0) {
-            const missingPaths = missing.map(m => m.real_path).join(", ");
-            // TODO如果有缺少的字型檔，是不是要試著重新生成？
-            throw new Error(`Missing font files: ${missingPaths}`);
-        }
-
-        // 全部存在的話就可以繼續
-        return results.map(r => r.real_path);
-    } catch (error) {
-        console.error("Error inserting font types:", error);
-        throw error;
-    }
+function give_static_font(font_family, font_weight, packs, state) {
+    // 回傳字型包路徑
+    const version_num = state.static_font_version;
+    const prefix = `${version_num}-${font_family}-${font_weight}/`;
+    const results = packs.map(pack => {
+        const filename = `${pack}.woff2`;
+        return `${state.static_font_base}/${prefix}${filename}`;
+    });
+    // 直接回傳陣列
+    return results;
 }
 export { find_static_font, give_static_font, regenerateAllStaticFont };

@@ -140,7 +140,20 @@ async function sync_r2_and_db(state, fontRecords) {
         throw err;
     }
 }
-
+async function get_bullet()
+{
+    try
+    {
+        let version_num = (await db.query(`SELECT bullet from version order BY start DESC limit 1;`)).rows; //[0].bullet
+        version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
+        return version_num;
+    }
+    catch(err)
+    {
+        console.erro("取得靜態字型資料庫版號發生錯誤")
+        throw err;
+    }
+}
 async function initCheck(state) {
     try {
         let originalBulletin = state.bulletin;
@@ -152,7 +165,7 @@ async function initCheck(state) {
         await initR2(state);
         if (!process.env.SKIP_FONT_CHECK) await insertFontTypes();
         else console.log("⚠️  跳過字體檢查");
-        if (process.env.SKIP_REGEN) {
+        if (state.SKIP_REGEN) {
             console.log("⚠️  跳過靜態字體生成");
         } else {
             const have_gen_list = await get_generated_static_floders();
@@ -161,6 +174,7 @@ async function initCheck(state) {
         }
         const all_file_on_r2 = await listFontsRecursive(state);
         await sync_r2_and_db(state, all_file_on_r2);
+        state.static_font_version = await get_bullet(state);
         state.alive = true;
         state.bulletin = originalBulletin;
         console.log("✅ 初始化完成");

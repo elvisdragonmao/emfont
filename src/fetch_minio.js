@@ -38,21 +38,13 @@ export default async state => {
                 Prefix: "original-fonts"
             })
         );
-
-        const listGenerated = await LOCAL_MINIO_CLIENT.send(
-            new ListObjectsV2Command({
-                Bucket: bucketName,
-                Prefix: "_generated"
-            })
-        );
-
         if (!listResponse.Contents) listResponse.Contents = [];
-        if (!listGenerated.Contents) listGenerated.Contents = [];
 
-        console.log(`🔄 找到 ${listResponse.Contents.length} 個原始字體，${listGenerated.Contents.length} 個分割好的，開始下載...`);
+
+        console.log(`🔄 找到 ${listResponse.Contents.length} 個原始字體`);
 
         await Promise.all(
-            [...listResponse.Contents, ...listGenerated.Contents].map(async file => {
+            [...listResponse.Contents].map(async file => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
                 const localPath = path.join("src", "_data", fileKey);
