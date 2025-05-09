@@ -26,7 +26,8 @@
                 colorTest: false,
                 root: document.documentElement,
                 log: false,
-                hideAd: false
+                hideAd: false,
+                forceMin: false
             }
         ) {
             this.config = config;
@@ -128,7 +129,7 @@
 
                 const fetchPromises = Object.entries(newFonts).map(([fontName, words]) => {
                     let postFontName = fontName;
-                    const min = fontName.includes("-min");
+                    const min = this.config.forceMin || fontName.includes("-min");
                     if (min) postFontName = fontName.replace("-min", "");
                     let weight = fontName.match(/-(\d+)/);
                     if (weight) {
