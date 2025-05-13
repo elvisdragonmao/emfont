@@ -20,6 +20,15 @@ ${pages}
 
 const registerApi = async (app, state) => {
     generateSitemap(state);
+
+    app.get("/robots.txt", (req, res) => {
+        if (state.baseURL === "https://font.emtech.cc") {
+            res.type("text/plain").send("User-agent: *\nAllow: /\nSitemap: https://font.emtech.cc/sitemap.xml");
+        } else {
+            res.type("text/plain").send("User-agent: *\nDisallow: /");
+        }
+    });
+
     app.post("/g/:font", async (req, res) => {
         try {
             if (req.params.font === "") {
