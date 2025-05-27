@@ -3,10 +3,12 @@
 import { db } from "./database.js";
 import { readFontBuffer } from "./font_min.js";
 import { Worker } from "worker_threads";
+import { Redis } from "ioredis";
 import dotenv from "dotenv";
 dotenv.config();
 import path from "path";
 import os from "os";
+const redis = new Redis(process.env.REDIS_URL);
 const __dirname = import.meta.dirname;
 const cpuCount = os.cpus().length + parseInt(process.env.THREADS ?? 0);
 const runWorker = data => {
@@ -244,19 +246,52 @@ async function regenerateAllStaticFont(state, have_gen_list) {
     console.log("✨ 所有靜態字體生成完成！");
 }
 async function find_static_font(word_set, font_family_name) {
-    // 回傳要用到的字型包編號
     try {
-        //載入該字型支援的所有字和對應的 pack
         word_set = word_set.split("");
-        //查詢請求的字分別散落在哪些字型包中
-        const query = "SELECT DISTINCT pack FROM static_fonts WHERE char = ANY($1::text[]) and $2 = ANY(families)";
-        const res = await db.query(query, [word_set, font_family_name]);
 
-        // 查請求的字需要在哪些 pack
-        return res.rows.map(row => String(row.pack).padStart(3, "0"));
-    } catch (error) {
-        console.error("靜態字體位置查詢失敗:", error);
-        throw error;
+        const packs = new Set();
+        const fallback_chars = [];
+
+        const pipeline = redis.pipeline();
+
+        for (const char of word_set) {
+            pipeline.hget("char_to_pack", char);
+        }
+
+        const results = await pipeline.exec();
+        for (let i = 0; i < word_set.length; i++) {
+            const char = word_set[i];
+            const pack = results[i][1]; // hget 結果
+            console.log(char, pack);
+            if (pack !== null) {
+                packs.add(pack.toString().padStart(3, "0"));
+            } else {
+                console.log("有些字找不到", char);
+                fallback_chars.push(char);
+            }
+        }
+        console.log(fallback_chars);
+        // 若有 Redis miss 的字，就查 PostgreSQL
+        if (fallback_chars.length > 0) {
+            const query = `
+            SELECT DISTINCT pack,char
+            FROM static_fonts 
+            WHERE char = ANY($1::text[]) and $2 = ANY(families);
+        `;
+            const res = await db.query(query, [fallback_chars, font_family_name]);
+            const redisSetPipeline = redis.pipeline();
+            for (const row of res.rows) {
+                const paddedPack = String(row.pack).padStart(3, "0");
+                packs.add(paddedPack);
+
+                // 寫回 Redis 快取
+                redisSetPipeline.hset("char_to_pack", row.char, row.pack);
+            }
+            await redisSetPipeline.exec();
+        }
+        return Array.from(packs);
+    } catch (err) {
+        console.log(err);
     }
 }
 function give_static_font(font_family, font_weight, packs, state) {
