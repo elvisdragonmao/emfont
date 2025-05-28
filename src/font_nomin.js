@@ -245,53 +245,43 @@ async function regenerateAllStaticFont(state, have_gen_list) {
     }
     console.log("✨ 所有靜態字體生成完成！");
 }
-async function find_static_font(word_set, font_family_name) {
+// /**
+//  * 給定文字集合，找會用到的靜態字型 pack number
+//  *
+//  * @param {string} word_set - 要查詢的文字集合。
+//  * @param {string} hash - 用於 Redis 快取的雜湊 key。
+//  * @returns {Promise<string[]>} 對應的字型包代碼陣列。
+//  */
+async function find_static_font(word_set,hash) {
     try {
         word_set = word_set.split("");
-
+        const this_key = "s-"+hash;//static font use prefix
         const packs = new Set();
-        const fallback_chars = [];
+        const  hash_record = await  redis.smembers(this_key)
 
-        const pipeline = redis.pipeline();
-
-        for (const char of word_set) {
-            pipeline.hget("char_to_pack", char);
-        }
-
-        const results = await pipeline.exec();
-        for (let i = 0; i < word_set.length; i++) {
-            const char = word_set[i];
-            const pack = results[i][1]; // hget 結果
-            console.log(char, pack);
-            if (pack !== null) {
-                packs.add(pack.toString().padStart(3, "0"));
-            } else {
-                console.log("有些字找不到", char);
-                fallback_chars.push(char);
-            }
-        }
-        console.log(fallback_chars);
         // 若有 Redis miss 的字，就查 PostgreSQL
-        if (fallback_chars.length > 0) {
+        if (hash_record.length == 0) {
             const query = `
             SELECT DISTINCT pack,char
             FROM static_fonts 
-            WHERE char = ANY($1::text[]) and $2 = ANY(families);
-        `;
-            const res = await db.query(query, [fallback_chars, font_family_name]);
+            WHERE char = ANY($1::text[]);
+        `;//不會比對該字型是否支援這個字，優點是不用根據不同的字體就重新去查，資料庫有紀錄的字都會給 pack number ，目標是通用兼容。如果請求到字型沒有的會給出不存在的包，前端會跳 404
+            const res = await db.query(query, [word_set]);
             const redisSetPipeline = redis.pipeline();
             for (const row of res.rows) {
                 const paddedPack = String(row.pack).padStart(3, "0");
                 packs.add(paddedPack);
-
                 // 寫回 Redis 快取
-                redisSetPipeline.hset("char_to_pack", row.char, row.pack);
+                redisSetPipeline.sadd(this_key,paddedPack)
             }
+            //key will expire after 3 Day(60*60*24*3)
+            redisSetPipeline.expire(this_key,259200);
             await redisSetPipeline.exec();
         }
         return Array.from(packs);
     } catch (err) {
         console.log(err);
+        return [];
     }
 }
 function give_static_font(font_family, font_weight, packs, state) {

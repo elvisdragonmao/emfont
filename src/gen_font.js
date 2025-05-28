@@ -111,7 +111,9 @@ export const genFont = async (req, res, state) => {
         } else {
             //請求靜態字型
             //TODO:確認字型包是否存在r2，若無，怎麼辦
-            const font_pack_you_need = await find_static_font(req_word_set, font_family_name);
+            //靜態字型的 hash 不需要跟動態一樣把字體檔案參數放進去，因為 pack number 每種字都一樣，只會有試著請求不支援的字型拿到 404 的問題。這是可以接受的錯誤，故忽略
+            const hash = await hashString(req_word_set);
+            const font_pack_you_need = await find_static_font(req_word_set,hash);
             const R2font_url = give_static_font(font_family_name, font_weight, font_pack_you_need, state);
             return {
                 code: 200,
