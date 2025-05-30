@@ -277,8 +277,18 @@ async function find_static_font(word_set,hash) {
             //key will expire after 3 Day(60*60*24*3)
             redisSetPipeline.expire(this_key,259200);
             await redisSetPipeline.exec();
+            return Array.from(packs);
         }
-        return Array.from(packs);
+        else
+        {
+            const currentTTL = await redis.ttl(this_key);
+            // 如果 key 是永久存在（TTL = -1），選擇不動作
+            if (currentTTL > 0) {
+                const newTTL = currentTTL + 3600;// 重複使用的 key 幫他加 ttl 1 hr
+                await redis.expire(this_key, newTTL);
+            }
+            return hash_record;
+        }
     } catch (err) {
         console.log(err);
         return [];
