@@ -14,6 +14,8 @@
 
 > ⭐ 喜歡 emfont 嗎？留下一顆星星並分享給你的朋友吧！
 
+[<img src="https://img.buymeacoffee.com/button-api/?text=讓 emfont 多活幾天&slug=elvismao&button_colour=5F7FFF&font_colour=ffffff&font_family=Inter&outline_colour=000000&coffee_colour=FFDD00" />](https://www.buymeacoffee.com/elvismao)
+
 ## 特點
 
 - **免費**：完全免費，無需註冊。
