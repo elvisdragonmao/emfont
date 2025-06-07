@@ -13,7 +13,7 @@
 </div>
 
 > ⭐ 喜歡 emfont 嗎？留下一顆星星並分享給你的朋友吧！  
-或是幫我們買杯咖啡讓 emfont 多活幾天w
+或是幫我們買杯咖啡讓 emfont 多活幾天。
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/elvismao)
 

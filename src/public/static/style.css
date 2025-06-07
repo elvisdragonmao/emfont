@@ -325,6 +325,13 @@ a.btn:active {
     margin-bottom: 1rem;
 }
 
+.buy-me-a-coffee {
+   flex: 0 0 100%;
+    margin-top: 1rem;
+}
+.buy-me-a-coffee img{
+    margin: auto;
+}
 .contributors,
 .sponsors {
     flex-grow: 1;
