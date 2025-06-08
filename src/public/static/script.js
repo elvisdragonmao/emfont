@@ -273,7 +273,7 @@ const loadFontInfo = async fontId => {
             <img src="/static/img/GitHub-400.svg" alt="GitHub">
         </a>
         <a href="${font.download}" target="_blank">
-            <img src="/static/img/download.svg" alt="GitHub">
+            <img src="/static/img/download.svg" alt="official-Download-link">
         </a>
     </div>
     <p class="font-description">${font.description}</p>
@@ -301,7 +301,13 @@ const loadFontInfo = async fontId => {
     font.weight.map(weight => {
         const weightDiv = document.createElement("div");
         weightDiv.innerHTML = `<div class="font-item">
-            <div class="font-title"><div class="weight">${weightChart[weight][1]} ${weight}</div></div>
+            <div class="font-title">
+                <div class="weight">${weightChart[weight][1]} ${weight}</div>
+                <div>
+                <a href="https://font.emtech.cc/file/original-fonts/${fontId}/${weight}.${font.format}">
+                    <img src="/static/img/download.svg" alt="original-Download-link-from-emfont">
+                </a></div>
+            </div>
             <div class="font-preview emfont-${fontId}${min}-${weight}" contenteditable="true">${inputText}</div></div>`;
         weightContainer.appendChild(weightDiv);
         const weightDivPreview = weightDiv.querySelector(".font-preview");

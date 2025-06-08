@@ -2,7 +2,8 @@ import { genFont } from "../gen_font.js";
 import { db } from "../database.js";
 import { writeFile } from "fs/promises";
 import { join } from "path";
-
+import { Redis } from "ioredis";
+const redis = new Redis(process.env.REDIS_URL);
 const generateSitemap = async state => {
     const { rows } = await db.query(`SELECT id FROM font_family`);
     const content = rows.map(row => `<url><loc>${state.baseURL}/fonts/${row.id}/</loc></url>`).join("\n");
@@ -147,10 +148,15 @@ const registerApi = async (app, state) => {
     app.get("/info/:fontID", async (req, res) => {
         const fontID = req.params.fontID;
         try {
+            const redisKey = `fontinfo:${fontID}`;
+            const cached = await redis.get(redisKey);
+            if (cached) {
+                return res.send(JSON.parse(cached));
+            }
             const { rows } = await db.query(
                 `
                 SELECT id, name, name_zh, name_en, weights, category, tags, family,
-                       version, license, repo_url AS source, authors, description
+                       version, license, repo_url AS source, authors, description,format
                 FROM font_family
                 WHERE id = $1
             `,
@@ -158,22 +164,25 @@ const registerApi = async (app, state) => {
             );
             if (rows.length === 0) return res.status(404).send({ status: "failed", message: "Font not found" });
             const font = rows[0];
-            res.send({
-                name: {
-                    original: font.name,
-                    zh: font.name_zh,
-                    en: font.name_en
-                },
-                category: font.category,
-                weight: font.weights || [],
-                tag: font.tags || [],
-                family: font.family,
-                version: font.version,
-                license: font.license,
-                source: font.source,
-                author: font.authors?.[0] || null,
-                description: font.description
-            });
+            const response = {
+            name: {
+                original: font.name,
+                zh: font.name_zh,
+                en: font.name_en
+            },
+            category: font.category,
+            weight: font.weights || [],
+            tag: font.tags || [],
+            family: font.family,
+            version: font.version,
+            license: font.license,
+            source: font.source,
+            author: font.authors?.[0] || null,
+            description: font.description,
+            format:font.format
+        };
+        await redis.set(redisKey, JSON.stringify(response), 'EX', 3600);
+        res.send(response);
         } catch (err) {
             console.error("讀取字體資訊失敗", err.stack);
             res.status(500).send("Database query failed");

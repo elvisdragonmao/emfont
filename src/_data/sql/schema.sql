@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS font_family (
     tags TEXT[] DEFAULT ARRAY[]::TEXT[], -- 標籤
     repo_url TEXT DEFAULT NULL,
     authors TEXT[] DEFAULT ARRAY[]::TEXT[], -- 作者
+    format TEXT DEFAULT 'ttf' CHECK (format IN ('otf', 'ttf')), -- 字體格式
     CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'))
 );
 
