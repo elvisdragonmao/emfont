@@ -53,21 +53,25 @@ const registerApi = async (app, state) => {
             const font_id = req.params.font;
             req.body = {};
             req.body.words = req.query.words?.trim() ?? null;
+            req.body.weight = req.query.weight?.trim() ?? null;
             if (!req.body.words) {
-                const { rows } = await db.query(`SELECT name, weights FROM font_family WHERE id = $1`, [font_id]);
+                const { rows } = await db.query(`SELECT name, weights, format FROM font_family WHERE id = $1`, [font_id]);
                 if (rows.length === 0)
                     return {
                         code: 404,
                         status: "failed",
                         message: "Font not found"
                     };
-                const allWeights = rows[0].weights;
+                let allWeights = rows[0].weights;
                 if (allWeights.rowCount === 0) {
                     return res.status(404).send({
                         code: 404,
                         status: "failed",
                         message: "No weights available for this font"
                     });
+                }
+                if (req.body.weight && allWeights.includes(req.body.weight)) {
+                    allWeights = [req.body.weight];
                 }
                 return res.send(
                     allWeights
@@ -76,8 +80,7 @@ const registerApi = async (app, state) => {
     font-family: '${font_id}';
     font-weight: ${weight};
     font-display: swap;
-    src: url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.ttf') format('ttf'),
-    url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.otf') format('otf');
+    src: url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.${rows[0].format}') format('${rows[0].format}'),
 }`
                         )
                         .join("\n")
@@ -85,7 +88,6 @@ const registerApi = async (app, state) => {
                 //https://font.emtech.cc/file/original-fonts/GenSekiGothicTC/400.otf
             } else {
                 req.body.min = req.query.min?.trim() ?? false;
-                req.body.weight = req.query.weight?.trim() ?? null;
                 req.body.format = req.query.format?.trim() ?? null;
                 const response = await genFont(req, res, state);
                 if (response.code == 200) {
