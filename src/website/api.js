@@ -50,22 +50,55 @@ const registerApi = async (app, state) => {
             if (req.params.font === "") {
                 return res.status(404).send("/* Please enter font name */");
             }
+            const font_id = req.params.font;
             req.body = {};
-            req.body.min = req.query.min?.trim() ?? false;
-            req.body.weight = req.query.weight?.trim() ?? null;
             req.body.words = req.query.words?.trim() ?? null;
-            req.body.format = req.query.format?.trim() ?? null;
-            const response = await genFont(req, res, state);
-            if (response.code == 200) {
-                const urls = response.location.map(font => `url('${font}') format('woff2')`).join(",\n");
-                return res.send(`@font-face {
+            if (!req.body.words) {
+                const { rows } = await db.query(`SELECT name, weights FROM font_family WHERE id = $1`, [font_id]);
+                if (rows.length === 0)
+                    return {
+                        code: 404,
+                        status: "failed",
+                        message: "Font not found"
+                    };
+                const allWeights = rows[0].weights;
+                if (allWeights.rowCount === 0) {
+                    return res.status(404).send({
+                        code: 404,
+                        status: "failed",
+                        message: "No weights available for this font"
+                    });
+                }
+                return res.send(
+                    allWeights
+                        .map(
+                            weight => `@font-face {
+    font-family: '${font_id}';
+    font-weight: ${weight};
+    font-display: swap;
+    src: url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.ttf') format('ttf'),
+    url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.otf') format('otf');
+}`
+                        )
+                        .join("\n")
+                );
+                //https://font.emtech.cc/file/original-fonts/GenSekiGothicTC/400.otf
+            } else {
+                req.body.min = req.query.min?.trim() ?? false;
+                req.body.weight = req.query.weight?.trim() ?? null;
+                req.body.format = req.query.format?.trim() ?? null;
+                const response = await genFont(req, res, state);
+                if (response.code == 200) {
+                    const urls = response.location.map(font => `url('${font}') format('woff2')`).join(",\n");
+                    return res.send(`@font-face {
   font-family: '${response.name}';
   src: ${urls};
   font-weight: ${req.params.weight || "normal"};
   font-display: swap;
 }
 `);
-            } else res.status(response.code).send(response);
+                } else res.status(response.code).send(response);
+            }
         } catch (error) {
             console.error("字體請求錯誤: ", error.stack);
             res.status(500).send({ status: "failed", message: error.message });
@@ -165,24 +198,24 @@ const registerApi = async (app, state) => {
             if (rows.length === 0) return res.status(404).send({ status: "failed", message: "Font not found" });
             const font = rows[0];
             const response = {
-            name: {
-                original: font.name,
-                zh: font.name_zh,
-                en: font.name_en
-            },
-            category: font.category,
-            weight: font.weights || [],
-            tag: font.tags || [],
-            family: font.family,
-            version: font.version,
-            license: font.license,
-            source: font.source,
-            author: font.authors?.[0] || null,
-            description: font.description,
-            format:font.format
-        };
-        await redis.set(redisKey, JSON.stringify(response), 'EX', 3600);
-        res.send(response);
+                name: {
+                    original: font.name,
+                    zh: font.name_zh,
+                    en: font.name_en
+                },
+                category: font.category,
+                weight: font.weights || [],
+                tag: font.tags || [],
+                family: font.family,
+                version: font.version,
+                license: font.license,
+                source: font.source,
+                author: font.authors?.[0] || null,
+                description: font.description,
+                format: font.format
+            };
+            await redis.set(redisKey, JSON.stringify(response), "EX", 3600);
+            res.send(response);
         } catch (err) {
             console.error("讀取字體資訊失敗", err.stack);
             res.status(500).send("Database query failed");
