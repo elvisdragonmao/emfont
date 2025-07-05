@@ -294,7 +294,7 @@ async function find_static_font(word_set,hash) {
         return [];
     }
 }
-function give_static_font(font_family, font_weight, packs, state) {
+function give_static_font({font_family, font_weight, packs, state}) {
     // 回傳字型包路徑
     const version_num = state.static_font_version;
     const prefix = `${version_num}-${font_family}-${font_weight}/`;

@@ -19,17 +19,17 @@ async function hashString(str) {
 
 ///g/:font 路由 呼叫的函式。會根據前端需要的字集，回傳字型檔
 //靜態字型檔 solution
-async function checkFormat(WORD_SET, FONT_NAME) {
-    //return request {FONT_NAME}'s id in database(if exist)
+async function checkFormat({ WORD_SET, FONT_NAME }) {
     if (!WORD_SET) {
         throw new Error("words_set are required"); // 使用 throw 讓 genFont 捕捉
     }
     const result = await db.query("SELECT id FROM font_family WHERE id = $1", [FONT_NAME]);
+    //refuse request {FONT_NAME}'s id in database(if exist)
     if (result.rowCount === 0) {
         return false;
     }
     const font_id = result.rows[0].id; // Extracting the id value
-    return font_id; // 如果沒問題，就回傳字型編號
+    return font_id; // 如果沒問題，就回傳字型 ID
 }
 
 export const genFont = async (req, res, state) => {
@@ -48,7 +48,7 @@ export const genFont = async (req, res, state) => {
         const min_flag = req.body.min;
         const req_source = req.headers.referer || req.headers.origin || "unknown"; //請求網域
         const font_family_name = req.params.font;
-        const font_id = await checkFormat(req_word_set, font_family_name);
+        const font_id = await checkFormat({ WORD_SET: req_word_set, FONT_NAME: font_family_name });
         if (!font_id) {
             return {
                 code: 404,
@@ -114,7 +114,11 @@ export const genFont = async (req, res, state) => {
             //靜態字型的 hash 不需要跟動態一樣把字體檔案參數放進去，因為 pack number 每種字都一樣，只會有試著請求不支援的字型拿到 404 的問題。這是可以接受的錯誤，故忽略
             const hash = await hashString(req_word_set);
             const font_pack_you_need = await find_static_font(req_word_set,hash);
-            const R2font_url = give_static_font(font_family_name, font_weight, font_pack_you_need, state);
+            const R2font_url = give_static_font({
+                font_family:font_family_name, 
+                font_weight:font_weight, 
+                packs:font_pack_you_need,
+                state:state});
             return {
                 code: 200,
                 status: "success",
