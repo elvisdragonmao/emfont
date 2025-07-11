@@ -16,7 +16,7 @@ app.register(fastifyView, { engine: { ejs: ejs } });
 // Register static file serving
 app.register(fastifyStatic, {
     root: path.join(__dirname, "public"),
-    prefix: "/"
+    prefix: "/",
 });
 let user = "";
 // Catch-all route

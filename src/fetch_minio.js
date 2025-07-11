@@ -1,9 +1,14 @@
 import fs from "fs";
 import path from "path";
-import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import {
+    S3Client,
+    ListObjectsV2Command,
+    GetObjectCommand,
+    ListBucketsCommand,
+} from "@aws-sdk/client-s3";
 import { promisify } from "util";
 
-export default async state => {
+export default async (state) => {
     const bucketName = process.env.MINIO_BUCKET;
     if (!bucketName) {
         console.log("⏭️  沒有設定 MINIO_BUCKET 環境變數，跳過下載字型");
@@ -14,16 +19,16 @@ export default async state => {
         endpoint: process.env.MINIO_ENDPOINT,
         credentials: {
             accessKeyId: process.env.MINIO_USERNAME,
-            secretAccessKey: process.env.MINIO_PASSWORD
+            secretAccessKey: process.env.MINIO_PASSWORD,
         },
-        forcePathStyle: true
+        forcePathStyle: true,
     });
 
     try {
         const data = await LOCAL_MINIO_CLIENT.send(new ListBucketsCommand({}));
         console.log(
             "🗃️  MinIO 連接成功，找到的 Bucket:",
-            data.Buckets.map(b => b.Name)
+            data.Buckets.map((b) => b.Name)
         );
         state.local = false;
     } catch (err) {
@@ -35,16 +40,15 @@ export default async state => {
         const listResponse = await LOCAL_MINIO_CLIENT.send(
             new ListObjectsV2Command({
                 Bucket: bucketName,
-                Prefix: "original-fonts"
+                Prefix: "original-fonts",
             })
         );
         if (!listResponse.Contents) listResponse.Contents = [];
 
-
         console.log(`🔄 找到 ${listResponse.Contents.length} 個原始字體`);
 
         await Promise.all(
-            [...listResponse.Contents].map(async file => {
+            [...listResponse.Contents].map(async (file) => {
                 const fileKey = file.Key;
                 if (!fileKey) return;
                 const localPath = path.join("src", "_data", fileKey);
@@ -58,7 +62,7 @@ export default async state => {
 
                 const getCommand = new GetObjectCommand({
                     Bucket: bucketName,
-                    Key: fileKey
+                    Key: fileKey,
                 });
 
                 const data = await LOCAL_MINIO_CLIENT.send(getCommand);
@@ -75,7 +79,7 @@ export default async state => {
                         resolve();
                     });
 
-                    fileStream.on("error", err => {
+                    fileStream.on("error", (err) => {
                         console.error(`❌ 下載檔案失敗: ${fileKey}`, err);
                         reject(err);
                     });
