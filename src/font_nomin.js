@@ -313,11 +313,10 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 //  */
 async function find_static_font(word_set, hash) {
     try {
-        word_set = word_set.split("");
+        word_set = [...word_set];
         const this_key = "s-" + hash; //static font use prefix
         const packs = new Set();
         const hash_record = await redis.smembers(this_key);
-
         // 若有 Redis miss 的字，就查 PostgreSQL
         if (hash_record.length == 0) {
             const query = `
