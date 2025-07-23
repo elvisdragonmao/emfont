@@ -15,6 +15,7 @@ const stat = promisify(fs.stat);
 dotenv.config();
 const sotrge_original_fontsDir = path.resolve("src/_data/original-fonts");
 const sotrge_generated_fontsDir = path.resolve("src/_data/_generated");
+import { execFile } from "child_process";
 //init check
 
 // 讀取並執行 SQL 腳本檔案
@@ -27,6 +28,37 @@ async function executeSQLFile(filePath) {
 	}
 }
 
+const codepoints_analyse_py_path = path.resolve("src/_data/py-tool/font_script_report.py");
+async function runFontForgeBatch(fontData) {
+	const args = fontData.map(f => `${f.fontName}=${f.sample_file}`);
+  return new Promise((resolve, reject) => {
+    execFile(
+      "fontforge",
+      ["-script", codepoints_analyse_py_path, ...args],
+      { maxBuffer: 100 * 1024 * 1024 },  // 避免 stdout buffer 不夠
+      (error, stdout, stderr) => {
+        if (error) return reject(error);
+        if (stderr) console.error("stderr:", stderr);
+        try {
+          resolve(JSON.parse(stdout));
+        } catch (e) {
+          reject(new Error("JSON parse error: " + e.message + "\nOutput:" + stdout));
+        }
+      }
+    );
+  });
+}
+
+async function analyseFontsInBatches(fontData, batchSize = 10) {
+  const allResults = {};
+  for (let i = 0; i < fontData.length; i += batchSize) {
+    const spilt_fontData = fontData.slice(i, i + batchSize);
+    console.log(`分析第 ${i / batchSize + 1} 批:`, spilt_fontData);
+    const batchResult = await runFontForgeBatch(spilt_fontData);
+    Object.assign(allResults, batchResult);
+}
+  return allResults;
+}
 //check database
 async function insertFontTypes() {
 	try {
@@ -68,6 +100,7 @@ async function insertFontTypes() {
 				file_count++;
 			}
 		}
+		await analyseFontsInBatches(fontData);
 		console.log(`📦 收錄 ${file_count} 個字體`);
 		if (skipped.length > 0)
 			console.warn(`⏭️ 已跳過: ${skipped.join(", ")}`);
