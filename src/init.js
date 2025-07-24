@@ -28,36 +28,56 @@ async function executeSQLFile(filePath) {
 	}
 }
 
-const codepoints_analyse_py_path = path.resolve("src/_data/py-tool/font_script_report.py");
+const codepoints_analyse_py_path = path.resolve(
+	"src/_data/py-tool/font_script_report.py"
+);
 async function runFontForgeBatch(fontData) {
-	const args = fontData.map(f => `${f.fontName}=${f.sample_file}`);
-  return new Promise((resolve, reject) => {
-    execFile(
-      "fontforge",
-      ["-script", codepoints_analyse_py_path, ...args],
-      { maxBuffer: 100 * 1024 * 1024 },  // 避免 stdout buffer 不夠
-      (error, stdout, stderr) => {
-        if (error) return reject(error);
-        if (stderr) console.error("stderr:", stderr);
-        try {
-          resolve(JSON.parse(stdout));
-        } catch (e) {
-          reject(new Error("JSON parse error: " + e.message + "\nOutput:" + stdout));
-        }
-      }
-    );
-  });
+	const args = fontData.map((f) => `${f.fontName}=${f.sample_file}`);
+	return new Promise((resolve, reject) => {
+		execFile(
+			"fontforge",
+			["-script", codepoints_analyse_py_path, ...args],
+			{ maxBuffer: 100 * 1024 * 1024 }, // 避免 stdout buffer 不夠
+			(error, stdout, stderr) => {
+				if (error) return reject(error);
+				try {
+					resolve(JSON.parse(stdout));
+				} catch (e) {
+					reject(
+						new Error(
+							"JSON parse error: " +
+								e.message +
+								"\nOutput:" +
+								stdout
+						)
+					);
+				}
+			}
+		);
+	});
 }
+async function writeToDatabase(batchResult) {
+	// console.log(batchResult);
+	// console.log("inster !")
+}
+async function analyseFontsInBatches(fontData, batchSize = 2) {
+	const allResults = {};
+	for (let i = 0; i < fontData.length; i += batchSize) {
+		const spilt_fontData = fontData.slice(i, i + batchSize);
+		// console.log(`分析第 ${i / batchSize + 1} 批:`, spilt_fontData);
+		process.stdout.write(
+			`\r正在統計字型語言分類${i + batchSize}/${fontData.length}`
+		);
+		try {
+			const batchResult = await runFontForgeBatch(spilt_fontData);
 
-async function analyseFontsInBatches(fontData, batchSize = 10) {
-  const allResults = {};
-  for (let i = 0; i < fontData.length; i += batchSize) {
-    const spilt_fontData = fontData.slice(i, i + batchSize);
-    console.log(`分析第 ${i / batchSize + 1} 批:`, spilt_fontData);
-    const batchResult = await runFontForgeBatch(spilt_fontData);
-    Object.assign(allResults, batchResult);
-}
-  return allResults;
+			writeToDatabase(batchResult).catch((err) => {
+				console.error("資料庫寫入失敗：", err);
+			});
+		} catch (err) {
+			console.error("批次分析失敗：", err);
+		}
+	}
 }
 //check database
 async function insertFontTypes() {
@@ -68,11 +88,11 @@ async function insertFontTypes() {
 			fs.mkdirSync(sotrge_generated_fontsDir, { recursive: true });
 		// 取得 `sotrge_original_fontsDir` 下的所有子項目
 		const ALL_FONTS_dir = await readdir(sotrge_original_fontsDir);
-		const fontData = []; // include arbitrarily font weight in specis font family folder. each font family can exist one record in this array
+		let fontData = []; // include arbitrarily font weight in specis font family folder. each font family can exist one record in this array
 		console.log("🗃️  找到 " + ALL_FONTS_dir.join(", "));
 		let skipped = [];
-		const fontWeightsMap = new Map();//紀錄字型名稱＝> 存在的字重
-		let file_count=0;
+		const fontWeightsMap = new Map(); //紀錄字型名稱＝> 存在的字重
+		let file_count = 0;
 		for (const one_font_family of ALL_FONTS_dir) {
 			const itemPath = path.join(
 				sotrge_original_fontsDir,
@@ -84,7 +104,10 @@ async function insertFontTypes() {
 			// 讀取該資料夾內的所有檔案
 			const fontFiles = await readdir(itemPath);
 			for (const fontFile of fontFiles) {
-				if (!/^\d+\.(ttf|otf)$/i.test(fontFile)) continue; // 不符合就跳過
+				if (!/^\d+\.(ttf|otf)$/i.test(fontFile)) {
+					skipped.push(fontFile);
+					continue; // 不符合就跳過
+				}
 				const match_groups = fontFile.match(/^(\d+)\.(ttf|otf)$/i);
 				const weight = match_groups[1]; // 取得數字部分作為 weight
 				// 將資料夾名（font_name）和提取的 weight 存入 fontData
@@ -93,19 +116,18 @@ async function insertFontTypes() {
 					fontWeightsMap.set(one_font_family, new Set());
 					fontData.push({
 						fontName: one_font_family, // font id (folder name)
-						sample_file:`${itemPath}/${fontFile}` //absolute font file path 
+						sample_file: `${itemPath}/${fontFile}`, //absolute font file path
 					});
 				}
 				fontWeightsMap.get(one_font_family).add(parseInt(weight));
 				file_count++;
 			}
 		}
-		await analyseFontsInBatches(fontData);
+
 		console.log(`📦 收錄 ${file_count} 個字體`);
 		if (skipped.length > 0)
 			console.warn(`⏭️ 已跳過: ${skipped.join(", ")}`);
 		if (fontData.length === 0) throw new Error("🔍 沒有找到任何字體");
-
 
 		// 把所有 fontName 一次查詢（避免每次都查一次 DB）
 		const fontNames = Array.from(fontWeightsMap.keys());
@@ -119,6 +141,9 @@ async function insertFontTypes() {
 		for (const [fontName, weightsSet] of fontWeightsMap.entries()) {
 			if (!validFontIds.has(fontName)) {
 				console.warn(`❔ 資料庫不認識: ${fontName}`);
+				fontData = fontData.filter(
+					(font) => font.fontName !== fontName
+				);
 				continue;
 			}
 
@@ -129,7 +154,7 @@ async function insertFontTypes() {
 				[weights, fontName]
 			);
 		}
-
+		await analyseFontsInBatches(fontData);
 		console.log("✅ 字體資料已更新");
 	} catch (error) {
 		console.error(`Error when check font file`, error);
