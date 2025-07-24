@@ -7,17 +7,21 @@ class ScriptFinder():
         downloads them to a text file, and loads them to a list, where every index
         of valid unicode is represented by a string that contains the script name.
         Note that this is not very RAM efficient, but very fast for lookups.
-        """        
-        cache_path = "static/Scripts.pkl"
+        """
+        this_py_dir = os.path.dirname(os.path.abspath(__file__))  # 找到當前 Python 檔案的資料夾
+        static_dir = os.path.join(this_py_dir, "static")
+        os.makedirs(static_dir, exist_ok=True)
+
+        cache_path = os.path.join(this_py_dir, "static", "Scripts.pkl")
+        text_path = os.path.join(static_dir, "Scripts.txt")
         if os.path.isfile(cache_path):
             with open(cache_path, "rb") as f:
                 self.ranges = pickle.load(f)
         else:
             self.ranges = [None] * 0x110000
-            if not os.path.isfile('static/Scripts.txt'):
-                os.system('mkdir -p static')
-                os.system('wget https://www.unicode.org/Public/16.0.0/ucd/Scripts.txt --no-check-certificate -O static/Scripts.txt')
-            for line in open('static/Scripts.txt'):
+            if not os.path.isfile(cache_path):
+                os.system(f'wget https://www.unicode.org/Public/16.0.0/ucd/Scripts.txt --no-check-certificate -O {this_py_dir}')
+            for line in open(text_path):
                 tok = line.split(';')
                 # 對 scripts.txt 做一點字串處理，拿出 code block 的定義
                 if line[0]!='#' and len(tok) == 2:
