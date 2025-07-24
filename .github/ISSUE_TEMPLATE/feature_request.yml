@@ -1,7 +1,7 @@
 name: 功能請求 Feature Request
 description: 無限進步 Infinite improvement
 title: '[Feature]: '
-labels: ['enhancement']
+labels: ['enhancement', 'new font']
 body:
   - type: markdown
     attributes:
