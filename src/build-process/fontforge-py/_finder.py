@@ -19,9 +19,9 @@ class ScriptFinder():
                 self.ranges = pickle.load(f)
         else:
             self.ranges = [None] * 0x110000
-            if not os.path.isfile(cache_path):
+            if not os.path.isfile(text_path):
                 os.system(f'wget https://www.unicode.org/Public/16.0.0/ucd/Scripts.txt --no-check-certificate -O {this_py_dir}')
-            for line in open(text_path):
+            for line in open(text_path, encoding='utf-8'):
                 tok = line.split(';')
                 # 對 scripts.txt 做一點字串處理，拿出 code block 的定義
                 if line[0]!='#' and len(tok) == 2:
