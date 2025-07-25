@@ -55,13 +55,13 @@ async function analyseFontsInBatches(fontData, batchSize = 2) {
         process.stdout.write(`\r正在統計字型語言分類${i + batchSize}/${fontData.length}`);
         try {
             const batchResult = await runFontForgeBatch(spilt_fontData);
-
-            await writeToDatabase(batchResult).catch(err => {
-                console.error("資料庫寫入失敗：", err);
-            });
+            Object.assign(allResults,batchResult)
         } catch (err) {
             console.error("批次分析失敗：", err);
         }
+        await writeToDatabase(allResults).catch(err => {
+            console.error("資料庫寫入失敗：", err);
+        });
     }
 }
 export { analyseFontsInBatches };
