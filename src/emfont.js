@@ -70,20 +70,42 @@
             let newFonts = {};
             this.setConfig(newConfig);
             return new Promise(resolve => {
-                let elements = this.config.root.querySelectorAll("[class*='emfont']");
-                // if root element has class add it too
-                if (this.config.root.className.includes("emfont")) elements = [this.config.root, ...elements];
+                // Get all elements with `emfont-*` on them
+                let roots = Array.from(this.config.root.querySelectorAll("[class*='emfont']"));
+                if (this.config.root.className.includes("emfont")) roots.unshift(this.config.root);
+
+                // To collect all styled sub-elements
+                let elements = new Set();
+
+                roots.forEach(root => {
+                    elements.add(root); // Add root itself
+                    root.querySelectorAll("*").forEach(child => {
+                        // Only add children that have text
+                        if (child.textContent.trim()) elements.add(child);
+                    });
+                });
+
                 let originalClasses = [];
+
                 elements.forEach(element => {
                     if (this.config.colorTest) {
                         element.style.color = "red";
                         return;
                     }
-                    const fontNames = element.className
-                        .split(" ")
-                        .filter(name => name.startsWith("emfont-") || name.startsWith("✏️"))
-                        .map(name => name.replace(/^(emfont-|✏️)/, ""));
-                    originalClasses.push(...fontNames);
+
+                    // Find closest ancestor with emfont-* class
+                    let fontName = null;
+                    for (let el = element; el; el = el.parentElement) {
+                        const match = [...el.classList].find(cls => cls.startsWith("emfont-") || cls.startsWith("✏️"));
+                        if (match) {
+                            fontName = match.replace(/^(emfont-|✏️)/, "");
+                            break;
+                        }
+                    }
+
+                    if (!fontName) return;
+
+                    // Get transformed text
                     const style = getComputedStyle(element);
                     let words = element.textContent.trim();
                     switch (style.textTransform) {
@@ -96,19 +118,22 @@
                         case "capitalize":
                             words = words.replace(/\b\w/g, c => c.toUpperCase());
                             break;
-                        // others like 'none' or 'inherit' => do nothing
                     }
 
-                    fontNames.forEach(fontName => {
-                        if (fontName && words) {
-                            const settedWeight = !!fontName.match(/-(\d+)/);
-                            if (!settedWeight) fontName += element.style.fontWeight ? "-" + element.style.fontWeight : this.config.weight ? "-" + this.config.weight : "";
-                            const text = (newFonts[fontName] ? newFonts[fontName] : "") + words;
-                            newFonts[fontName] = Array.from(new Set(text.split("")))
-                                .sort()
-                                .join("");
-                        }
-                    });
+                    // Handle font weight
+                    let finalFontName = fontName;
+                    const hasWeight = fontName.match(/-(\d+)/);
+                    if (!hasWeight) {
+                        const weight = style.fontWeight || this.config.weight || "";
+                        if (weight && weight !== "normal") finalFontName += `-${weight}`;
+                    }
+
+                    if (finalFontName && words) {
+                        const text = (newFonts[finalFontName] || "") + words;
+                        newFonts[finalFontName] = Array.from(new Set(text.split("")))
+                            .sort()
+                            .join("");
+                    }
                 });
 
                 if (!this._styleElement) {
