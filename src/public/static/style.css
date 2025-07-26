@@ -13,6 +13,24 @@
     --slate-950: #020617;
 }
 
+body:has(#lightmode:checked) {
+    --slate-50: #080f31;
+    --slate-100: #475472;
+    --slate-200: #1e293b;
+    --slate-300: #334155;
+    --slate-400: #475569;
+    --slate-500: #64748b;
+    --slate-600: #94a3b8;
+    --slate-700: #cbd5e1;
+    --slate-800: #e2e8f0;
+    --slate-900: #f1f5f9;
+    --slate-950: #f8fafc;
+}
+
+body:has(#lightmode:checked) #logo {
+    filter: brightness(0) invert(31%) sepia(19%) saturate(935%) hue-rotate(184deg) brightness(90%) contrast(83%);
+}
+
 @supports (color: oklch(0% 0 0)) {
     :root {
         --slate-50: oklch(0.984 0.003 247.858);
@@ -33,6 +51,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    transition: color 0.3s ease-out, background-color 0.3s ease-out;
 }
 body,
 input,
@@ -194,9 +213,11 @@ section > div {
     display: flex;
     gap: 0.6rem;
     position: relative;
+    width: calc(100% + 2rem);
+    margin-left: -1rem;
 }
 
-.header-links a {
+.header-links > * {
     flex: 1;
     border-radius: 0.5rem;
     background: var(--slate-800);
@@ -209,6 +230,39 @@ section > div {
 
 .header-links img {
     width: 1.6rem;
+}
+
+#lightmodeLabel {
+    cursor: pointer;
+    position: relative;
+}
+
+#lightmodeLabel::before,
+#lightmodeLabel::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1.6rem;
+    height: 1.6rem;
+    transition: scale 0.3s ease-in-out;
+    transform-origin: top left;
+    background: url("/static/img/dark.svg") no-repeat center center / contain;
+}
+
+#lightmodeLabel::after {
+    background-image: url("/static/img/light.svg");
+    scale: 0;
+}
+
+main:has(#lightmodeLabel:checked) #lightmodeLabel::after {
+    scale: 1;
+}
+
+main:has(#lightmodeLabel:checked) #lightmodeLabel::before {
+    scale: 0;
 }
 
 .header-links-font {
@@ -326,10 +380,10 @@ a.btn:active {
 }
 
 .buy-me-a-coffee {
-   flex: 0 0 100%;
+    flex: 0 0 100%;
     margin-top: 1rem;
 }
-.buy-me-a-coffee img{
+.buy-me-a-coffee img {
     margin: auto;
 }
 .contributors,
@@ -390,7 +444,7 @@ body:has(.home) {
     #section-home > .emfont-jfOpenHuninn-min {
         animation-delay: -1s;
     }
-    #section-home > .emfont-MantouSans-min {
+    section-home > .emfont-MantouSans-min {
         animation-delay: -2s;
     }
     #section-home > .emfont-ChenYuLuoYan-min {
