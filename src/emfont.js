@@ -98,7 +98,6 @@
                     for (let el = element; el; el = el.parentElement) {
                         const match = [...el.classList].find(cls => cls.startsWith("emfont-") || cls.startsWith("✏️"));
                         if (match) {
-                            originalClasses.push(match);
                             fontName = match.replace(/^(emfont-|✏️)/, "");
                             break;
                         }
