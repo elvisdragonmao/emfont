@@ -99,6 +99,7 @@
                         const match = [...el.classList].find(cls => cls.startsWith("emfont-") || cls.startsWith("✏️"));
                         if (match) {
                             fontName = match.replace(/^(emfont-|✏️)/, "");
+                            originalClasses.push(fontName);
                             break;
                         }
                     }
