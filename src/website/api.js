@@ -73,7 +73,7 @@ const registerApi = async (app, state) => {
                 if (req.body.weight && allWeights.includes(req.body.weight)) {
                     allWeights = [req.body.weight];
                 }
-                return res.send(
+                return res.type("text/css").send(
                     allWeights
                         .map(
                             weight => `@font-face {
@@ -92,7 +92,7 @@ const registerApi = async (app, state) => {
                 const response = await genFont(req, res, state);
                 if (response.code == 200) {
                     const urls = response.location.map(font => `url('${font}') format('woff2')`).join(",\n");
-                    return res.send(`@font-face {
+                    return res.type("text/css").send(`@font-face {
   font-family: '${response.name}';
   src: ${urls};
   font-weight: ${req.params.weight || "normal"};
