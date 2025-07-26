@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
 import { db } from "../database.js";
+import { join } from "path";
 // Read the HTML file in the same directory
 
 export default async app => {
@@ -63,6 +64,11 @@ export default async app => {
         const user = req.cookies.token;
         if (!user) return res.redirect("/login");
         return renderSite(res, { page: "dashboard", title: "儀表板 - emfont" });
+    });
+
+    // render status.html in public folder
+    app.get("/status", async (req, res) => {
+        return res.sendFile('status.html');
     });
 
     app.setNotFoundHandler((req, res) => {

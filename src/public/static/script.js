@@ -92,8 +92,6 @@ const updateFontDisplay = (e, animationOff = false) => {
     const min = searchText.value ? "" : "-min";
     const previewText = searchText.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
     let containerHTML = "";
-    // if filtered length is same as fontList length
-    console.log(filtered.length, fontList.length);
     if (filtered.length == fontList.length) {
         filtered.sort(() => Math.random() - 0.5);
     }

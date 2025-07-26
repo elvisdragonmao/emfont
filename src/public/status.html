@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>emfont 功能測試</title>
+        <style>
+            :root {
+                --max-width: 1320px;
+                --slate-50: #f8fafc;
+                --slate-100: #f1f5f9;
+                --slate-200: #e2e8f0;
+                --slate-300: #cbd5e1;
+                --slate-400: #94a3b8;
+                --slate-500: #64748b;
+                --slate-600: #475569;
+                --slate-700: #334155;
+                --slate-800: #1e293b;
+                --slate-900: #0f172a;
+                --slate-950: #020617;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                min-height: 100dvh;
+                background-color: var(--slate-900);
+                color: var(--slate-100);
+                padding: 3rem;
+                max-width: 1000px;
+                margin: auto;
+            }
+            body > div {
+                margin-bottom: 1rem;
+                border: 2px solid #1c293d;
+                padding: 1rem;
+            }
+            .class {
+                color: var(--slate-400);
+                margin-bottom: 0.2rem;
+            }
+            h1 {
+                margin-bottom: 1.5rem;
+            }
+        </style>
+        <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H69XEEC798"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag("js", new Date());
+
+            gtag("config", "G-H69XEEC798");
+        </script>
+        <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+        <script>
+            // VConsole will be exported to `window.VConsole` by default.
+            var vConsole = new window.VConsole();
+        </script>
+    </head>
+    <body>
+        <h1>emfont 功能測試</h1>
+        <div class="test1">
+            <div class="class">emfont-Cubic11</div>
+            <h2 class="emfont-Cubic11">一般文字</h2>
+        </div>
+        <div class="test3">
+            <div class="class">emfont-MaokenAssortedSansTC-min</div>
+            <h2 class="emfont-MaokenAssortedSansTC-min">極致壓縮</h2>
+        </div>
+        <div class="test2">
+            <div class="class">emfont-Tiejili-400-min</div>
+            <h2 class="emfont-Tiejili-400-min">極致壓縮＋指定字重</h2>
+        </div>
+        <div class="test4">
+            <div class="class">emfont-ChillBitmap16px-min-700</div>
+            <h2 class="emfont-ChillBitmap16px-min-700">測試模式</h2>
+        </div>
+        <div class="test5">
+            <div class="class">emfont-MantouSans</div>
+            <h2 class="emfont-ChillBitmap16px-min-700">什麼都沒變，測試繼承設定</h2>
+        </div>
+        <div class="test6">
+            <div class="class">emfont-GenJyuuGothicPX-850</div>
+            <h2 class="emfont-GenJyuuGothicPX-850">不存在的字重，應選最近</h2>
+        </div>
+        <div class="test7">
+            <div class="class">emfont-Iansui</div>
+            <h2 class="emfont-Iansui">使用 JS 極致壓縮</h2>
+        </div>
+        <div class="test8">
+            <div class="class">emfont-neverGonnaGiveYouUp</div>
+            <h2 class="emfont-neverGonnaGiveYouUp">不存在字體錯誤測試</h2>
+        </div>
+        <div class="test9">
+            <link href="https://font.emtech.cc/css/MantouSans?weight=400" rel="stylesheet" />
+            <div class="class">https://font.emtech.cc/css/MantouSans?weight=400</div>
+            <h2 style="font-family: MantouSans;">純 CSS 載入</h2>
+        </div>
+        <div class="test10">
+            <link href="https://font.emtech.cc/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入" rel="stylesheet" />
+            <div class="class">https://font.emtech.cc/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入</div>
+            <h2 style="font-family: ChenYuLuoYan;">純 CSS 極致壓縮載入</h2>
+        </div>
+        <script type="module">
+            import "/emfont.js";
+            emfont.init({
+                root: document.querySelector(".test1")
+            });
+            emfont.init({
+                root: document.querySelector(".test2")
+            });
+            emfont.init({
+                root: document.querySelector(".test3")
+            });
+            emfont.init({
+                root: document.querySelector(".test4"),
+                colorTest: true
+            });
+            emfont.init({
+                root: document.querySelector(".test5")
+            });
+            emfont.init({
+                root: document.querySelector(".test6"),
+                colorTest: false
+            });
+            emfont
+                .init({
+                    root: document.querySelector(".test7"),
+                    forceMin: true
+                })
+                .then(() => {
+                    console.log("使用 JS 極致壓縮測試完成！");
+                });
+            emfont
+                .init({
+                    root: document.querySelector(".test8")
+                })
+                .then(results => {
+                    console.log("不存在字體錯誤測試完成！", results);
+                    const failed = results.filter(r => r.status === "rejected");
+                    const success = results.filter(r => r.status === "fulfilled");
+
+                    if (failed.length > 0) {
+                        console.warn("Some fonts failed to load:", failed);
+                    }
+                });
+        </script>
+    </body>
+</html>
