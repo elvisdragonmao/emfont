@@ -80,7 +80,7 @@ const registerApi = async (app, state) => {
     font-family: '${font_id}';
     font-weight: ${weight};
     font-display: swap;
-    src: url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.${rows[0].format}') format('${rows[0].format}');
+    src: url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.${rows[0].format}') format('${rows[0].format.replace("otf", "opentype").replace("ttf", "truetype")}');
 }`
                         )
                         .join("\n")
