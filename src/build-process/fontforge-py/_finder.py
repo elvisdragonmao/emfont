@@ -38,15 +38,15 @@ class ScriptFinder():
                 # range in the indices, so the first range for Latin is 65-90
                 # for example, character 65 (A) and 90 (Z) are both included in
                 # the Latin set.  
-            # 建立一個節點
-            self.ranges.append((start, end, script_name))
+                # 建立一個節點
+                self.ranges.append((start, end, script_name))
             # 排序節點
             self.ranges.sort(key=lambda x: x[0])
             # 紀錄每個節點的開始位置
             self.starts = [start for start, _, _ in self.ranges]
             with open(cache_path, "wb") as f:
                 pickle.dump((self.ranges, self.starts), f)
-    def find_char(self, char):
+    def find_char(self, codepoint):
         """
         Return the script of a single character, if a string
         is passed, it returns the script of the first character.
@@ -85,7 +85,7 @@ class ScriptFinder():
         """
         classes = {}
         for char in text:
-            cat = self.find_char(char)
+            cat = self.find_char(ord(char))
             if cat == None:
                 continue
             if cat not in classes:

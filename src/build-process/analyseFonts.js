@@ -47,7 +47,7 @@ async function writeToDatabase(batchResult) {
         );
     }
 }
-async function analyseFontsInBatches(fontData, batchSize = 1) {
+async function analyseFontsInBatches(fontData, batchSize = 10) {
     const allResults = {};
     for (let i = 0; i < fontData.length; i += batchSize) {
         const spilt_fontData = fontData.slice(i, i + batchSize);
