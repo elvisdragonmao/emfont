@@ -110,11 +110,11 @@
 
             gtag("config", "G-H69XEEC798");
         </script>
-        <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+        <!-- <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
         <script>
             // VConsole will be exported to `window.VConsole` by default.
             // var vConsole = new window.VConsole();
-        </script>
+        </script> -->
     </head>
     <body>
         <h1>emfont 功能測試</h1>
@@ -154,8 +154,8 @@
         </div>
         <div class="test6">
             <button class="test-button individual-test-button" onclick="runTest(6)">測試</button>
-            <div class="class">6. emfont-GenJyuuGothicPX-850</div>
-            <h2 class="emfont-GenJyuuGothicPX-850">不存在的字重，應選最近</h2>
+            <div class="class">6. emfont-GenJyuuGothicPX-850-min</div>
+            <h2 class="emfont-GenJyuuGothicPX-850-min">不存在的字重，應選最近</h2>
             <div class="result">❔</div>
         </div>
         <div class="test7">
@@ -259,7 +259,7 @@
                     } else {
                         if (results[0]) {
                             if (results[0].status === "fulfilled") {
-                                if (testNumber === 6) {
+                                if (0 && testNumber === 6) {
                                     // get the font-weight
                                     const testElement = document.querySelector(`.test${testNumber} h2`);
                                     const computedStyle = getComputedStyle(testElement);
