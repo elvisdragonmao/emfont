@@ -57,6 +57,48 @@
                 font-size: 2rem;
                 color: var(--slate-500);
             }
+            h2 {
+                font-weight: normal;
+            }
+            .test-button {
+                background-color: var(--slate-700);
+                color: var(--slate-100);
+                border: 1px solid var(--slate-600);
+                padding: 0.5rem 1rem;
+                border-radius: 0.25rem;
+                cursor: pointer;
+                font-size: 0.875rem;
+                transition: background-color 0.2s;
+            }
+            .test-button:hover {
+                background-color: var(--slate-600);
+            }
+            .test-all-button {
+                background-color: var(--slate-800);
+                color: var(--slate-100);
+                border: 2px solid var(--slate-600);
+                padding: 0.75rem 1.5rem;
+                border-radius: 0.375rem;
+                cursor: pointer;
+                font-size: 1rem;
+                font-weight: 500;
+                margin-bottom: 2rem;
+                display: block;
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+                transition: all 0.2s;
+            }
+            .test-all-button:hover {
+                background-color: var(--slate-700);
+                border-color: var(--slate-500);
+            }
+            .individual-test-button {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                right: 4rem;
+            }
         </style>
         <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H69XEEC798"></script>
         <script>
@@ -71,194 +113,188 @@
         <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
         <script>
             // VConsole will be exported to `window.VConsole` by default.
-            var vConsole = new window.VConsole();
+            // var vConsole = new window.VConsole();
         </script>
     </head>
     <body>
         <h1>emfont 功能測試</h1>
         <p>結果僅供參考，請實際看字體變化並使用開發者工具確認。</p>
+
+        <button class="test-all-button" onclick="runAllTests()">🚀 測試所有項目</button>
+
         <div class="test1">
+            <button class="test-button individual-test-button" onclick="runTest(1)">測試</button>
             <div class="class">1. emfont-Cubic11</div>
             <h2 class="emfont-Cubic11">一般文字</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test2">
+            <button class="test-button individual-test-button" onclick="runTest(2)">測試</button>
             <div class="class">2. emfont-MaokenAssortedSansTC-min</div>
             <h2 class="emfont-MaokenAssortedSansTC-min">極致壓縮</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test3">
+            <button class="test-button individual-test-button" onclick="runTest(3)">測試</button>
             <div class="class">3. emfont-Tiejili-400-min</div>
             <h2 class="emfont-Tiejili-400-min">極致壓縮＋指定字重</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test4">
+            <button class="test-button individual-test-button" onclick="runTest(4)">測試</button>
             <div class="class">4. emfont-ChillBitmap16px-min-700</div>
             <h2 class="emfont-ChillBitmap16px-min-700">測試模式</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test5">
+            <button class="test-button individual-test-button" onclick="runTest(5)">測試</button>
             <div class="class">5. emfont-MantouSans</div>
             <h2 class="emfont-ChillBitmap16px-min-700">什麼都沒變，測試繼承設定</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test6">
+            <button class="test-button individual-test-button" onclick="runTest(6)">測試</button>
             <div class="class">6. emfont-GenJyuuGothicPX-850</div>
             <h2 class="emfont-GenJyuuGothicPX-850">不存在的字重，應選最近</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test7">
+            <button class="test-button individual-test-button" onclick="runTest(7)">測試</button>
             <div class="class">7. emfont-Iansui</div>
             <h2 class="emfont-Iansui">使用 JS 極致壓縮</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test8">
+            <button class="test-button individual-test-button" onclick="runTest(8)">測試</button>
             <div class="class">8. emfont-neverGonnaGiveYouUp</div>
             <h2 class="emfont-neverGonnaGiveYouUp">不存在字體錯誤測試</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test9">
-            <link href="https://font.emtech.cc/css/MantouSans?weight=400" rel="stylesheet" />
-            <div class="class">9. https://font.emtech.cc/css/MantouSans?weight=400</div>
+            <button class="test-button individual-test-button" onclick="runTest(9)">測試</button>
+            <div class="class">9. https://beta-emfont.zeabur.app/css/MantouSans?weight=400</div>
             <h2 style="font-family: MantouSans">純 CSS 載入</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <div class="test10">
-            <link href="https://font.emtech.cc/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入" rel="stylesheet" />
-            <div class="class">10. https://font.emtech.cc/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入</div>
+            <button class="test-button individual-test-button" onclick="runTest(10)">測試</button>
+            <div class="class">10. https://beta-emfont.zeabur.app/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入</div>
             <h2 style="font-family: ChenYuLuoYan">純 CSS 極致壓縮載入</h2>
-            <div class="result">⏳</div>
+            <div class="result">❔</div>
         </div>
         <script type="module">
-            import "/emfont.js";
-            emfont
-                .init({
-                    root: document.querySelector(".test1")
-                })
-                .then(results => {
-                    if (results[0].status == "fulfilled") {
-                        document.querySelector(".test1 .result").textContent = "✅";
-                    } else {
-                        console.warn("Test 1 failed: ", results[0]);
-                        document.querySelector(".test1 .result").textContent = "❌";
+            import "https://beta-emfont.zeabur.app/emfont.js";
+
+            // Store test functions for reuse
+            const testFunctions = {
+                1: () => emfont.init({ root: document.querySelector(".test1") }),
+                2: () => emfont.init({ root: document.querySelector(".test2") }),
+                3: () => emfont.init({ root: document.querySelector(".test3") }),
+                4: () => emfont.init({ root: document.querySelector(".test4"), colorTest: true }),
+                5: () => emfont.init({ root: document.querySelector(".test5") }),
+                6: () => emfont.init({ root: document.querySelector(".test6"), colorTest: false }),
+                7: () => emfont.init({ root: document.querySelector(".test7"), forceMin: true }),
+                8: () => emfont.init({ root: document.querySelector(".test8") })
+            };
+
+            window.runTest = async function (testNumber) {
+                const resultElement = document.querySelector(`.test${testNumber} .result`);
+                resultElement.textContent = "⏳";
+
+                try {
+                    if (testNumber === 9 || testNumber === 10) {
+                        // use js to load CSS, test if success loaded, and test if the font is applied
+                        const links = {
+                            9: "https://beta-emfont.zeabur.app/css/MantouSans?weight=400",
+                            10: "https://beta-emfont.zeabur.app/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入"
+                        };
+                        const link = document.createElement("link");
+                        link.href = links[testNumber];
+                        link.rel = "stylesheet";
+                        link.onload = () => {
+                            const fontName = testNumber === 9 ? "MantouSans" : "ChenYuLuoYan";
+                            const testElement = document.querySelector(`.test${testNumber} h2`);
+                            const computedStyle = getComputedStyle(testElement);
+
+                            if (computedStyle.fontFamily.includes(fontName)) {
+                                resultElement.textContent = "✅";
+                                return;
+                            } else {
+                                console.error(`❌ Test ${testNumber} failed: font not applied`);
+                                resultElement.textContent = "❌";
+                                return;
+                            }
+                        };
+
+                        link.onerror = () => {
+                            console.error(`❌ Test ${testNumber} failed: link load error`);
+                            resultElement.textContent = "❌";
+                        };
+
+                        document.head.appendChild(link);
+                        return;
                     }
-                });
-            emfont
-                .init({
-                    root: document.querySelector(".test2")
-                })
-                .then(results => {
-                    if (results[0].status == "fulfilled") {
-                        document.querySelector(".test2 .result").textContent = "✅";
-                    } else {
-                        console.warn("Test 2 failed: ", results[0]);
-                        document.querySelector(".test2 .result").textContent = "❌";
-                    }
-                });
-            emfont
-                .init({
-                    root: document.querySelector(".test3")
-                })
-                .then(results => {
-                    if (results[0].status == "fulfilled") {
-                        document.querySelector(".test3 .result").textContent = "✅";
-                    } else {
-                        console.warn("Test 3 failed: ", results[0]);
-                        document.querySelector(".test3 .result").textContent = "❌";
-                    }
-                });
-            emfont
-                .init({
-                    root: document.querySelector(".test4"),
-                    colorTest: true
-                })
-                .then(results => {
-                    if (!results.length) {
-                        const testElement = document.querySelector(".test4 h2");
-                        const computedStyle = getComputedStyle(testElement);
-                        if (computedStyle.color === "rgb(255, 0, 0)") {
-                            document.querySelector(".test4 .result").textContent = "✅";
-                            return;
+
+                    const results = await testFunctions[testNumber]();
+
+                    if (testNumber === 4 || testNumber === 5) {
+                        // Special handling for color tests
+                        if (!results.length) {
+                            const testElement = document.querySelector(`.test${testNumber} h2`);
+                            const computedStyle = getComputedStyle(testElement);
+                            if (computedStyle.color === "rgb(255, 0, 0)") {
+                                resultElement.textContent = "✅";
+                                return;
+                            }
                         }
-                    }
-                    document.querySelector(".test4 .result").textContent = "❌";
-                });
-            emfont
-                .init({
-                    root: document.querySelector(".test5")
-                })
-                .then(results => {
-                    if (!results.length) {
-                        const testElement = document.querySelector(".test5 h2");
-                        const computedStyle = getComputedStyle(testElement);
-                        if (computedStyle.color === "rgb(255, 0, 0)") {
-                            document.querySelector(".test5 .result").textContent = "✅";
-                            return;
+                        resultElement.textContent = "❌";
+                    } else if (testNumber === 8) {
+                        // Error test - expects failures
+                        const failed = results.filter(r => r.status === "rejected");
+                        if (failed.length > 0) {
+                            resultElement.textContent = "✅";
+                        } else {
+                            resultElement.textContent = "❌";
                         }
-                    }
-                    document.querySelector(".test5 .result").textContent = "❌";
-                });
-            emfont
-                .init({
-                    root: document.querySelector(".test6"),
-                    colorTest: false
-                })
-                .then(results => {
-                    if (results[0].status == "fulfilled") {
-                        document.querySelector(".test6 .result").textContent = "✅";
                     } else {
-                        console.warn("Test 6 failed: ", results[0]);
-                        document.querySelector(".test6 .result").textContent = "❌";
+                        if (results[0]) {
+                            if (results[0].status === "fulfilled") {
+                                if (testNumber === 6) {
+                                    // get the font-weight
+                                    const testElement = document.querySelector(`.test${testNumber} h2`);
+                                    const computedStyle = getComputedStyle(testElement);
+                                    const fontWeight = computedStyle.fontWeight;
+                                    // Check if the font-weight is one of the expected values
+                                    if (["800", "900"].includes(fontWeight)) {
+                                        return (resultElement.textContent = "✅");
+                                    } else {
+                                        console.error(`❌ Test ${testNumber} failed: unexpected font-weight ${fontWeight}`);
+                                        return (resultElement.textContent = "❌");
+                                    }
+                                }
+
+                                return (resultElement.textContent = "✅");
+                            } else if (results[0].status === "skipped") {
+                                return (resultElement.textContent = "⏭️");
+                            }
+                        }
+                        console.error(`❌ Test ${testNumber} failed: `, results[0]);
+                        resultElement.textContent = "❌";
                     }
-                });
-            emfont
-                .init({
-                    root: document.querySelector(".test7"),
-                    forceMin: true
-                })
-                .then(() => {
-                    if (results[0].status == "fulfilled") {
-                        document.querySelector(".test7 .result").textContent = "✅";
-                    } else {
-                        console.warn("Test 7 failed: ", results[0]);
-                        document.querySelector(".test7 .result").textContent = "❌";
-                    }
-                });
-            emfont
-                .init({
-                    root: document.querySelector(".test8")
-                })
-                .then(results => {
-                    //  console.log("不存在字體錯誤測試完成！", results);
-                    const failed = results.filter(r => r.status === "rejected");
-                    const success = results.filter(r => r.status === "fulfilled");
+                } catch (error) {
+                    console.error(`❌ Test ${testNumber} error:`, error);
+                    resultElement.textContent = "❌";
+                }
+            };
 
-                    if (failed.length > 0) {
-                        document.querySelector(".test8 .result").textContent = "✅";
-                    } else document.querySelector(".test8 .result").textContent = "❌";
-                });
-
-            // when all css loaded
-
-            async function waitForAllStylesheets() {
-                const links = [...document.querySelectorAll('link[rel="stylesheet"]')];
-                await Promise.all(
-                    links.map(link => {
-                        return new Promise(resolve => {
-                            if (link.sheet) return resolve(); // Already loaded
-                            link.addEventListener("load", resolve);
-                            link.addEventListener("error", resolve); // to avoid hanging
-                        });
-                    })
-                );
-                console.log("All stylesheets loaded");
-                // get the acture font of
-                console.log(23456789);
-                const computedFont = getComputedStyle(document.querySelector(".test10 h2")).fontFamily;
-                console.log(computedFont);
-            }
-
-            waitForAllStylesheets();
+            // Run all tests function
+            window.runAllTests = async function () {
+                for (let i = 1; i <= 10; i++) {
+                    await runTest(i);
+                    // Small delay between tests
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            };
         </script>
     </body>
 </html>
