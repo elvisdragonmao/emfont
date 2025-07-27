@@ -5,6 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>emfont 功能測試</title>
         <style>
+            @font-face {
+                font-family: "Tofu";
+                font-weight: 400;
+                font-display: swap;
+                src: url("https://beta-emfont.zeabur.app/file/original-fonts/Tofu/PawFont.woff2") format("woff2");
+            }
+
             :root {
                 --max-width: 1320px;
                 --slate-50: #f8fafc;
@@ -59,6 +66,7 @@
             }
             h2 {
                 font-weight: normal;
+                font-family: Tofu;
             }
             .test-button {
                 background-color: var(--slate-700);
@@ -124,62 +132,62 @@
 
         <div class="test1">
             <button class="test-button individual-test-button" onclick="runTest(1)">測試</button>
-            <div class="class">1. emfont-Cubic11</div>
+            <div class="class">1. 一般文字 emfont-Cubic11</div>
             <h2 class="emfont-Cubic11">一般文字</h2>
             <div class="result">❔</div>
         </div>
         <div class="test2">
             <button class="test-button individual-test-button" onclick="runTest(2)">測試</button>
-            <div class="class">2. emfont-MaokenAssortedSansTC-min</div>
+            <div class="class">2. 極致壓縮 emfont-MaokenAssortedSansTC-min</div>
             <h2 class="emfont-MaokenAssortedSansTC-min">極致壓縮</h2>
             <div class="result">❔</div>
         </div>
         <div class="test3">
             <button class="test-button individual-test-button" onclick="runTest(3)">測試</button>
-            <div class="class">3. emfont-Tiejili-400-min</div>
+            <div class="class">3. 極致壓縮＋指定字重 emfont-Tiejili-400-min</div>
             <h2 class="emfont-Tiejili-400-min">極致壓縮＋指定字重</h2>
             <div class="result">❔</div>
         </div>
         <div class="test4">
             <button class="test-button individual-test-button" onclick="runTest(4)">測試</button>
-            <div class="class">4. emfont-ChillBitmap16px-min-700</div>
+            <div class="class">4. 測試模式 emfont-ChillBitmap16px-min-700</div>
             <h2 class="emfont-ChillBitmap16px-min-700">測試模式</h2>
             <div class="result">❔</div>
         </div>
         <div class="test5">
             <button class="test-button individual-test-button" onclick="runTest(5)">測試</button>
-            <div class="class">5. emfont-MantouSans</div>
+            <div class="class">5. 什麼都沒變，測試繼承設定 emfont-MantouSans</div>
             <h2 class="emfont-ChillBitmap16px-min-700">什麼都沒變，測試繼承設定</h2>
             <div class="result">❔</div>
         </div>
         <div class="test6">
             <button class="test-button individual-test-button" onclick="runTest(6)">測試</button>
-            <div class="class">6. emfont-GenJyuuGothicPX-850-min</div>
+            <div class="class">6. 不存在的字重，應選最近 emfont-GenJyuuGothicPX-850-min</div>
             <h2 class="emfont-GenJyuuGothicPX-850-min">不存在的字重，應選最近</h2>
             <div class="result">❔</div>
         </div>
         <div class="test7">
             <button class="test-button individual-test-button" onclick="runTest(7)">測試</button>
-            <div class="class">7. emfont-Iansui</div>
+            <div class="class">7. 使用 JS 極致壓縮 emfont-Iansui</div>
             <h2 class="emfont-Iansui">使用 JS 極致壓縮</h2>
             <div class="result">❔</div>
         </div>
         <div class="test8">
             <button class="test-button individual-test-button" onclick="runTest(8)">測試</button>
-            <div class="class">8. emfont-neverGonnaGiveYouUp</div>
+            <div class="class">8. 不存在字體錯誤測試 emfont-neverGonnaGiveYouUp</div>
             <h2 class="emfont-neverGonnaGiveYouUp">不存在字體錯誤測試</h2>
             <div class="result">❔</div>
         </div>
         <div class="test9">
             <button class="test-button individual-test-button" onclick="runTest(9)">測試</button>
-            <div class="class">9. https://beta-emfont.zeabur.app/css/MantouSans?weight=400</div>
-            <h2 style="font-family: MantouSans">純 CSS 載入</h2>
+            <div class="class">9. 純 CSS 載入 https://beta-emfont.zeabur.app/css/MantouSans?weight=400</div>
+            <h2 style="font-family: MantouSans, Tofu">純 CSS 載入</h2>
             <div class="result">❔</div>
         </div>
         <div class="test10">
             <button class="test-button individual-test-button" onclick="runTest(10)">測試</button>
-            <div class="class">10. https://beta-emfont.zeabur.app/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入</div>
-            <h2 style="font-family: ChenYuLuoYan">純 CSS 極致壓縮載入</h2>
+            <div class="class">10. 純 CSS 極致壓縮載入 https://beta-emfont.zeabur.app/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入</div>
+            <h2 style="font-family: ChenYuLuoYan, Tofu">純 CSS 極致壓縮載入</h2>
             <div class="result">❔</div>
         </div>
         <script type="module">
