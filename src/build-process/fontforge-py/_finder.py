@@ -29,7 +29,7 @@ class ScriptFinder():
                 tok = line.split(';')
                 char_range_hex = tok[0].strip().split('..')
                 script_name = tok[1].strip().split()[0]
-                if len(char_range_int) == 1:
+                if len(char_range_hex) == 1:
                     start = end = int(char_range_hex[0], 16)
                 else:
                     start = int(char_range_hex[0], 16)
