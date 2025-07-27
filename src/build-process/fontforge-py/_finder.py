@@ -1,4 +1,5 @@
 import pickle,os
+import bisect
 # credit: https://robvanderg.github.io/scripts/scripts/
 class ScriptFinder():
     def __init__(self):
@@ -16,30 +17,35 @@ class ScriptFinder():
         text_path = os.path.join(static_dir, "Scripts.txt")
         if os.path.isfile(cache_path):
             with open(cache_path, "rb") as f:
-                self.ranges = pickle.load(f)
+                self.ranges, self.starts = pickle.load(f)
         else:
-            self.ranges = [None] * 0x110000
+            self.ranges = []
             if not os.path.isfile(text_path):
                 os.system(f'wget https://www.unicode.org/Public/16.0.0/ucd/Scripts.txt --no-check-certificate -O {this_py_dir}')
             for line in open(text_path, encoding='utf-8'):
-                tok = line.split(';')
+                if line.startswith('#') or ';' not in line:
+                    continue
                 # 對 scripts.txt 做一點字串處理，拿出 code block 的定義
-                if line[0]!='#' and len(tok) == 2:
-                    char_range_hex = tok[0].strip().split('..')
-                    char_range_int = [int(x, 16) for x in char_range_hex]
-                    script_name = tok[1].strip().split()[0]
-                    if len(char_range_int) == 1:
-                        self.ranges[char_range_int[0]] = script_name
-                        # print(self.ranges[:100])
-                    else:
-                        for ind in range(char_range_int[0], char_range_int[1]+1):
-                            self.ranges[ind] = script_name
-                    # Note that we include the first and the last character of the
-                    # range in the indices, so the first range for Latin is 65-90
-                    # for example, character 65 (A) and 90 (Z) are both included in
-                    # the Latin set.  
+                tok = line.split(';')
+                char_range_hex = tok[0].strip().split('..')
+                script_name = tok[1].strip().split()[0]
+                if len(char_range_int) == 1:
+                    start = end = int(char_range_hex[0], 16)
+                else:
+                    start = int(char_range_hex[0], 16)
+                    end = int(char_range_hex[1], 16)
+                # Note that we include the first and the last character of the
+                # range in the indices, so the first range for Latin is 65-90
+                # for example, character 65 (A) and 90 (Z) are both included in
+                # the Latin set.  
+            # 建立一個節點
+            self.ranges.append((start, end, script_name))
+            # 排序節點
+            self.ranges.sort(key=lambda x: x[0])
+            # 紀錄每個節點的開始位置
+            self.starts = [start for start, _, _ in self.ranges]
             with open(cache_path, "wb") as f:
-                pickle.dump(self.ranges, f)
+                pickle.dump((self.ranges, self.starts), f)
     def find_char(self, char):
         """
         Return the script of a single character, if a string
@@ -56,12 +62,13 @@ class ScriptFinder():
         script: str
             The name of the script, or None if not found
         """
-        if len(char) > 1:
-            char = char[0]
-        char_idx = ord(char)
-        if char_idx >= len(self.ranges):
-            return None
-        return self.ranges[char_idx]
+        idx = bisect.bisect_right(self.starts, codepoint) - 1
+        if idx >= 0:
+            start, end, script = self.ranges[idx]
+            if start <= codepoint <= end:
+                return script
+        return None
+
 
     def char_Classify(self, text):
         """
