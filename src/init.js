@@ -8,7 +8,7 @@ import { regenerateAllStaticFont } from "./font_nomin.js";
 import fetchMinio from "./fetch_minio.js";
 import { initR2, listFontsRecursive } from "./r2.js";
 import { generateSitemap } from "./website/api.js";
-import { analyseFontsInBatches } from "./build-process/analyseFonts.js";
+import { analyseFontsInBatches } from "./script/read-font-file/analyseFonts.js";
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -60,7 +60,8 @@ async function insertFontTypes() {
                     fontWeightsMap.set(one_font_family, new Set());
                     fontData.push({
                         fontName: one_font_family, // font id (folder name)
-                        sample_file: `${itemPath}/${fontFile}` //absolute font file path
+                        sample_file: `${itemPath}/${fontFile}`, //absolute font file path
+                        weights:weight//number , is sample font weitght
                     });
                 }
                 fontWeightsMap.get(one_font_family).add(parseInt(weight));
@@ -89,7 +90,7 @@ async function insertFontTypes() {
             const weights = Array.from(weightsSet);
             await db.query(`UPDATE font_family SET weights = $1 WHERE id = $2`, [weights, fontName]);
         }
-        // await analyseFontsInBatches(fontData);
+        await analyseFontsInBatches(fontData);
         console.log("✅ 字體資料已更新");
     } catch (error) {
         console.error(`Error when check font file`, error);
