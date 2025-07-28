@@ -1,3 +1,4 @@
+import path from "path";
 import subsetFont from "subset-font";
 import {readFontBuffer} from "../read-font-file/readFontBuffer.js"
 const __dirname = import.meta.dirname;
