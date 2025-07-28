@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs, { stat } from "fs";
 import path from "path";
 import { db } from "./database.js";
 import { uploadToR2, checkR2FileExists } from "./r2.js";
