@@ -20,18 +20,18 @@ dotenv.config();
 const { Client } = pg;
 
 const db = new Client({
-	connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.DATABASE_URL
 });
 
 async function initDb() {
-	try {
-		await db.connect();
-		console.log("✅ PostgreSQL 連接成功");
-		return true;
-	} catch (err) {
-		console.error("❌ PostgreSQL 連接失敗:", err);
-		return false;
-	}
+    try {
+        await db.connect();
+        console.log("✅ PostgreSQL 連接成功");
+        return true;
+    } catch (err) {
+        console.error("❌ PostgreSQL 連接失敗:", err);
+        return false;
+    }
 }
 
 export { db, initDb };

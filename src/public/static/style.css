@@ -13,6 +13,20 @@
     --slate-950: #020617;
 }
 
+body:has(#lightmode:checked) {
+    --slate-50: #080f31;
+    --slate-100: #475472;
+    --slate-200: #334155;
+    --slate-300: #475569;
+    --slate-400: #64748b;
+    --slate-500: #94a3b8;
+    --slate-600: #cbd5e1;
+    --slate-700: #e2e8f0;
+    --slate-800: #f1f5f9;
+    --slate-900: #f8fafc;
+    --slate-950: #f8fafc;
+}
+
 @supports (color: oklch(0% 0 0)) {
     :root {
         --slate-50: oklch(0.984 0.003 247.858);
@@ -33,6 +47,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    transition: color 0.5s ease-out, background-color 0.5s ease-in-out;
 }
 body,
 input,
@@ -109,6 +124,11 @@ header {
 
 #logo {
     height: 2.8rem;
+}
+
+body:has(#lightmode:checked) #logo {
+    color: rgb(241, 245, 249);
+    filter: brightness(0) invert(31%) sepia(19%) saturate(935%) hue-rotate(184deg) brightness(90%) contrast(83%);
 }
 
 section {
@@ -194,9 +214,11 @@ section > div {
     display: flex;
     gap: 0.6rem;
     position: relative;
+    width: calc(100% + 2rem);
+    margin-left: -1rem;
 }
 
-.header-links a {
+.header-links > * {
     flex: 1;
     border-radius: 0.5rem;
     background: var(--slate-800);
@@ -209,6 +231,39 @@ section > div {
 
 .header-links img {
     width: 1.6rem;
+}
+
+#lightmodeLabel {
+    cursor: pointer;
+    position: relative;
+}
+
+#lightmodeLabel::before,
+#lightmodeLabel::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1.6rem;
+    height: 1.6rem;
+    transition: scale 0.3s ease-in-out;
+    transform-origin: top left;
+    background: url("/static/img/dark.svg") no-repeat center center / contain;
+}
+
+#lightmodeLabel::after {
+    background-image: url("/static/img/light.svg");
+    scale: 0;
+}
+
+main:has(#lightmodeLabel:checked) #lightmodeLabel::after {
+    scale: 1;
+}
+
+main:has(#lightmodeLabel:checked) #lightmodeLabel::before {
+    scale: 0;
 }
 
 .header-links-font {
@@ -311,6 +366,10 @@ a.btn:active {
     background-size: 80%;
 }
 
+body:has(#lightmode:checked) #section-about {
+    background: linear-gradient(rgba(241, 245, 249, 0.8), rgba(241, 245, 249, 0.8)), url("/static/img/logo/emfont-logo-dark.svg") no-repeat right bottom / 80%;
+}
+
 .credits {
     display: flex;
     max-width: 50rem;
@@ -326,10 +385,10 @@ a.btn:active {
 }
 
 .buy-me-a-coffee {
-   flex: 0 0 100%;
+    flex: 0 0 100%;
     margin-top: 1rem;
 }
-.buy-me-a-coffee img{
+.buy-me-a-coffee img {
     margin: auto;
 }
 .contributors,
@@ -355,9 +414,17 @@ a.btn:active {
     color: var(--slate-100);
 }
 
-.sponsors img {
+.sponsors img,.sponsors svg {
     margin: auto;
     margin-bottom: 2rem;
+}
+
+
+.sponsors a{
+    color: #F1F5F9;
+}
+body:has(#lightmode:checked) .sponsors a{
+ color: #000;
 }
 
 #section-home {
@@ -365,6 +432,14 @@ a.btn:active {
     height: 100%;
     line-height: 1;
     white-space: nowrap;
+}
+
+body:has(#lightmode:checked) #section-home {
+    color: var(--slate-600);
+}
+
+body:has(#lightmode:checked) #section-home > div:nth-child(2n){
+    color: var(--slate-700);
 }
 
 body:has(.home) {
@@ -390,7 +465,7 @@ body:has(.home) {
     #section-home > .emfont-jfOpenHuninn-min {
         animation-delay: -1s;
     }
-    #section-home > .emfont-MantouSans-min {
+    section-home > .emfont-MantouSans-min {
         animation-delay: -2s;
     }
     #section-home > .emfont-ChenYuLuoYan-min {

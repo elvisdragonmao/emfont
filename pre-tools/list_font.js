@@ -1,21 +1,19 @@
 // font-reader.mjs
-import * as fontkit from 'fontkit';
-import { writeFile } from 'fs/promises';
+import * as fontkit from "fontkit";
+import { writeFile } from "fs/promises";
 
-const fontPath = 'src/_data/original-fonts/GenKiGothicTW/200.otf';
+const fontPath = "src/_data/original-fonts/GenKiGothicTW/200.otf";
 
 const font = await fontkit.open(fontPath);
 const supportedCodePoints = Array.from(font.characterSet);
 const characters = supportedCodePoints.map(cp => String.fromCodePoint(cp));
-console.log(supportedCodePoints)
+console.log(supportedCodePoints);
 // console.log(`字元總數: ${characters.length}`);
 // console.log('前 200 個字元：');
 // console.log(characters);
 
 // await writeFile('output.txt', characters.join(''), 'utf8');
 // console.log('所有字元已寫入 output.txt');
-
-
 
 // import {Font} from 'fonteditor-core';
 // import fs from 'fs';

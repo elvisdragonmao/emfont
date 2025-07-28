@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
-  - name: 加入 Discord
-    url: https://dc.elvismao.com
-    about: 與我們一起討論！
-  - name: 加入 Telegram
-    url: https://t.me/emfont
-    about: 與我們一起討論！
+    - name: 加入 Discord
+      url: https://dc.elvismao.com
+      about: 與我們一起討論！
+    - name: 加入 Telegram
+      url: https://t.me/emfont
+      about: 與我們一起討論！

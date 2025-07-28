@@ -1,28 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Document</title>
-        <style>
-            *{
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                font-size: 3rem;
-            }
-        </style>
     </head>
-    <body>
-        <h1>不亦說乎</h1><!-- 沒有 emfont 比對-->
-        <h1 class="emfont-GenYoGothicTW">沒有百?00</h1>
-        <h1 class="emfont-GenYoGothicTW-400">四百400</h1>
-        <h1 class="emfont-GenYoGothicTW-500">五百500</h1>
-        <h1 class="emfont-GenYoGothicTW-700">六百600</h1>
-        <h1 class="emfont-GenYoGothicTW-900">七百700</h1>
-        <script src="/emfont.js"></script>
-        <script>
+    <body class="emfont-MantouSans-400-min">
+        <p><b>Lorem</b> ipsum dolor sit amet consectetur adipisicing elit. Magni voluptatem quasi suscipit! Ipsum alias animi fugiat laborum commodi modi, id corrupti dignissimos nihil ducimus quod veritatis illum voluptatum perferendis nulla?</p>
+        <script type="module">
+            // import "http://127.0.0.1:3333/emfont.js";
+            import "https://beta-emfont.zeabur.app/emfont.js";
             emfont.init();
         </script>
     </body>

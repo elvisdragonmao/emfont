@@ -15,23 +15,23 @@ app.register(fastifyView, { engine: { ejs: ejs } });
 
 // Register static file serving
 app.register(fastifyStatic, {
-	root: path.join(__dirname, "public"),
-	prefix: "/",
+    root: path.join(__dirname, "public"),
+    prefix: "/"
 });
 let user = "";
 // Catch-all route
 app.get("/", async (req, reply) => {
-	return reply.view("/src/website.ejs", { user, page: "home" });
+    return reply.view("/src/website.ejs", { user, page: "home" });
 });
 // Start server
 const start = async () => {
-	try {
-		await app.listen({ port: 3000 });
-		console.log("Server running at http://localhost:3000");
-	} catch (err) {
-		app.log.error(err);
-		process.exit(1);
-	}
+    try {
+        await app.listen({ port: 3000 });
+        console.log("Server running at http://localhost:3000");
+    } catch (err) {
+        app.log.error(err);
+        process.exit(1);
+    }
 };
 
 start();
