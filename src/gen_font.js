@@ -59,31 +59,32 @@ export const genFont = async (req, res, state) => {
         //req.body.word 是使用者請求的字集
         //請求字重
         let font_weight = req.body.weight;
-        if (!font_weight || font_weight == "null") {
-            const { rows } = await db.query(
-                `
+        const { rows } = await db.query(
+            `
                 SELECT id, name, name_zh, name_en, weights, category, tags, family,
                        version, license, repo_url AS source, authors, description
                 FROM font_family
                 WHERE id = $1
             `,
-                [font_id]
-            );
-            if (rows.length === 0)
-                return {
-                    code: 404,
-                    status: "failed",
-                    message: "Font not found"
-                };
-            const allWeights = rows[0].weights;
-            if (allWeights.length === 0)
-                return {
-                    code: 503,
-                    status: "failed",
-                    message: "Font missing, temporary can't be use."
-                };
+            [font_id]
+        );
+        if (rows.length === 0)
+            return {
+                code: 404,
+                status: "failed",
+                message: "Font not found"
+            };
+        const allWeights = rows[0].weights;
+        if (allWeights.length === 0)
+            return {
+                code: 503,
+                status: "failed",
+                message: "Font missing, temporary can't be use."
+            };
+        if (!allWeights.includes(font_weight)) {
+            const target = !font_weight || font_weight == "null" ? 400 : font_weight;
             font_weight = allWeights.reduce((prev, curr) => {
-                return Math.abs(curr - 400) < Math.abs(prev - 400) ? curr : prev;
+                return Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev;
             });
         }
         await db.query(`INSERT INTO usage_log (family_id ,weight,referer,text,min) VALUES ($1,$2,$3,$4,$5)`, [font_id, font_weight, req_source, req_word_set, min_flag]);
