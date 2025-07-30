@@ -190,8 +190,19 @@
             <h2 style="font-family: ChenYuLuoYan, Tofu">純 CSS 極致壓縮載入</h2>
             <div class="result">❔</div>
         </div>
+        <div class="test11">
+            <button class="test-button individual-test-button" onclick="runTest(11)">測試</button>
+            <div class="class">6. 不存在的字重，應選最近 emfont-GenJyuuGothicPX-850</div>
+            <h2 class="emfont-GenJyuuGothicPX-850">不存在的字重，應選最近</h2>
+            <div class="result">❔</div>
+        </div>
         <script type="module">
-            import "https://beta-emfont.zeabur.app/emfont.js";
+            // get ?domain= from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            let domain = urlParams.get("domain");
+            domain = domain || "";
+
+            import(`${domain}/emfont.js`).catch(err => console.error("Failed to load emfont.js:", err));
 
             // Store test functions for reuse
             const testFunctions = {
@@ -202,7 +213,8 @@
                 5: () => emfont.init({ root: document.querySelector(".test5") }),
                 6: () => emfont.init({ root: document.querySelector(".test6"), colorTest: false }),
                 7: () => emfont.init({ root: document.querySelector(".test7"), forceMin: true }),
-                8: () => emfont.init({ root: document.querySelector(".test8") })
+                8: () => emfont.init({ root: document.querySelector(".test8") }),
+                11: () => emfont.init({ root: document.querySelector(".test11") })
             };
 
             window.runTest = async function (testNumber) {
@@ -213,8 +225,8 @@
                     if (testNumber === 9 || testNumber === 10) {
                         // use js to load CSS, test if success loaded, and test if the font is applied
                         const links = {
-                            9: "https://beta-emfont.zeabur.app/css/MantouSans?weight=400",
-                            10: "https://beta-emfont.zeabur.app/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入"
+                            9: document.domain + "/css/MantouSans?weight=400",
+                            10: document.domain + "/css/ChenYuLuoYan?min=true&words=純CSS極致壓縮載入"
                         };
                         const link = document.createElement("link");
                         link.href = links[testNumber];
@@ -293,7 +305,7 @@
 
             // Run all tests function
             window.runAllTests = async function () {
-                for (let i = 1; i <= 10; i++) {
+                for (let i = 1; i <= 11; i++) {
                     await runTest(i);
                     // Small delay between tests
                     await new Promise(resolve => setTimeout(resolve, 100));
