@@ -414,17 +414,17 @@ body:has(#lightmode:checked) #section-about {
     color: var(--slate-100);
 }
 
-.sponsors img,.sponsors svg {
+.sponsors img,
+.sponsors svg {
     margin: auto;
     margin-bottom: 2rem;
 }
 
-
-.sponsors a{
-    color: #F1F5F9;
+.sponsors a {
+    color: #f1f5f9;
 }
-body:has(#lightmode:checked) .sponsors a{
- color: #000;
+body:has(#lightmode:checked) .sponsors a {
+    color: #000;
 }
 
 #section-home {
@@ -438,7 +438,7 @@ body:has(#lightmode:checked) #section-home {
     color: var(--slate-600);
 }
 
-body:has(#lightmode:checked) #section-home > div:nth-child(2n){
+body:has(#lightmode:checked) #section-home > div:nth-child(2n) {
     color: var(--slate-700);
 }
 
@@ -752,7 +752,17 @@ a.font-item:hover {
     transition: color 0.3s ease-out;
     font-family: serif;
     color: transparent;
+    font-family: Tofu;
 }
+
+body:has(#lightmode:checked) .font-preview {
+    color: #000 !important;
+}
+
+body:has(#lightmode:checked) .font-preview[style="color: rgb(112, 37, 37);"] {
+    color: rgb(112, 37, 37) !important;
+}
+
 .font-item:has(.font-preview:focus)::after {
     display: none;
 }
