@@ -218,7 +218,8 @@ section > div {
     margin-left: -1rem;
 }
 
-.header-links > * {
+.header-links > a,
+.header-links > label {
     flex: 1;
     border-radius: 0.5rem;
     background: var(--slate-800);
@@ -227,19 +228,20 @@ section > div {
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 2.6rem;
 }
 
 .header-links img {
     width: 1.6rem;
 }
 
-#lightmodeLabel {
+.lightmodeLabel {
     cursor: pointer;
     position: relative;
 }
 
-#lightmodeLabel::before,
-#lightmodeLabel::after {
+.lightmodeLabel::before,
+.lightmodeLabel::after {
     content: "";
     display: block;
     position: absolute;
@@ -253,16 +255,16 @@ section > div {
     background: url("/static/img/dark.svg") no-repeat center center / contain;
 }
 
-#lightmodeLabel::after {
+.lightmodeLabel::after {
     background-image: url("/static/img/light.svg");
     scale: 0;
 }
 
-main:has(#lightmodeLabel:checked) #lightmodeLabel::after {
+main:has(.lightmodeLabel:checked) .lightmodeLabel::after {
     scale: 1;
 }
 
-main:has(#lightmodeLabel:checked) #lightmodeLabel::before {
+main:has(.lightmodeLabel:checked) .lightmodeLabel::before {
     scale: 0;
 }
 
@@ -272,6 +274,7 @@ main:has(#lightmodeLabel:checked) #lightmodeLabel::before {
     left: 0;
     display: none;
     width: 100%;
+    margin-left: 0;
 }
 
 .navigation {
@@ -465,7 +468,7 @@ body:has(.home) {
     #section-home > .emfont-jfOpenHuninn-min {
         animation-delay: -1s;
     }
-    section-home > .emfont-MantouSans-min {
+    #section-home > .emfont-MantouSans-min {
         animation-delay: -2s;
     }
     #section-home > .emfont-ChenYuLuoYan-min {
