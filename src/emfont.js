@@ -142,7 +142,7 @@
          * @param {string} url See {@link fetch}
          * @param {RequestInit} options See {@link fetch}
          * @param {ReturnType<typeof this._createLocalStorageCacher>} cacher
-         * See {@link _createLocalStorageCacher}, if null, then nothing will be cached
+         * See {@link _createLocalStorageCacher}, nothing will be cached if null
          * @returns {Promise<T>}
          */
         async _fetchJson(url, options, cacher) {
@@ -158,7 +158,7 @@
 
             const responseJson = await response.json();
 
-            // 只當 status 等於 success 的時候，才進行 cache
+            // Cache only when "status" is "success"
             if ("status" in responseJson && responseJson.status !== "success") {
                 return responseJson;
             }
