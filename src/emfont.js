@@ -1,5 +1,13 @@
 /** @format */
 
+/**
+ * @typedef {{
+ *   version: number,
+ *   payload: any,
+ *   expiresAt: string,
+ * }} EmfontCacheContent
+ */
+
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
         // AMD. Register as an anonymous module
@@ -65,6 +73,98 @@
                 root: document.documentElement,
                 ...newConfig
             };
+        }
+
+        /**
+         * Hash a string to a number
+         *
+         * @param {string} str
+         * @param {number} seed
+         * @returns {number}
+         */
+        _cyrb53(str, seed = 42) {
+            let h1 = 0xdeadbeef ^ seed,
+                h2 = 0x41c6ce57 ^ seed;
+            for (let i = 0, ch; i < str.length; i++) {
+                ch = str.charCodeAt(i);
+                h1 = Math.imul(h1 ^ ch, 2654435761);
+                h2 = Math.imul(h2 ^ ch, 1597334677);
+            }
+            h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+            h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+            h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+            h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+            return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+        }
+
+        /**
+         * Cache a value
+         * @template T
+         * @param {string} key
+         * @param {number} ttl The cache TTL in seconds, by default it is 1 day
+         * @returns {{get: () => T | null, set: (value: T) => void}}
+         */
+        _cache(key, ttl = 86400) {
+            const version = 1;
+            const cacheKey = `emfont-cache:${key}`;
+
+            return {
+                get() {
+                    const cacheJson = localStorage.getItem(cacheKey);
+                    if (cacheJson) {
+                        /**
+                         * @type {EmfontCacheContent}
+                         */
+                        const cache = JSON.parse(cacheJson);
+                        if (cache.version === version && new Date(cache.expiresAt) > new Date()) {
+                            return cache.payload;
+                        }
+                    }
+
+                    return null;
+                },
+                set(value) {
+                    /**
+                     * @type {EmfontCacheContent}
+                     */
+                    const cache = {
+                        version,
+                        payload: value,
+                        expiresAt: new Date(Date.now() + ttl * 1000).toISOString()
+                    };
+                    localStorage.setItem(cacheKey, JSON.stringify(cache));
+                }
+            };
+        }
+
+        /**
+         * Fetch JSON with cache
+         * @template T
+         * @param {string} url See {@link fetch}
+         * @param {RequestInit} options See {@link fetch}
+         * @param {{get: () => T, set: (value: T) => void}} cacher
+         * See {@link _cache}, if null, then nothing will be cached
+         * @returns {Promise<T>}
+         */
+        async _fetchJson(url, options, cacher) {
+            const cache = cacher?.get();
+            if (cache) {
+                return cache;
+            }
+
+            const response = await fetch(url, options);
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+            const responseJson = await response.json();
+
+            // 只當 status 等於 success 的時候，才進行 cache
+            if ("status" in responseJson && responseJson.status !== "success") {
+                return responseJson;
+            }
+
+            cacher?.set(responseJson);
+            return responseJson;
         }
 
         init(newConfig = {}) {
@@ -166,6 +266,7 @@
                         this.fonts[fontName] = newFonts[fontName];
                     }
                 });
+
                 const fetchPromises = Object.entries(newFonts).map(([fontName, words]) => {
                     let postFontName = fontName;
                     const min = this.config.forceMin || fontName.includes("-min");
@@ -176,22 +277,27 @@
                         weight = weight[1];
                     }
                     const tofu = this.config.tofu ? ", 'Tofu'" : "";
-                    return fetch("{{BASE_URL}}/g/" + postFontName, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
+
+                    const payload = JSON.stringify({
+                        words: words + " ",
+                        min,
+                        weight,
+                        format: this.config.format
+                    });
+                    const payloadHash = this._cyrb53(payload);
+                    const cacher = !min && this.config.cache ? this._cache(payloadHash, 86400) : null;
+
+                    return this._fetchJson(
+                        "{{BASE_URL}}/g/" + postFontName,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: payload,
                         },
-                        body: JSON.stringify({
-                            words: words + " ",
-                            min,
-                            weight,
-                            format: this.config.format
-                        })
-                    })
-                        .then(response => {
-                            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                            return response.json();
-                        })
+                        cacher
+                    )
                         .then(async data => {
                             if (data.status === "success") {
                                 if (data.message) console.warn("✏️ " + data.message);
