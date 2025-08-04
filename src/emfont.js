@@ -2,7 +2,7 @@
 
 /**
  * @typedef {{
- *   version: number,
+ *   version: string,
  *   payload: any,
  *   expiresAt: string,
  * }} EmfontCacheContent
@@ -104,7 +104,7 @@
          * @returns {{get: (key: string) => T | null, set: (key: string, value: T) => void}}
          */
         _createLocalStorageCacher(ttl = 86400) {
-            const version = 1;
+            const version = "{{FONT_VERSION}}";
             const cachePrefix = "emfont-cache:";
 
             return {
