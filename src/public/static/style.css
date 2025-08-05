@@ -397,13 +397,17 @@ body:has(#lightmode:checked) #section-about {
 .contributors,
 .sponsors {
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 .contributors > div {
     display: flex;
     justify-content: center;
+    align-items: center;
     flex-wrap: wrap;
     gap: 2rem;
     margin-bottom: 2rem;
+    flex: 1;
 }
 
 .contributors img {
@@ -413,6 +417,11 @@ body:has(#lightmode:checked) #section-about {
     object-fit: cover;
     margin-bottom: 1rem;
 }
+
+.ncse {
+    width: 185px;
+}
+
 .contributors a {
     color: var(--slate-100);
 }
@@ -421,6 +430,7 @@ body:has(#lightmode:checked) #section-about {
 .sponsors svg {
     margin: auto;
     margin-bottom: 2rem;
+    width: 211px;
 }
 
 .sponsors a {
