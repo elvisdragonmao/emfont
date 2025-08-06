@@ -16,10 +16,17 @@ CREATE TABLE IF NOT EXISTS font_family (
     repo_url TEXT DEFAULT NULL,
     authors TEXT[] DEFAULT ARRAY[]::TEXT[], -- 作者
     language JSON, -- 支援語言，language:font_count，語系對字數
+    demo_content_id INT DEFAULT 1,
     format TEXT DEFAULT 'ttf' CHECK (format IN ('otf', 'ttf')), -- 字體格式
-    CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy'))
+    CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy')),
+    CONSTRAINT  fk_demo_content FOREIGN KEY (demo_content_id) REFERENCES demo_sentence(sid) ON DELETE RESTRICT
 );
-
+-- 字型展示句子
+CREATE TABLE IF NOT EXISTS demo_sentence(
+    sid SERIAL PRIMARY KEY,
+    content text,
+    language VARCHAR(10) -- 語言標籤備註，例如 zh-hant, en, fr,jp ...
+);
 CREATE SEQUENCE IF NOT EXISTS custom_bullet_seq START WITH 100;
 
 CREATE TABLE IF NOT EXISTS version(
