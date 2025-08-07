@@ -48,7 +48,11 @@ fetch("/bulletin")
 document.getElementById("closeBulletin").addEventListener("click", () => {
     document.getElementById("bulletin").style.display = "none";
 });
-
+let demo_content
+(async () => {
+  const response = await fetch("lorem");
+  demo_content = await response.json(); // 或 .json()，取決於你回傳格式
+})();
 const weightChart = {
     100: ["T", "Thin"],
     200: ["EL", "Extra Light"],
@@ -91,11 +95,10 @@ const updateFontDisplay = (e, animationOff = false) => {
         return matchName && matchFamily && matchCategory && matchTags;
     });
     const min = searchText.value ? "" : "-min";
-    const previewText = searchText.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
     let containerHTML = "";
-    if (filtered.length == fontList.length) {
-        filtered.sort(() => Math.random() - 0.5);
-    }
+    // if (filtered.length == fontList.length) {
+    //     filtered.sort(() => Math.random() - 0.5);
+    // }
     filtered.forEach(font => {
         const parts = [];
         for (let weight in font.weight) {
@@ -106,6 +109,8 @@ const updateFontDisplay = (e, animationOff = false) => {
         }
         weightStr = parts.join(" ⋅ ");
         if (!weightStr) weightStr = "暫時無法使用";
+        const lorem = demo_content[`${font.id}`]
+        const previewText = searchText.value || lorem;
         containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
                         <h3>${font.name}</h3>

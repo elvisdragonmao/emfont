@@ -179,6 +179,26 @@ const registerApi = async (app, state) => {
             res.status(500).send("Database query failed");
         }
     });
+    //取得展示用句子，回傳預設字型字型和他要顯示的內文
+    app.get("/lorem", async (req, res) => {
+        try {
+            const result = await db.query(`
+                SELECT
+                    ff.id AS fonts,
+                    ds.content
+                FROM font_family ff
+                JOIN demo_sentence ds ON ff.demo_content_id = ds.sid ORDER BY fonts;
+                `);
+            const responseObj = {};
+            for (const row of result.rows) {
+                responseObj[row.fonts] = row.content;
+            }
+            res.send(responseObj);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send({ error: "Internal server error" });
+        }
+    });
 
     app.get("/info/:fontID", async (req, res) => {
         const fontID = req.params.fontID;
