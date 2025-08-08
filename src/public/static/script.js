@@ -51,7 +51,7 @@ document.getElementById("closeBulletin").addEventListener("click", () => {
 let demo_content
 (async () => {
   const response = await fetch("lorem");
-  demo_content = await response.json(); // 或 .json()，取決於你回傳格式
+  demo_content = await response.json();
 })();
 const weightChart = {
     100: ["T", "Thin"],
