@@ -156,7 +156,7 @@ const registerApi = async (app, state) => {
                 `
                 SELECT id, name, weights, authors, name_zh, name_en,category, tags, family
                 FROM font_family
-                ${whereClause}
+                ${whereClause} ORDER BY id
             `,
                 values
             );

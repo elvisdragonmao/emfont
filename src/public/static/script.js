@@ -300,7 +300,8 @@ const loadFontInfo = async fontId => {
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
     const min = searchText.value ? "" : "-min";
-    const inputText = searchText.value || "我個人認為義大利麵就應該拌42號混泥土，因為這個螺絲釘的長度很容易直接影響到挖掘機的扭矩。";
+    const lorem = demo_content[`${fontId}`]
+    const inputText = searchText.value || lorem;
     weightContainer.innerHTML = "";
     font.weight.map(weight => {
         const weightDiv = document.createElement("div");
