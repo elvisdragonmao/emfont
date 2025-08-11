@@ -50,7 +50,7 @@ document.getElementById("closeBulletin").addEventListener("click", () => {
 });
 let demo_content
 (async () => {
-  const response = await fetch("lorem");
+  const response = await fetch("/lorem");
   demo_content = await response.json();
 })();
 const weightChart = {
