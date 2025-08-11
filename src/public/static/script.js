@@ -48,11 +48,6 @@ fetch("/bulletin")
 document.getElementById("closeBulletin").addEventListener("click", () => {
     document.getElementById("bulletin").style.display = "none";
 });
-let demo_content
-(async () => {
-  const response = await fetch("/lorem");
-  demo_content = await response.json();
-})();
 const weightChart = {
     100: ["T", "Thin"],
     200: ["EL", "Extra Light"],
@@ -73,6 +68,13 @@ const tags = new Set();
 const categories = new Set();
 const searchText = document.querySelector("#search-test");
 const container = document.getElementById("section-search");
+let demo_content;
+async function loadDemo() {
+  const res = await fetch("/lorem");
+  demo_content = await res.json();
+}
+
+loadDemo();
 const updateFontDisplay = (e, animationOff = false) => {
     if (e && e.target.classList[0].includes("cat")) {
         const checkboxes = document.querySelectorAll(".category input:checked");
@@ -109,8 +111,8 @@ const updateFontDisplay = (e, animationOff = false) => {
         }
         weightStr = parts.join(" ⋅ ");
         if (!weightStr) weightStr = "暫時無法使用";
-        const lorem = demo_content[font.id]
-        const previewText = searchText.value || lorem;
+        const default_text = demo_content[font.sid]
+        const previewText = searchText.value || default_text;
         containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
                         <h3>${font.name}</h3>
@@ -300,8 +302,8 @@ const loadFontInfo = async fontId => {
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
     const min = searchText.value ? "" : "-min";
-    const lorem = demo_content[fontId]
-    const inputText = searchText.value || lorem;
+    const default_text = demo_content[font.sid];
+    const inputText = searchText.value || default_text;
     weightContainer.innerHTML = "";
     font.weight.map(weight => {
         const weightDiv = document.createElement("div");
