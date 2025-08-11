@@ -98,9 +98,10 @@ const updateFontDisplay = (e, animationOff = false) => {
     });
     const min = searchText.value ? "" : "-min";
     let containerHTML = "";
-    // if (filtered.length == fontList.length) {
-    //     filtered.sort(() => Math.random() - 0.5);
-    // }
+    // 打亂前端排序字型顯示排序
+    if (filtered.length == fontList.length) {
+        filtered.sort(() => Math.random() - 0.5);
+    }
     filtered.forEach(font => {
         const parts = [];
         for (let weight in font.weight) {
