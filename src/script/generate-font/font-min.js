@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import subsetFont from "subset-font";
-import {readFontBuffer,check_in_charArray} from "../read-font-file/readFontBuffer.js"
+import {readFontBuffer} from "../read-font-file/readFontBuffer.js"
 const __dirname = import.meta.dirname;
 async function generateFont(
     originalFontFamily,
@@ -28,20 +28,12 @@ async function generateFont(
         const destFolder = path.join(__dirname, put_folder);
         fs.mkdirSync(destFolder, { recursive: true });
 
-        // 檢查是否請求的所有字該字型檔都生不出來，避免生成空的檔案。
-        const continue_gen=await check_in_charArray(originalFontFamily,font_weight,words);
-        if(!continue_gen)
-        {
-            //字型檔不存在請求的任何一個字元
-            return {
-            status: "failed",
-            message: "user input char doesn't exist in original font",
-            location: "null"
-        };
-        }
-        //如果部分字有缺仍然繼續生成，但會顯示貓爪
+        // It is possible to generate a file without any fonts, which happens when the original font file doesn't support any of the requested fonts 
+        // The users's browser will report an error if it reads it empty file.
 
-        // // 寫入檔案
+        // I don't intend to do any checking, because the time cost of preventing this is much greater than the time it takes to request an empty file.
+        
+        // 寫入檔案
         // fs.writeFileSync(outputPath, outBuffer);
         const outputPath = path.join(destFolder, `${output_name}`);
         await subsetFont(fontfile, words, {

@@ -35,28 +35,5 @@ async function readFontBuffer(originalFontFamily, font_weight, use_fontkit = fal
         return { fontfile, type: file_found.ext, success: true };
     }
 }
-/**
- * 檢查字型是否支援指定字元集合
- * @param {string} ff_name 字型資料夾名稱
- * @param {string} weight 字重檔名
- * @param {string} char_set 要檢查的字元集合
- * @returns {Promise<boolean>} true 代表字型至少支援一個字元，false 代表完全不支援
- */
-async function check_in_charArray(ff_name, weight, char_set) {
-    try {
-        const { success, fontfile, error } = await readFontBuffer(ff_name, weight, true);
-        if (!success) {
-            console.error(error);
-            return false;
-        }
 
-        const availableChars = Array.from(char_set)
-            .filter(char => fontfile.hasGlyphForCodePoint(char.codePointAt(0)));
-        return availableChars.length > 0;
-    } catch (err) {
-        console.error("檢查字型支援時發生錯誤:", err);
-        return false;
-    }
-}
-
-export {readFontBuffer,check_in_charArray};
+export {readFontBuffer};
