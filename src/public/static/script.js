@@ -109,7 +109,7 @@ const updateFontDisplay = (e, animationOff = false) => {
         }
         weightStr = parts.join(" ⋅ ");
         if (!weightStr) weightStr = "暫時無法使用";
-        const lorem = demo_content[`${font.id}`]
+        const lorem = demo_content[font.id]
         const previewText = searchText.value || lorem;
         containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
@@ -300,7 +300,7 @@ const loadFontInfo = async fontId => {
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
     const min = searchText.value ? "" : "-min";
-    const lorem = demo_content[`${fontId}`]
+    const lorem = demo_content[fontId]
     const inputText = searchText.value || lorem;
     weightContainer.innerHTML = "";
     font.weight.map(weight => {
