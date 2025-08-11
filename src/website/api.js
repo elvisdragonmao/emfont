@@ -154,7 +154,7 @@ const registerApi = async (app, state) => {
         try {
             const { rows } = await db.query(
                 `
-                SELECT id, name, weights, authors, name_zh, name_en,category, tags, family
+                SELECT id, name, weights, authors, name_zh, name_en,category, tags, family,demo_content_id
                 FROM font_family
                 ${whereClause} ORDER BY id
             `,
@@ -170,7 +170,8 @@ const registerApi = async (app, state) => {
                 name_en: row.name_en,
                 category: row.category,
                 tags: row.tags || [],
-                family: row.family
+                family: row.family,
+                sid: row.demo_content_id
             }));
 
             return res.send(fonts);
@@ -179,21 +180,19 @@ const registerApi = async (app, state) => {
             res.status(500).send("Database query failed");
         }
     });
-    //取得展示用句子，回傳預設字型字型和他要顯示的內文
+    //取得展示用句子和他的 ID
     app.get("/lorem", async (req, res) => {
         try {
-            const result = await db.query(`
-                SELECT
-                    ff.id AS fonts,
-                    ds.content
-                FROM font_family ff
-                JOIN demo_sentence ds ON ff.demo_content_id = ds.sid ORDER BY fonts;
+                const id_to_content_result = await db.query(`
+                SELECT sid, content
+                FROM demo_sentence;
                 `);
-            const responseObj = {};
-            for (const row of result.rows) {
-                responseObj[row.fonts] = row.content;
-            }
-            res.send(responseObj);
+
+                const sidToContent = {};
+                for (const row of id_to_content_result.rows) {
+                sidToContent[row.sid] = row.content;
+                }
+            res.send(sidToContent);
         } catch (err) {
             console.error(err);
             res.status(500).send({ error: "Internal server error" });
@@ -211,7 +210,7 @@ const registerApi = async (app, state) => {
             const { rows } = await db.query(
                 `
                 SELECT id, name, name_zh, name_en, weights, category, tags, family,
-                       version, license, repo_url AS source, authors, description,format
+                       version, license, repo_url AS source, authors, description,format,demo_content_id
                 FROM font_family
                 WHERE id = $1
             `,
@@ -234,7 +233,8 @@ const registerApi = async (app, state) => {
                 source: font.source,
                 author: font.authors?.[0] || null,
                 description: font.description,
-                format: font.format
+                format: font.format,
+                sid: font.demo_content_id
             };
             await redis.set(redisKey, JSON.stringify(response), "EX", 3600);
             res.send(response);
