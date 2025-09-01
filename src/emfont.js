@@ -349,13 +349,15 @@
                         });
                 });
 
-                Promise.all(fetchPromises).then(results => {
+                Promise.allSettled(fetchPromises).then(results => {
+                    results = results.map(r => (r.status === "fulfilled" ? r.value : { status: "rejected", reason: r.reason }));
                     results = [...results, ...skippedList];
 
                     let allCSS = this._styleElement.innerHTML.split("\n").filter((css, index, self) => self.indexOf(css) === index);
+
                     this._styleElement.innerHTML = allCSS.join("\n");
 
-                    if (this.config.log)
+                    if (this.config.log) {
                         results.forEach(result => {
                             if (result.status === "fulfilled") {
                                 console.log(`✅ ${result.name} loaded successfully`);
@@ -363,6 +365,8 @@
                                 console.warn(`❌ ${result.name} failed: ${result.reason}`);
                             }
                         });
+                    }
+
                     resolve(results);
                 });
             });
