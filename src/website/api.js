@@ -1,5 +1,5 @@
 import { genFont } from "../gen_font.js";
-import { db } from "../database.js";
+import { db } from "../utils/database.js";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { Redis } from "ioredis";

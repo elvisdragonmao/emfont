@@ -1,6 +1,6 @@
 import fs, { stat } from "fs";
 import path from "path";
-import { db } from "./database.js";
+import { db } from "./utils/database.js";
 import { uploadToR2, checkR2FileExists } from "./r2.js";
 import {generateFont} from "./script/generate-font/font-min.js";
 

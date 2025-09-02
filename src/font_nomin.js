@@ -1,6 +1,6 @@
 //切割靜態字型檔（非極致壓縮）
 //依照字頻表分裝檔案 (開機時重切)
-import { db } from "./database.js";
+import { db } from "./utils/database.js";
 import { readFontBuffer } from "./script/read-font-file/readFontBuffer.js";
 import { Worker } from "worker_threads";
 import { Redis } from "ioredis";
