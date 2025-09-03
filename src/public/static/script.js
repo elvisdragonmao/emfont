@@ -69,13 +69,22 @@ const categories = new Set();
 const searchText = document.querySelector("#search-test");
 const container = document.getElementById("section-search");
 let demo_content;
+let demoContentPromise;
+
 async function loadDemo() {
-  const res = await fetch("/lorem");
-  demo_content = await res.json();
+    try {
+        const res = await fetch("/lorem");
+        demo_content = await res.json();
+    } catch (error) {
+        console.error("Failed to load demo content:", error);
+        demo_content = {}; // Fallback to empty object
+    }
 }
 
-loadDemo();
-const updateFontDisplay = (e, animationOff = false) => {
+demoContentPromise = loadDemo();
+const updateFontDisplay = async (e, animationOff = false) => {
+    await demoContentPromise; // Wait for demo content to be loaded
+
     if (e && e.target.classList[0].includes("cat")) {
         const checkboxes = document.querySelectorAll(".category input:checked");
         checkboxes.forEach(checkbox => {
@@ -112,7 +121,7 @@ const updateFontDisplay = (e, animationOff = false) => {
         }
         weightStr = parts.join(" ⋅ ");
         if (!weightStr) weightStr = "暫時無法使用";
-        const default_text = demo_content[font.sid]
+        const default_text = demo_content[font.sid] || "我個人認為義大利麵就應該拌 42 號混泥土";
         const previewText = searchText.value || default_text;
         containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
@@ -191,7 +200,7 @@ const initSearch = async () => {
     });
 
     paramFromUrl();
-    updateFontDisplay();
+    await updateFontDisplay(); // Wait for demo content to be loaded before calling updateFontDisplay
     document.querySelectorAll(".search-container input, .search-container select").forEach(input => {
         input.addEventListener("change", () => updateFontDisplay()); // 要用箭頭不然 e 會進去壞掉
     });
@@ -242,6 +251,8 @@ document.addEventListener("scroll", addClassToVisibleElements);
 addClassToVisibleElements();
 
 const loadFontInfo = async fontId => {
+    await demoContentPromise; // Wait for demo content to be loaded
+
     const container = document.querySelector(".info-container.fontPage-container");
     const weightContainer = document.querySelector(".font-weights");
     weightContainer.innerHTML = `<div class="font-item loading">
@@ -303,7 +314,7 @@ const loadFontInfo = async fontId => {
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
     const min = searchText.value ? "" : "-min";
-    const default_text = demo_content[font.sid];
+    const default_text = demo_content[font.sid] || "字型展示文字";
     const inputText = searchText.value || default_text;
     weightContainer.innerHTML = "";
     font.weight.map(weight => {

@@ -149,9 +149,7 @@
             const cacheKey = this._cyrb53(url + JSON.stringify(options));
 
             const cache = cacher?.get(cacheKey);
-            if (cache) {
-                return cache;
-            }
+            if (cache) return cache;
 
             const response = await fetch(url, options);
             if (!response.ok) throw new Error(`HTTP error ${response.status}`);
