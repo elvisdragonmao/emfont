@@ -1,4 +1,4 @@
-import { db } from "../../database.js";
+import { db } from "../../utils/database.js";
 import { ScriptFinder } from "../../utils/scriptFinder.js";
 import { get_glyphs } from "./all-glyphs.js";
 const finder = new ScriptFinder();

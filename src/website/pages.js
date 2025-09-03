@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { db } from "../database.js";
+import { db } from "../utils/database.js";
 import { join } from "path";
 // Read the HTML file in the same directory
 

@@ -3,10 +3,10 @@ import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
 
-import { db, initDb } from "./database.js";
+import { db, initDb } from "./utils/database.js";
 import { regenerateAllStaticFont } from "./font_nomin.js";
 import fetchMinio from "./fetch_minio.js";
-import { initR2, listFontsRecursive } from "./r2.js";
+import { initR2, listFontsRecursive } from "./utils/r2.js";
 import { generateSitemap } from "./website/api.js";
 import { analyseFontsInBatches } from "./script/read-font-file/analyseFonts.js";
 const readdir = promisify(fs.readdir);
