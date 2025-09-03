@@ -250,19 +250,6 @@
                     this._styleElement = document.createElement("style");
                     if (this.config.autoApply) this.config.applyAt.appendChild(this._styleElement);
                 }
-                let skippedList = [];
-                if (this.config.cache) {
-                    Object.keys(this.fonts).forEach(fontName => {
-                        if (newFonts[fontName]) {
-                            delete newFonts[fontName];
-                            skippedList.push({
-                                name: fontName,
-                                status: "skipped",
-                                reason: "Already loaded"
-                            });
-                        }
-                    });
-                }
                 let willAddCSS = [];
                 Object.keys(newFonts).forEach(fontName => {
                     willAddCSS.push(fontName);
@@ -377,7 +364,6 @@
                             };
                         }
                     });
-                    results = [...results, ...skippedList];
 
                     let allCSS = this._styleElement.innerHTML.split("\n").filter((css, index, self) => self.indexOf(css) === index);
 
