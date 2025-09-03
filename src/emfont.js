@@ -273,7 +273,7 @@
                     }
                     const tofu = this.config.tofu ? ", 'Tofu'" : "";
 
-                    const cacher = !min && this.config.cache ? this._createLocalStorageCacher(86400) : null;
+                    const cacher = this.config.cache ? this._createLocalStorageCacher(86400) : null;
 
                     return this._fetchJson(
                         "{{BASE_URL}}/g/" + postFontName,
