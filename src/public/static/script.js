@@ -54,6 +54,7 @@ const weightChart = {
     300: ["L", "Light"],
     350: ["N", "Normal"],
     400: ["R", "Regular"],
+    450: ["R", "Book"],
     500: ["M", "Medium"],
     600: ["SB", "Semi Bold"],
     700: ["B", "Bold"],
@@ -323,7 +324,7 @@ const loadFontInfo = async fontId => {
         const weightDiv = document.createElement("div");
         weightDiv.innerHTML = `<div class="font-item">
             <div class="font-title">
-                <div class="weight">${weightChart[weight][1]} ${weight}</div>
+                <div class="weight">${weightChart[weight]?weightChart[weight][1]:'未知字重'} ${weight}</div>
                 <div>
                 <a href="https://font.emtech.cc/file/original-fonts/${fontId}/${weight}.${font.format}">
                     <img src="/static/img/download.svg" alt="original-Download-link-from-emfont">
