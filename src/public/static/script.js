@@ -111,6 +111,7 @@ const updateFontDisplay = async (e, animationOff = false) => {
     if (filtered.length == fontList.length) {
         filtered.sort(() => Math.random() - 0.5);
     }
+    await demoContentPromise;
     filtered.forEach(font => {
         const parts = [];
         for (let weight in font.weight) {
@@ -314,6 +315,7 @@ const loadFontInfo = async fontId => {
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
     const min = searchText.value ? "" : "-min";
+    await demoContentPromise;
     const default_text = demo_content[font.sid] || "字型展示文字";
     const inputText = searchText.value || default_text;
     weightContainer.innerHTML = "";
