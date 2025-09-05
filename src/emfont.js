@@ -322,17 +322,25 @@
                                             .join("\n");
                                 }
 
-                                for (const url of data.location) {
-                                    const font = new FontFace(fontCSSName, `url(${url})`, {
-                                        weight: weight || this.config.weight || "normal"
-                                    });
+                                const loadPromises = data.location.map(async url => {
                                     try {
+                                        // Prefetch the font binary so failures are handled here without browser error spam
+                                        const resp = await fetch(url, { mode: "cors" });
+                                        if (!resp.ok) {
+                                            console.warn(`✏️ Failed to fetch font (HTTP ${resp.status}) from: ${url}`);
+                                            return;
+                                        }
+                                        const buffer = await resp.arrayBuffer();
+                                        const font = new FontFace(fontCSSName, buffer, {
+                                            weight: weight || this.config.weight || "normal"
+                                        });
                                         const loadedFont = await font.load();
                                         document.fonts.add(loadedFont);
                                     } catch (err) {
-                                        console.warn(`✏️ Failed to load font from: ${url}`, err);
+                                        console.warn(`✏️ Can't loaded some of the files, maybe font don't support this word: ${url}`);
                                     }
-                                }
+                                });
+                                await Promise.allSettled(loadPromises);
                                 return {
                                     name: fontName,
                                     status: "fulfilled"
