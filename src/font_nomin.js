@@ -14,7 +14,7 @@ const cpuCount = os.cpus().length + parseInt(process.env.THREADS ?? 0);
 const runWorker = data => {
     try {
         return new Promise((resolve, reject) => {
-            const worker = new Worker(path.resolve(__dirname, "font_nomin_worker.js"), {
+            const worker = new Worker(path.resolve(__dirname, "script/generate-font/font_nomin_worker.js"), {
                 workerData: data
             });
 
