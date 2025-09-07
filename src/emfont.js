@@ -322,17 +322,53 @@
                                             .join("\n");
                                 }
 
-                                for (const url of data.location) {
-                                    const font = new FontFace(fontCSSName, `url(${url})`, {
-                                        weight: weight || this.config.weight || "normal"
-                                    });
+                                // 12-hour blacklist for 404'd font files (by filename)
+                                const blacklistCacher = this._createLocalStorageCacher(43200);
+                                const getFilenameFromUrl = url => {
                                     try {
+                                        const u = new URL(url, typeof location !== "undefined" ? location.href : undefined);
+                                        const name = u.pathname.substring(u.pathname.lastIndexOf("/") + 1);
+                                        return name || url; // fallback to full url if empty
+                                    } catch (_) {
+                                        const withoutQuery = url.split("?")[0];
+                                        return withoutQuery.substring(withoutQuery.lastIndexOf("/") + 1) || url;
+                                    }
+                                };
+                                const isBlacklisted = url => !!blacklistCacher.get(`font-404:${getFilenameFromUrl(url)}`);
+
+                                // Skip URLs that are currently blacklisted
+                                const urlsToLoad = data.location.filter(url => {
+                                    const blocked = isBlacklisted(url);
+                                    if (blocked && this.config.log) {
+                                        console.warn(`✏️ Skip blacklisted font file for now (12h TTL): ${getFilenameFromUrl(url)}`);
+                                    }
+                                    return !blocked;
+                                });
+
+                                const loadPromises = urlsToLoad.map(async url => {
+                                    try {
+                                        // Prefetch the font binary so failures are handled here without browser error spam
+                                        const resp = await fetch(url, { mode: "cors" });
+                                        if (!resp.ok) {
+                                            console.warn(`✏️ Failed to fetch font (HTTP ${resp.status}) from: ${url}`);
+                                            // Only blacklist on 404 as requested
+                                            if (resp.status === 404) {
+                                                const file = getFilenameFromUrl(url);
+                                                blacklistCacher.set(`font-404:${file}`, true);
+                                            }
+                                            return;
+                                        }
+                                        const buffer = await resp.arrayBuffer();
+                                        const font = new FontFace(fontCSSName, buffer, {
+                                            weight: weight || this.config.weight || "normal"
+                                        });
                                         const loadedFont = await font.load();
                                         document.fonts.add(loadedFont);
                                     } catch (err) {
-                                        console.warn(`✏️ Failed to load font from: ${url}`, err);
+                                        console.warn(`✏️ Can't loaded some of the files, maybe font don't support this word: ${url}`);
                                     }
-                                }
+                                });
+                                await Promise.allSettled(loadPromises);
                                 return {
                                     name: fontName,
                                     status: "fulfilled"

@@ -54,6 +54,7 @@ const weightChart = {
     300: ["L", "Light"],
     350: ["N", "Normal"],
     400: ["R", "Regular"],
+    450: ["R", "Book"],
     500: ["M", "Medium"],
     600: ["SB", "Semi Bold"],
     700: ["B", "Bold"],
@@ -120,7 +121,7 @@ const updateFontDisplay = async (e, animationOff = false) => {
                 parts.push(`<span class="${weightChart[weight][0]}">${weightChart[weight][0]}</span>`);
             } else parts.push(`<span>${weight}</span>`);
         }
-        weightStr = parts.join(" ⋅ ");
+        let weightStr = parts.join(" ⋅ ");
         if (!weightStr) weightStr = "暫時無法使用";
         const default_text = demo_content[font.sid] || "我個人認為義大利麵就應該拌 42 號混泥土";
         const previewText = searchText.value || default_text;
@@ -159,7 +160,7 @@ const paramFromUrl = () => {
     }
     let urlTags = urlParams.get("tags");
     if (urlTags) {
-        urlTags = tags.split(",");
+        urlTags = urlTags.split(",");
         for (const tag of urlTags) {
             const el = document.querySelector(".tag-" + tag);
             if (el) el.checked = true;
@@ -323,7 +324,7 @@ const loadFontInfo = async fontId => {
         const weightDiv = document.createElement("div");
         weightDiv.innerHTML = `<div class="font-item">
             <div class="font-title">
-                <div class="weight">${weightChart[weight][1]} ${weight}</div>
+                <div class="weight">${weightChart[weight] ? weightChart[weight][1] : "未知字重"} ${weight}</div>
                 <div>
                 <a href="https://font.emtech.cc/file/original-fonts/${fontId}/${weight}.${font.format}">
                     <img src="/static/img/download.svg" alt="original-Download-link-from-emfont">
@@ -332,7 +333,7 @@ const loadFontInfo = async fontId => {
             <div class="font-preview emfont-${fontId}${min}-${weight}" contenteditable="true">${inputText}</div></div>`;
         weightContainer.appendChild(weightDiv);
         const weightDivPreview = weightDiv.querySelector(".font-preview");
-        weightDivPreview.style.color = "translarent";
+        weightDivPreview.style.color = "transparent";
         emfont
             .init({
                 root: weightDiv,
