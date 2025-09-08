@@ -34,35 +34,50 @@ const runWorker = data => {
         console.log(err);
     }
 };
-
-async function complete_ff_name_support_char_in_db(ff_name, charArray, existingChars) {
+async function complete_ff_name_support_char_in_db(ff_name, lost_chars) {
     try {
-        // 2. 找出還沒出現在資料庫的字
-        const newChars = charArray.filter(char => !existingChars.has(char));
-        console.log(ff_name, "newchar", newChars);
-        if (newChars.length === 0) {
-            console.log("╠ 沒有新字要插入");
+        if (lost_chars.length == 0) {
+            console.log("╠ 沒有新字需要異動");
             return true;
         }
-        // 3. 查目前最大的 pack 編號和該 pack 裡面有幾個字
-        const { rows: lastPackRows } = await db.query(
-            `SELECT pack, COUNT(*) AS count 
-            FROM static_fonts 
-            GROUP BY pack 
-            ORDER BY pack DESC 
-            LIMIT 1`
+        const no_record_chars = lost_chars.filter(r => r.status === 'not_exist_char').map(r => r.char);
+
+        const no_fontfamily_binding = lost_chars.filter(r => r.status === 'missing_family').map(r => r.char);
+        // update support list that exist in db but not in  support family list
+        if (no_fontfamily_binding.length!=0)
+        {
+
+            await db.query(
+            `UPDATE static_fonts
+            SET families = (
+                SELECT ARRAY(
+                SELECT DISTINCT unnest(families || $1)
+                )
+            )
+            WHERE char = ANY($2)`,
+                [[ff_name], no_fontfamily_binding]
+            );
+        }
+
+        // find the maxiumn pack id and check its total char counts
+        const { rows } = await db.query(
+            `SELECT pack, COUNT(*)::int AS count
+            FROM static_fonts
+            WHERE pack = (SELECT MAX(pack) FROM static_fonts)
+            GROUP BY pack;
+`
         );
 
         let currentPack = 0;
         let packCount = 0;
 
-        if (lastPackRows.length > 0) {
-            currentPack = parseInt(lastPackRows[0].pack);
-            packCount = parseInt(lastPackRows[0].count);
-        }
+        const { pack, count } = rows[0] ?? {};
+        currentPack = pack ? parseInt(pack, 10) : null;
+        packCount  = count ?? 0;
+
         const inserts = [];
-        for (const char of newChars) {
-            if (packCount >= 90) {
+        for (const char of no_record_chars) {
+            if (packCount >= 135) {
                 currentPack += 1;
                 packCount = 0;
             }
@@ -76,7 +91,7 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
             packCount += 1;
         }
 
-        // 4. 把新字 insert 進去
+        // 4. 把新字 insert 進去，每次語句插入 1000 個字
         for (let i = 0; i < inserts.length; i += 1000) {
             const batch = inserts.slice(i, i + 1000);
             const values = [];
@@ -86,20 +101,13 @@ async function complete_ff_name_support_char_in_db(ff_name, charArray, existingC
                 values.push(`($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3})`);
                 params.push(char, pack, families);
             });
-            //如果主鍵（或唯一鍵）衝突，就將 families 陣列中「尚未存在的字型」加進去。
             await db.query(
                 `INSERT INTO static_fonts (char, pack, families)
                      VALUES ${values.join(",")}
-                     ON CONFLICT (char) DO UPDATE
-                       SET families = (
-                         SELECT ARRAY(
-                           SELECT DISTINCT unnest(static_fonts.families || EXCLUDED.families)
-                         )
-                       )`,
+                     `,
                 params
             );
         }
-
         return true;
     } catch (err) {
         console.error(err);
@@ -143,13 +151,26 @@ async function regenerateAllStaticFont(state, have_gen_list) {
             const supportedCodePoints = Array.from(fontfile.characterSet);
             const charArray = supportedCodePoints.map(cp => String.fromCodePoint(cp)).filter(char => char !== "\x00");
             console.log("╔ " + ff_name + " " + support_weights, "有", charArray.length, "個字");
-            // 1. 查出此字型支援，且資料庫已經有綁定的字
-            const { rows: existing } = await db.query("SELECT char FROM static_fonts WHERE char = ANY($1) AND  $2 =  any(families) ", [charArray, ff_name]);
-            const existingChars = new Set(existing.map(row => row.char));
-
-            // const oldChars = charArray.filter(char => existingChars.has(char));
+            // 1. 查出資料紀錄不完全的字
+            //       |資料庫存在該字|自型支援清單|
+            // CASE 1： 0 | 0 | 1 -> 資料庫根本沒有這個字
+            // CASE 2： 0 | 1 | X -> don't care 。邏輯上不會有這種情況
+            // CASE 3： 1 | 0 | 1 -> 資料庫存在，但支援字型清單不存在該字型
+            // CASE 4： 1 | 1 | 0 -> no action 
+            const { rows:lost_chars } = await db.query(
+                `
+                SELECT c.char, 
+                    CASE 
+                        WHEN s.char IS NULL THEN 'not_exist_char'
+                        WHEN NOT ($2 = ANY(s.families)) THEN 'missing_family'
+                    END AS status
+                FROM unnest($1::text[]) AS c(char)
+                LEFT JOIN static_fonts s ON s.char = c.char
+                WHERE s.char IS NULL OR NOT ($2 = ANY(s.families));`,
+            [charArray, ff_name]
+            );
             //把此字型支援的所有字元裡頭紀錄的支援字型陣列加入這次的字型（如果還沒加入的話）
-            await complete_ff_name_support_char_in_db(ff_name, charArray, existingChars);
+            await complete_ff_name_support_char_in_db(ff_name, lost_chars);
             //this_static_font_dir_status 是 ff_name-support_weights 的靜態字型在生成列表中的狀態，
             // 包括字型id 、字重和生成的檔案編號，從 have_gen_list（有所有靜態已生成資料夾的屬性） 拆解出來
             const this_static_font_dir_status = have_gen_list.find(item => item.fontName === this_font.fontName && item.weight == this_font.weight && item.version == version_num);
@@ -277,7 +298,7 @@ async function find_static_font(word_set, hash) {
             return Array.from(packs);
         } else {
             const currentTTL = await redis.ttl(this_key);
-            // 如果 key 是永久存在（TTL = -1），選擇不動作
+            // 如果 key 是永久存在（TTL = -1），選擇不動作complete_ff_name_support_char_in_db
             if (currentTTL > 0) {
                 const newTTL = currentTTL + 3600; // 重複使用的 key 幫他加 ttl 1 hr
                 await redis.expire(this_key, newTTL);
