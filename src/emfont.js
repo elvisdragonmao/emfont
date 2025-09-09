@@ -239,8 +239,6 @@
                     }
                 });
 
-                let willAddCSS = [];
-
                 Object.keys(newFonts).forEach(fontName => {
                     newFonts[fontName] = Array.from(new Set(newFonts[fontName].split("")))
                         .sort()
@@ -260,18 +258,11 @@
                                     reason: "Already loaded"
                                 });
                             } else {
-                                willAddCSS.push(fontName);
-                                this.fonts[fontName] = Array.from(new Set((this.fonts[fontName] + newFonts[fontName]).split("")))
+                                newFonts[fontName] = newFonts[fontName]
+                                    .split("")
+                                    .filter(char => !this.fonts[fontName].includes(char))
                                     .sort()
                                     .join("");
-                                // remove loaded text in newFonts
-                                newFonts = {
-                                    ...newFonts,
-                                    [fontName]: newFonts[fontName]
-                                        .split("")
-                                        .filter(char => !this.fonts[fontName].includes(char))
-                                        .join("")
-                                };
                             }
                         } else {
                             this.fonts[fontName] = newFonts[fontName];
@@ -281,7 +272,7 @@
 
                 if (!this._styleElement) {
                     this._styleElement = document.createElement("style");
-                   this._styleElement.classList.add("emfont-styles"); 
+                    this._styleElement.classList.add("emfontStyles");
                     if (this.config.autoApply) this.config.applyAt.appendChild(this._styleElement);
                 }
 
@@ -318,8 +309,7 @@
                             if (data.status === "success") {
                                 if (data.message) console.warn("✏️ " + data.message);
                                 const fontCSSName = data.name;
-
-                                if (this.config.autoApply && willAddCSS.includes(fontName)) {
+                                if (this.config.autoApply) {
                                     const baseFontName = fontName.split("-")[0];
                                     const matchedVariants = originalClasses.filter(cls => cls.startsWith(baseFontName));
                                     if (matchedVariants.length === 0) matchedVariants.push(baseFontName);

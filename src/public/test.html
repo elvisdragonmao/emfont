@@ -4,16 +4,18 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Test</title>
+        <style>
+            * {
+                font-weight: 400;
+            }
+        </style>
     </head>
-    <body class="emfont-McDonaldsFries">
-        <h1 >Text你媽</h1>
+    <body class="emfont-XiaoLai">
+        <h1 class="">Text 不太好</h1>
         <input type="text" value="Hello World 你好" />
         <script type="module">
             import "/emfont.js";
-            emfont.init().then(() => {
-                document.querySelector("h1").innerText += " Words";
-                emfont.init();
-            });
+           emfont.init()
         </script>
     </body>
 </html>
