@@ -281,6 +281,7 @@
 
                 if (!this._styleElement) {
                     this._styleElement = document.createElement("style");
+                   this._styleElement.classList.add("emfont-styles"); 
                     if (this.config.autoApply) this.config.applyAt.appendChild(this._styleElement);
                 }
 
