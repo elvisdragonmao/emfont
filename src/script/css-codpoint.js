@@ -61,7 +61,7 @@ async function make_css_code_point(font_id, weight, state) {
     font-style: normal;
     font-weight: ${weight};
     font-display: swap;
-    src: url(https:/font.emtech.cc/file/_generated/${state.static_font_version}-${font_id}-${weight}/${paddedPack}.woff2) format('woff2');
+    src: url('https:/font.emtech.cc/file/_generated/${state.static_font_version}-${font_id}-${weight}/${paddedPack}.woff2') format('woff2');
     unicode-range: ${p.unicodeRanges};
   }\n`;
 	});
