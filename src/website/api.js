@@ -55,7 +55,7 @@ const registerApi = async (app, state) => {
             req.body.words = req.query.words?.trim() ?? null;
             req.body.weight = req.query.weight?.trim() ?? null;
             if (!req.body.words) {
-                const { rows } = await db.query(`SELECT name, weights, format FROM font_family WHERE id = $1`, [font_id]);
+                const { rows } = await db.query(`SELECT name, weights FROM font_family WHERE id = $1`, [font_id]);
                 if (rows.length === 0)
                     return {
                         code: 404,
@@ -73,18 +73,7 @@ const registerApi = async (app, state) => {
                 if (req.body.weight && allWeights.includes(req.body.weight)) {
                     allWeights = [req.body.weight];
                 }
-                return res.type("text/css").send(
-                    allWeights
-                        .map(
-                            weight => `@font-face {
-    font-family: '${font_id}';
-    font-weight: ${weight};
-    font-display: swap;
-    src: url('${state.baseURL}/file/original-fonts/${font_id}/${weight}.${rows[0].format}') format('${rows[0].format.replace("otf", "opentype").replace("ttf", "truetype")}');
-}`
-                        )
-                        .join("\n")
-                );
+                return res.type("text/css").send(allWeights.map(weight => `@import url('${state.baseURL}/css/${font_id}/${weight}');`).join("\n"));
                 //https://font.emtech.cc/file/original-fonts/GenSekiGothicTC/400.otf
             } else {
                 req.body.min = req.query.min?.trim() ?? false;
@@ -183,15 +172,15 @@ const registerApi = async (app, state) => {
     //取得展示用句子和他的 ID
     app.get("/lorem", async (req, res) => {
         try {
-                const id_to_content_result = await db.query(`
+            const id_to_content_result = await db.query(`
                 SELECT sid, content
                 FROM demo_sentence;
                 `);
 
-                const sidToContent = {};
-                for (const row of id_to_content_result.rows) {
+            const sidToContent = {};
+            for (const row of id_to_content_result.rows) {
                 sidToContent[row.sid] = row.content;
-                }
+            }
             res.send(sidToContent);
         } catch (err) {
             console.error(err);
