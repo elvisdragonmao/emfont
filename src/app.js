@@ -13,6 +13,7 @@ import dotenv from "dotenv";
 import registerPages from "./website/pages.js";
 import { registerApi } from "./website/api.js";
 import registerStatic, { generateEmfontJS } from "./website/static.js";
+import { registerMcpApi } from "./website/mcp.js";
 
 dotenv.config();
 const state = {
@@ -42,6 +43,7 @@ app.register(cors, {
 
 await registerPages(app);
 await registerApi(app, state);
+await registerMcpApi(app, state);
 await registerStatic(app);
 
 // Start server

@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "name": "emfont",
+  "description": "emfont MCP server - Find and apply suitable CJK fonts for your text",
+  "tools": [
+    {
+      "name": "search_fonts",
+      "description": "Search for fonts by name, language, category, or tags. Returns a list of matching fonts with their details.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query - can be font name, author, language (Chinese/Japanese/Korean), style, or description"
+          },
+          "category": {
+            "type": "string",
+            "description": "Filter by category (serif, sans-serif, handwriting, monospace, etc.)",
+            "enum": ["serif", "sans-serif", "handwriting", "monospace", "display", "other"]
+          },
+          "language": {
+            "type": "string",
+            "description": "Target language support (zh-CN, zh-TW, ja, ko)",
+            "enum": ["zh-CN", "zh-TW", "ja", "ko", "all"]
+          }
+        }
+      }
+    },
+    {
+      "name": "recommend_font",
+      "description": "Get font recommendations based on use case, mood, or text content. Returns suitable fonts with reasons.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Sample text or content description to analyze"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Purpose of the text (heading, body, logo, quote, etc.)"
+          },
+          "mood": {
+            "type": "string",
+            "description": "Desired mood or feeling (formal, casual, elegant, playful, modern, traditional, etc.)"
+          },
+          "language": {
+            "type": "string",
+            "description": "Primary language of the text"
+          }
+        },
+        "required": ["text"]
+      }
+    },
+    {
+      "name": "get_font_info",
+      "description": "Get detailed information about a specific font including weights, license, author, and usage instructions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "font_id": {
+            "type": "string",
+            "description": "Font identifier (e.g., 'jfopenhuninn', 'gensenrounded')"
+          }
+        },
+        "required": ["font_id"]
+      }
+    },
+    {
+      "name": "generate_implementation",
+      "description": "Generate ready-to-use HTML/CSS/JS code to implement selected fonts in a webpage.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "font_id": {
+            "type": "string",
+            "description": "Font identifier to implement"
+          },
+          "text": {
+            "type": "string",
+            "description": "The text content to display with the font"
+          },
+          "weight": {
+            "type": "string",
+            "description": "Font weight (400, 700, etc.)"
+          },
+          "method": {
+            "type": "string",
+            "description": "Implementation method",
+            "enum": ["css", "js", "both"]
+          }
+        },
+        "required": ["font_id", "text"]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "fonts_list",
+      "description": "Complete list of all available fonts",
+      "uri": "fonts://list"
+    },
+    {
+      "name": "font_categories",
+      "description": "Available font categories and their descriptions",
+      "uri": "fonts://categories"
+    }
+  ]
+}
