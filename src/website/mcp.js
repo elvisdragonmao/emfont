@@ -252,10 +252,10 @@ function generateImplementation(fontId, text, weight = "400", method = "both", s
   emfont.init();
 </script>`;
 
-    const bothImplementation = `<!-- 推薦使用 JavaScript 方式（更靈活） -->
+    const bothImplementation = `<!-- JavaScript 方式（更靈活更多自訂，但 input 等動態內容需小心） -->
 ${jsImplementation}
 
-<!-- 或使用 CSS 方式（更簡單） -->
+<!-- 推薦使用 CSS 方式（更簡單） -->
 ${cssImplementation}`;
 
     const implementations = {
