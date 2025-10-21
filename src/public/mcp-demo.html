@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>emfont MCP API 示例 - 字體推薦和實現</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .font-card {
+            padding: 15px;
+            margin: 10px 0;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            transition: box-shadow 0.3s;
+        }
+
+        .font-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .font-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .font-info {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 2px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            font-size: 0.85em;
+            color: #555;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .preview-text {
+            font-size: 2em;
+            padding: 20px;
+            background: white;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .info {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .api-endpoint {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✏️ emfont MCP API 示例</h1>
+        <p class="subtitle">AI 輔助的字體發現和實現工具</p>
+
+        <div class="info">
+            <strong>📘 什麼是 MCP API？</strong><br>
+            Model Context Protocol (MCP) API 是專為 AI 助手設計的接口，讓 GPT、Claude 等 AI 能夠幫助用戶找到合適的字體並生成實現代碼。
+        </div>
+
+        <!-- Demo 1: Search Fonts -->
+        <div class="demo-section">
+            <h2>🔍 1. 搜索字體</h2>
+            <p>根據關鍵詞、分類和語言搜索字體</p>
+            
+            <div class="input-group">
+                <label for="search-query">搜索關鍵詞：</label>
+                <input type="text" id="search-query" placeholder="例如：圓體、手寫、作者名稱等">
+            </div>
+
+            <div class="input-group">
+                <label for="search-category">分類（可選）：</label>
+                <select id="search-category">
+                    <option value="">全部</option>
+                    <option value="serif">襯線字體 (serif)</option>
+                    <option value="sans-serif">無襯線字體 (sans-serif)</option>
+                    <option value="handwriting">手寫字體 (handwriting)</option>
+                    <option value="monospace">等寬字體 (monospace)</option>
+                    <option value="display">展示字體 (display)</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+
+            <button onclick="searchFonts()">搜索字體</button>
+            <div id="search-results" class="results" style="display:none;"></div>
+        </div>
+
+        <!-- Demo 2: Recommend Fonts -->
+        <div class="demo-section">
+            <h2>💡 2. 推薦字體</h2>
+            <p>根據文本內容、用途和風格獲得字體推薦</p>
+            
+            <div class="input-group">
+                <label for="recommend-text">文本內容：</label>
+                <textarea id="recommend-text" placeholder="輸入您的文本內容，例如：歡迎來到我的網站">歡迎來到我的網站</textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="recommend-purpose">用途：</label>
+                <select id="recommend-purpose">
+                    <option value="heading">標題 (heading)</option>
+                    <option value="body">內文 (body)</option>
+                    <option value="logo">標誌 (logo)</option>
+                    <option value="quote">引用 (quote)</option>
+                    <option value="code">程式碼 (code)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="recommend-mood">風格：</label>
+                <select id="recommend-mood">
+                    <option value="modern">現代 (modern)</option>
+                    <option value="traditional">傳統 (traditional)</option>
+                    <option value="elegant">優雅 (elegant)</option>
+                    <option value="casual">休閒 (casual)</option>
+                    <option value="playful">活潑 (playful)</option>
+                    <option value="formal">正式 (formal)</option>
+                </select>
+            </div>
+
+            <button onclick="recommendFonts()">獲取推薦</button>
+            <div id="recommend-results" class="results" style="display:none;"></div>
+        </div>
+
+        <!-- Demo 3: Get Font Info -->
+        <div class="demo-section">
+            <h2>📋 3. 獲取字體詳細信息</h2>
+            <p>查看特定字體的完整信息</p>
+            
+            <div class="input-group">
+                <label for="info-fontid">字體 ID：</label>
+                <input type="text" id="info-fontid" placeholder="例如：jfopenhuninn, gensenrounded" value="jfopenhuninn">
+            </div>
+
+            <button onclick="getFontInfo()">獲取信息</button>
+            <div id="info-results" class="results" style="display:none;"></div>
+        </div>
+
+        <!-- Demo 4: Generate Implementation -->
+        <div class="demo-section">
+            <h2>💻 4. 生成實現代碼</h2>
+            <p>生成可直接使用的 HTML/CSS/JS 代碼</p>
+            
+            <div class="input-group">
+                <label for="impl-fontid">字體 ID：</label>
+                <input type="text" id="impl-fontid" placeholder="例如：jfopenhuninn" value="jfopenhuninn">
+            </div>
+
+            <div class="input-group">
+                <label for="impl-text">顯示文本：</label>
+                <input type="text" id="impl-text" placeholder="要顯示的文字" value="歡迎使用 emfont">
+            </div>
+
+            <div class="input-group">
+                <label for="impl-weight">字重：</label>
+                <select id="impl-weight">
+                    <option value="400">400 (Regular)</option>
+                    <option value="700">700 (Bold)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="impl-method">實現方式：</label>
+                <select id="impl-method">
+                    <option value="both">兩種方式 (both)</option>
+                    <option value="js">JavaScript 方式 (js)</option>
+                    <option value="css">CSS 方式 (css)</option>
+                </select>
+            </div>
+
+            <button onclick="generateImplementation()">生成代碼</button>
+            <div id="impl-results" class="results" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 基礎 URL（生產環境請使用 https://font.emtech.cc）
+        const BASE_URL = window.location.origin;
+
+        // 搜索字體
+        async function searchFonts() {
+            const query = document.getElementById('search-query').value;
+            const category = document.getElementById('search-category').value;
+            const resultsDiv = document.getElementById('search-results');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="loading">🔍 搜索中...</div>';
+
+            try {
+                const params = new URLSearchParams();
+                if (query) params.append('q', query);
+                if (category) params.append('category', category);
+
+                const response = await fetch(`${BASE_URL}/mcp/search?${params}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    let html = `<h3>找到 ${data.count} 個字體：</h3>`;
+                    data.fonts.forEach(font => {
+                        html += `
+                            <div class="font-card">
+                                <div class="font-name">${font.name_zh || font.name} (${font.id})</div>
+                                <div class="font-info">
+                                    <strong>分類：</strong>${font.category || 'N/A'} | 
+                                    <strong>作者：</strong>${(font.authors || []).join(', ') || 'N/A'}
+                                </div>
+                                <div class="font-info">${font.description || ''}</div>
+                                <div class="font-info">
+                                    <strong>可用字重：</strong>${(font.weights || []).join(', ') || 'N/A'}
+                                </div>
+                                <div>
+                                    ${(font.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">錯誤：${data.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">請求失敗：${error.message}</div>`;
+            }
+        }
+
+        // 推薦字體
+        async function recommendFonts() {
+            const text = document.getElementById('recommend-text').value;
+            const purpose = document.getElementById('recommend-purpose').value;
+            const mood = document.getElementById('recommend-mood').value;
+            const resultsDiv = document.getElementById('recommend-results');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="loading">💡 分析中...</div>';
+
+            try {
+                const response = await fetch(`${BASE_URL}/mcp/recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, purpose, mood })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    let html = `<h3>為您推薦 ${data.count} 個字體：</h3>`;
+                    data.recommendations.forEach(font => {
+                        html += `
+                            <div class="font-card">
+                                <div class="font-name">
+                                    ${font.name_zh || font.name} (${font.id})
+                                    <span style="float: right; color: #27ae60;">匹配度: ${font.match_score}</span>
+                                </div>
+                                <div class="font-info" style="color: #27ae60;">
+                                    <strong>推薦理由：</strong>${font.reason}
+                                </div>
+                                <div class="font-info">${font.description || ''}</div>
+                                <div class="font-info">
+                                    <strong>分類：</strong>${font.category} | 
+                                    <strong>字重：</strong>${(font.weights || []).join(', ')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">錯誤：${data.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">請求失敗：${error.message}</div>`;
+            }
+        }
+
+        // 獲取字體信息
+        async function getFontInfo() {
+            const fontId = document.getElementById('info-fontid').value;
+            const resultsDiv = document.getElementById('info-results');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="loading">📋 載入中...</div>';
+
+            try {
+                const response = await fetch(`${BASE_URL}/mcp/info/${fontId}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const font = data.font;
+                    let html = `
+                        <div class="font-card">
+                            <div class="font-name">${font.name.zh || font.name.original}</div>
+                            <div class="font-info"><strong>ID：</strong>${font.id}</div>
+                            <div class="font-info"><strong>英文名：</strong>${font.name.en}</div>
+                            <div class="font-info"><strong>原始名：</strong>${font.name.original}</div>
+                            <div class="font-info"><strong>分類：</strong>${font.category}</div>
+                            <div class="font-info"><strong>可用字重：</strong>${font.weights.join(', ')}</div>
+                            <div class="font-info"><strong>作者：</strong>${font.authors.join(', ')}</div>
+                            <div class="font-info"><strong>授權：</strong>${font.license}</div>
+                            <div class="font-info"><strong>版本：</strong>${font.version}</div>
+                            <div class="font-info"><strong>格式：</strong>${font.format}</div>
+                            ${font.description ? `<div class="font-info"><strong>描述：</strong>${font.description}</div>` : ''}
+                            ${font.source ? `<div class="font-info"><strong>來源：</strong><a href="${font.source}" target="_blank">${font.source}</a></div>` : ''}
+                            <div>
+                                ${font.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">錯誤：${data.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">請求失敗：${error.message}</div>`;
+            }
+        }
+
+        // 生成實現代碼
+        async function generateImplementation() {
+            const fontId = document.getElementById('impl-fontid').value;
+            const text = document.getElementById('impl-text').value;
+            const weight = document.getElementById('impl-weight').value;
+            const method = document.getElementById('impl-method').value;
+            const resultsDiv = document.getElementById('impl-results');
+            
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="loading">💻 生成中...</div>';
+
+            try {
+                const response = await fetch(`${BASE_URL}/mcp/implement`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ font_id: fontId, text, weight, method })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const impl = data.implementation;
+                    let html = `
+                        <div class="success">✅ 代碼生成成功！</div>
+                        <h3>實現代碼：</h3>
+                        <div class="code-block">${escapeHtml(impl.code)}</div>
+                        <h3>預覽效果：</h3>
+                        <div class="preview-text" id="font-preview">${text}</div>
+                        <div class="font-info">
+                            <strong>字體 ID：</strong>${impl.font_id} | 
+                            <strong>字重：</strong>${impl.weight} | 
+                            <strong>方式：</strong>${impl.method}
+                        </div>
+                        <p>
+                            <a href="${impl.preview_url}" target="_blank">查看字體詳情</a> | 
+                            <a href="${impl.documentation_url}" target="_blank">查看文檔</a>
+                        </p>
+                    `;
+                    resultsDiv.innerHTML = html;
+                    
+                    // Apply the font
+                    if (method === 'js' || method === 'both') {
+                        const previewEl = document.getElementById('font-preview');
+                        previewEl.className = `preview-text emfont-${fontId}`;
+                        if (window.emfont) {
+                            window.emfont.init();
+                        }
+                    }
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">錯誤：${data.message}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">請求失敗：${error.message}</div>`;
+            }
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
