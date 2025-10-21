@@ -239,7 +239,7 @@ function generateImplementation(fontId, text, weight = "400", method = "both", s
     const cssImplementation = `<!-- CSS 實現方式 -->
 <style>
   .my-text {
-    font-family: 'emfont-${fontId}';
+    font-family: '${fontId}';
   }
 </style>
 <link rel="stylesheet" href="${state.baseURL}/css/${fontId}?words=${encodeURIComponent(text)}${weight ? `&weight=${weight}` : ''}">
