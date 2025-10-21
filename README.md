@@ -24,6 +24,7 @@
 - **快速**：字體壓縮為 `.woff2`，載入速度快。
 - **省流**：極致子級化，一百字只要 40kb。
 - **開源**：採用 Apache-2.0 授權。
+- **🤖 AI 輔助**：全新 MCP API，讓 GPT/Claude 等 AI 助手幫你找到最適合的字體！
 
 ## 使用方法
 
@@ -36,6 +37,31 @@
 ```
 
 完整使用說明請參考 [emfont說明文件](https://font.emtech.cc/docs)
+
+## 🤖 MCP API - AI 輔助字體發現
+
+emfont 現在支援 Model Context Protocol (MCP) API，讓 AI 助手（如 GPT、Claude）能夠幫助你找到最適合的字體！
+
+### 快速開始
+
+AI 助手可以透過以下端點幫你：
+
+- **搜索字體**：`GET /mcp/search?q=圓體`
+- **推薦字體**：`POST /mcp/recommend` - 根據文本內容和用途推薦
+- **獲取字體信息**：`GET /mcp/info/:font_id`
+- **生成實現代碼**：`POST /mcp/implement` - 自動生成可用的 HTML/CSS/JS
+
+### 使用示例
+
+向 AI 助手說：
+- "幫我找一個適合部落格標題的現代中文字體"
+- "我需要一個適合引用文字的優雅字體"
+- "推薦一個適合程式碼展示的等寬字體"
+
+AI 會自動搜索、推薦字體並生成實現代碼！
+
+📖 詳細文檔請參考：[MCP_API.md](./MCP_API.md)  
+🎮 互動式演示：訪問 `/mcp-demo.html` 查看完整示例
 
 ## 開發與部屬
 
