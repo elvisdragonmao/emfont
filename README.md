@@ -27,15 +27,15 @@
 
 ## 使用方法
 
-```html
-<p class="emfont-jfopenhuninn">這個段落使用了 jf-openhuninn-2.0 字型。</p>
-<script src="https://font.emtech.cc/emfont.js"></script>
-<script>
-    emfont.init();
-</script>
+```css
+@import url("https://font.emtech.cc/css/jfOpenHuninn");
+
+body {
+    font-family: "jfOpenHuninn", sans-serif;
+}
 ```
 
-完整使用說明請參考 [emfont說明文件](https://font.emtech.cc/docs)
+就是那麼簡單。完整使用說明請參考 [emfont 說明文件](https://font.emtech.cc/docs)
 
 ## 開發與部屬
 
