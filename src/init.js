@@ -9,6 +9,7 @@ import fetchMinio from "./fetch_minio.js";
 import { initR2, listFontsRecursive } from "./utils/r2.js";
 import { generateSitemap } from "./website/api.js";
 import { analyseFontsInBatches } from "./script/read-font-file/analyseFonts.js";
+import {make_css_code_point} from "./script/css-codpoint.js"
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -155,13 +156,24 @@ async function get_bullet() {
         throw err;
     }
 }
+async function gen_css(state)
+{
+    const rows = await db.query(`select id, weights from font_family ;`)
+    for (const row of rows.rows) {
+        for (const w of row.weights)
+        {
+            await make_css_code_point(row.id, w,state);
+
+        }
+    }
+}
 async function initCheck(state) {
     try {
         let originalBulletin = state.bulletin;
         state.bulletin = "🔁 正在初始化中，請稍後...";
         if (!(await initDb())) return false;
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
-        await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
+        // await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await fetchMinio(state);
         await initR2(state);
         if (!process.env.SKIP_FONT_CHECK) await insertFontTypes();
@@ -172,6 +184,10 @@ async function initCheck(state) {
             const have_gen_list = await get_generated_static_floders();
             state.bulletin = "📠 正在生成靜態字型，請稍後...";
             await regenerateAllStaticFont(state, have_gen_list);
+        }
+        if (!(state.REGEN_CSS)) {
+            //regenerated static font css map
+            await gen_css(state)
         }
         const all_file_on_r2 = await listFontsRecursive(state);
         await sync_r2_and_db(state, all_file_on_r2);
