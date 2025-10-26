@@ -36,7 +36,8 @@
         <script src="/emfont.js"></script>
     </head>
     <body>
-        <main class="{{page}}">
+        <a href="#main-content" class="skip-link">跳到主要內容</a>
+        <main id="main-content" class="{{page}}" role="main">
             <input type="checkbox" name="lightmode" id="lightmode" />
             <input type="checkbox" id="mobileToggle" />
             <section>
@@ -45,9 +46,9 @@
                     <p>目前 emfont 提供超過 90 款開源中文字型。 輕巧，穩定，不必處理繁瑣的設定，也不需擔心版權問題，讓設計和開發專注於創意本身。</p>
                     <p>
                         本專案特別感謝
-                        <a href="https://zeabur.com/" target="_blank">Zeabur</a>
+                        <a href="https://zeabur.com/" target="_blank" rel="noopener">Zeabur</a>
                         及
-                        <a href="https://sponsor.ncse.tw/" target="_blank">國雲網路</a>
+                        <a href="https://sponsor.ncse.tw/" target="_blank" rel="noopener">國雲網路</a>
                         提供台灣高速穩定的運算資源。 讓 emfont 能持續為大家提供優質服務。而最重要的，是每一位使用者的支持——我們的使命，就是讓設計師不再受限於中文字型，盡情綻放腦中的創意。
                     </p>
                     <p>
@@ -62,15 +63,15 @@
                             <h2>貢獻者</h2>
                             <div>
                                 <a href="https://elvismao.com" class="contributor">
-                                    <img src="https://avatars.githubusercontent.com/u/61068739" alt="" />
+                                    <img src="https://avatars.githubusercontent.com/u/61068739" alt="毛哥EM" loading="lazy" />
                                     毛哥EM</a
                                 >
                                 <a href="https://github.com/iach526526" class="contributor">
-                                    <img src="https://avatars.githubusercontent.com/u/98824625" alt="" />
+                                    <img src="https://avatars.githubusercontent.com/u/98824625" alt="Each Chan" loading="lazy" />
                                     Each Chan</a
                                 >
                                 <a href="https://pan93.com" class="contributor">
-                                    <img src="https://avatars.githubusercontent.com/u/28441561" alt="" />
+                                    <img src="https://avatars.githubusercontent.com/u/28441561" alt="Yi-Jyun Pan" loading="lazy" />
                                     Yi-Jyun Pan
                                 </a>
                             </div>
@@ -78,8 +79,8 @@
                         <div class="sponsors">
                             <h2>贊助</h2>
                             <div>
-                                <a href="https://zeabur.com/?referralCode=Edit-Mr" target="_blank">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="221" height="42" viewBox="0 0 221 42" fill="none">
+                                <a href="https://zeabur.com/?referralCode=Edit-Mr" target="_blank" rel="noopener" aria-label="Zeabur">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="221" height="42" viewBox="0 0 221 42" fill="none" aria-hidden="true" focusable="false">
                                         <g clip-path="url(#clip0_6_236)">
                                             <path d="M19.7248 27.4207H50.7601V42.0001H-0.00140381V27.4207H14.2694L33.9188 16.8842H-0.00140381V2.30493H50.7601V16.8842L19.7248 27.4207Z" fill="currentColor" />
                                             <path d="M33.7489 2.30493H-0.00012207V16.8842H33.7489V2.30493Z" fill="#6300FF" />
@@ -111,9 +112,9 @@
                                     </svg>
                                 </a>
                             </div>
-                            <a href="https://sponsor.ncse.tw/" target="_blank"><img src="/static/img/NCSE.svg" class="ncse" alt="國雲網路 logo" /></a>
+                            <a href="https://sponsor.ncse.tw/" target="_blank" rel="noopener"><img src="/static/img/NCSE.svg" class="ncse" alt="國雲網路 logo" /></a>
                         </div>
-                        <a href="https://www.buymeacoffee.com/elvismao" class="buy-me-a-coffee" target="_blank"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a Red Bull&emoji=&slug=elvismao&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" /></a>
+                        <a href="https://www.buymeacoffee.com/elvismao" class="buy-me-a-coffee" target="_blank" rel="noopener"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a Red Bull&emoji=&slug=elvismao&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" alt="支持 emfont" /></a>
                     </div>
                 </div>
                 <div id="section-home">
@@ -151,7 +152,7 @@
                     <div>
                         <h1>登入</h1>
                         <p>查看你的網頁的統計資料</p>
-                        <a href="/login/github" class="btn"><img src="/static/img/GitHub.svg" alt="" />透過 GitHub 繼續</a>
+                        <a href="/login/github" class="btn"><img src="/static/img/GitHub.svg" alt="" aria-hidden="true" />透過 GitHub 繼續</a>
                     </div>
                 </div>
                 <div id="section-search"></div>
@@ -164,19 +165,19 @@
                             <h2>第一次使用 emfont？</h2>
                             <p>emfont 是一個免費的網頁字體 (Webfont) 服務，會自動壓縮與最佳化字型檔案。你可以 <a href="/docs/setup">閱讀文檔來快速入門</a>。</p>
                         </div>
-                        <footer>
-                            <img src="/static/img/logo/emfont-icon-gray.svg" alt="emfont" class="footer-logo" />
+                        <footer role="contentinfo">
+                            <img src="/static/img/logo/emfont-icon-gray.svg" alt="emfont 標誌" class="footer-logo" />
                             <p>文字是網站的靈魂，是思想的表達，更是美感的載體。然而中文字體因為檔案龐大、需要耗費大量流量，很少有免費中文字體的 webfont 服務。emfont 的誕生正是為了填補這一空白，整理了許多開源免費的字體。為開發者和設計師們提供一個優秀的中文字體解決方案。</p>
                             <a href="https://zeabur.com/?referralCode=Edit-Mr" class="footer-zeabur"><img src="/static/img/Zeabur-deploy.svg" alt="Deployed on Zeabur" /></a>
                         </footer>
                     </div>
                 </div>
             </section>
-            <header>
+            <header role="banner">
                 <label class="mobile-nav" for="mobileToggle"></label>
-                <a href="/"> <img src="/static/img/logo/emfont-logo-light.svg" alt="" id="logo" /></a>
+                <a href="/"> <img src="/static/img/logo/emfont-logo-light.svg" id="logo" height="44.8" width="250" alt="emfont 標誌" /></a>
                 <div class="header-container">
-                    <nav class="navigation">
+                    <nav class="navigation" aria-label="主導覽">
                         <ul>
                             <li>
                                 <a href="/fonts" id="font-button">字型</a>
@@ -194,11 +195,13 @@
                     </nav>
                     <h1>免費的中文 Webfont 服務</h1>
                 </div>
-                <div class="search-container fontPage-container">
+                <div class="search-container fontPage-container" role="search" aria-label="字型搜尋">
                     <a class="navigation" href="/"> <img src="/static/img/larr.svg" alt="" />字型 </a>
-                    <input type="text" id="search-input" placeholder="搜尋字型" />
+                    <label for="search-input" class="sr-only">搜尋字型</label>
+                    <input type="text" id="search-input" placeholder="搜尋字型" aria-label="搜尋字型" />
                     <h2>即時測試</h2>
-                    <textarea id="search-test" rows="3" placeholder="我個人認為義大利麵就應該拌42號混泥土。"></textarea>
+                    <label for="search-test" class="sr-only">即時測試文字</label>
+                    <textarea id="search-test" rows="3" placeholder="我個人認為義大利麵就應該拌42號混泥土。" aria-label="即時測試文字"></textarea>
                     <!--  <h2>支援語言</h2>
                     <div class="language">
                         <input type="checkbox" id="lang-sc" />
@@ -215,7 +218,8 @@
                     <h2>分類</h2>
                     <div class="category"></div>
                     <h2>家族</h2>
-                    <select id="family">
+                    <label for="family" class="sr-only">選擇家族</label>
+                    <select id="family" aria-label="家族選單">
                         <option value="all" selected>所有家族</option>
                     </select>
                     <h2>標籤</h2>
@@ -223,31 +227,23 @@
                 </div>
                 <div class="info-container fontPage-container"></div>
                 <div class="header-links header-links-social">
-                    <a href="https://dc.elvismao.com" target="_blank"><img src="/static/img/Discord.svg" alt="Discord" /></a>
-                    <a href="https://github.com/edit-Mr/emfont" target="_blank"><img src="/static/img/GitHub.svg" alt="GitHub" /></a>
-                    <a href="https://t.me/emfont" target="_blank"><img src="/static/img/Telegram.svg" alt="Telegram" /></a>
+                    <a href="https://dc.elvismao.com" target="_blank" rel="noopener"><img src="/static/img/Discord.svg" alt="Discord" width="25.6" height="25.6" /></a>
+                    <a href="https://github.com/edit-Mr/emfont" target="_blank" rel="noopener"><img src="/static/img/GitHub.svg" alt="GitHub" width="25.6" height="25.6" /></a>
+                    <a href="https://t.me/emfont" target="_blank" rel="noopener"><img src="/static/img/Telegram.svg" alt="Telegram" width="25.6" height="25.6" /></a>
                     <label for="lightmode" class="lightmodeLabel"></label>
                     <div class="header-links header-links-font">
-                        <a href="https://github.com/emfont/emfont/issues" target="_blank"><img src="/static/img/warning.svg" alt="意見回饋" /></a>
-                        <a href="https://github.com/emfont/emfont/" target="_blank"><img src="/static/img/GitHub.svg" alt="GitHub" /></a>
+                        <a href="https://github.com/emfont/emfont/issues" target="_blank" rel="noopener"><img src="/static/img/warning.svg" alt="意見回饋" /></a>
+                        <a href="https://github.com/emfont/emfont/" target="_blank" rel="noopener"><img src="/static/img/GitHub.svg" alt="GitHub" /></a>
                         <a href="/docs"><img src="/static/img/question.svg" alt="說明文件" /></a>
                         <label for="lightmode" class="lightmodeLabel"></label>
                     </div>
                 </div>
             </header>
-            <div id="bulletin">
-                <button id="closeBulletin"></button>
+            <div id="bulletin" role="region" aria-live="polite" aria-atomic="true">
+                <button id="closeBulletin" aria-label="關閉公告"></button>
                 <p></p>
             </div>
         </main>
         <script src="/static/script.js"></script>
-        <style>
-            @font-face {
-                font-family: "Tofu";
-                font-weight: 400;
-                font-display: swap;
-                src: url("https://font.emtech.cc/file/original-fonts/Tofu/PawFont.woff2") format("woff2");
-            }
-        </style>
     </body>
 </html>
