@@ -14,7 +14,7 @@ async function writeCssFile(font_id, weight, cssBlocks) {
 		console.error("❌ 寫檔失敗:", err);
 	}
 }
-async function make_css_code_point(font_id, weight, state) {
+async function generateCSSMap(font_id, weight, state) {
 	const { rows } = await db.query(
 		`select pack,string_agg("char" , '') AS chars  from static_fonts where $1 = any (families) group by pack`,
 		[font_id]
@@ -70,4 +70,4 @@ async function make_css_code_point(font_id, weight, state) {
 	return cssBlocks;
 }
 
-export { make_css_code_point };
+export { generateCSSMap };

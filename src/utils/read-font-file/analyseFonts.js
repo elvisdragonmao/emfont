@@ -1,6 +1,6 @@
 import { db } from "../../utils/database.js";
 import { ScriptFinder } from "../../utils/scriptFinder.js";
-import { get_glyphs } from "./all-glyphs.js";
+import { get_glyphs } from "./allGlyphs.js";
 const finder = new ScriptFinder();
 async function runFontForgeBatch(fontChars) {
 	const combinedText = fontChars.join("");

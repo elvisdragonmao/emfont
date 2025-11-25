@@ -1,6 +1,6 @@
-import { find_dynamic_font } from "./font_min.js"; // 極致壓縮字型
-import { find_static_font, give_static_font } from "./font_nomin.js"; // 靜態字型
-import { db } from "./utils/database.js";
+import { find_dynamic_font } from "./fontMin.js"; // 極致壓縮字型
+import { find_static_font, give_static_font } from "../../bootstrap/fontNoMin.js"; // 靜態字型
+import { db } from "../database.js";
 
 async function hashString(str) {
     const encoder = new TextEncoder();

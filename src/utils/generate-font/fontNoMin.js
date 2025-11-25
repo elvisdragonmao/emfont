@@ -1,5 +1,5 @@
 import { parentPort, workerData } from "worker_threads";
-import { generateFont } from "./make-font.js";
+import { generateFont } from "./makeFont.js";
 
 (async () => {
     try {

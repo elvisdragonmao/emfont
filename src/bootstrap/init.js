@@ -3,13 +3,13 @@ import path from "path";
 import { promisify } from "util";
 import dotenv from "dotenv";
 
-import { db, initDb } from "./utils/database.js";
-import { regenerateAllStaticFont } from "./font_nomin.js";
-import fetchMinio from "./fetch_minio.js";
-import { initR2, listFontsRecursive } from "./utils/r2.js";
-import { generateSitemap } from "./website/api.js";
-import { analyseFontsInBatches } from "./script/read-font-file/analyseFonts.js";
-import {make_css_code_point} from "./script/css-codpoint.js"
+import { db, initDb } from "../utils/database.js";
+import { regenerateAllStaticFont } from "./fontNoMin.js";
+import fetchMinio from "./fetchMinio.js";
+import { initR2, listFontsRecursive } from "../utils/r2.js";
+import { generateSitemap } from "../website/api.js";
+import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
+import {generateCSSMap} from "../website/generateCSSMap.js"
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -162,7 +162,7 @@ async function gen_css(state)
     for (const row of rows.rows) {
         for (const w of row.weights)
         {
-            await make_css_code_point(row.id, w,state);
+            await generateCSSMap(row.id, w,state);
 
         }
     }

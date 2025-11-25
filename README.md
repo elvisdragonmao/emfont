@@ -1,7 +1,7 @@
 <div align=center>
 
-<img src=src/public/static/img/logo/emfont-logo-light.svg#gh-dark-mode-only height=48px>
-<img src=src/public/static/img/logo/emfont-logo-dark.svg#gh-light-mode-only height=48px>
+<img src=src/public/assets/img/logo/emfont-logo-light.svg#gh-dark-mode-only height=48px>
+<img src=src/public/assets/img/logo/emfont-logo-dark.svg#gh-light-mode-only height=48px>
 
 <div style=height:1.5rem></div>
 

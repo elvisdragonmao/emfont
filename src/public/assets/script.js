@@ -260,7 +260,7 @@ const loadFontInfo = async fontId => {
     weightContainer.innerHTML = `<div class="font-item loading">
             <div class="font-title"><div class="weight">Regular 400</div></div>
             <div class="font-preview"></div></div>`;
-    container.innerHTML = `<div class=loading><a class="navigation" href="/fonts"> <img src="/static/img/larr.svg" alt="">字型</a>
+    container.innerHTML = `<div class=loading><a class="navigation" href="/fonts"> <img src="/assets/img/larr.svg" alt="">字型</a>
             <h1>字字字字字</h1><p>字字字字字</p>
             <div class="font-tags"><a class="tag">AA</a></div>
             <div class="font-actions">
@@ -278,7 +278,7 @@ const loadFontInfo = async fontId => {
     document.title = `${font.name.original} - emfont`;
     const sourceUrl = font.source.endsWith("/") ? font.source.slice(0, -1) : font.source;
     font.download = sourceUrl + (sourceUrl.startsWith("https://github.com/") ? "/releases/latest" : "");
-    container.innerHTML = `<a class="navigation" href="/fonts"> <img src="/static/img/larr.svg" alt="">字型 </a>
+    container.innerHTML = `<a class="navigation" href="/fonts"> <img src="/assets/img/larr.svg" alt="">字型 </a>
     <h1>${font.name.original}</h1>
     <p>${font.name.zh}</p>
     <div class="font-tags">
@@ -290,10 +290,10 @@ const loadFontInfo = async fontId => {
             <div id="copyClass"></div>
         </div>
         <a href="${font.source}" target="_blank">
-            <img src="/static/img/GitHub-400.svg" alt="GitHub">
+            <img src="/assets/img/GitHub-400.svg" alt="GitHub">
         </a>
         <a href="${font.download}" target="_blank">
-            <img src="/static/img/download.svg" alt="official-Download-link">
+            <img src="/assets/img/download.svg" alt="official-Download-link">
         </a>
     </div>
     <p class="font-description">${font.description}</p>
@@ -327,7 +327,7 @@ const loadFontInfo = async fontId => {
                 <div class="weight">${weightChart[weight] ? weightChart[weight][1] : "未知字重"} ${weight}</div>
                 <div>
                 <a href="https://font.emtech.cc/file/original-fonts/${fontId}/${weight}.${font.format}">
-                    <img src="/static/img/download.svg" alt="original-Download-link-from-emfont">
+                    <img src="/assets/img/download.svg" alt="original-Download-link-from-emfont">
                 </a></div>
             </div>
             <div class="font-preview emfont-${fontId}${min}-${weight}" contenteditable="true">${inputText}</div></div>`;

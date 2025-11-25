@@ -1,7 +1,7 @@
 //切割靜態字型檔（非極致壓縮）
 //依照字頻表分裝檔案 (開機時重切)
-import { db } from "./utils/database.js";
-import { readFontBuffer } from "./script/read-font-file/readFontBuffer.js";
+import { db } from "../utils/database.js";
+import { readFontBuffer } from "../utils/read-font-file/readFontBuffer.js";
 import { Worker } from "worker_threads";
 import { Redis } from "ioredis";
 import dotenv from "dotenv";
@@ -14,7 +14,7 @@ const cpuCount = os.cpus().length + parseInt(process.env.THREADS ?? 0);
 const runWorker = data => {
     try {
         return new Promise((resolve, reject) => {
-            const worker = new Worker(path.resolve(__dirname, "script/generate-font/font_nomin_worker.js"), {
+            const worker = new Worker(path.resolve(__dirname, "utils/generate-font/font_nomin_worker.js"), {
                 workerData: data
             });
 

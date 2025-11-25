@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { S3Client, ListObjectsV2Command, GetObjectCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
-import { promisify } from "util";
 
 export default async state => {
     const bucketName = process.env.MINIO_BUCKET;

@@ -6,7 +6,7 @@ import cors from "@fastify/cors";
 //import axios from "axios";
 
 // font
-import { initCheck } from "./init.js";
+import { initCheck } from "./bootstrap/init.js";
 import dotenv from "dotenv";
 
 // routes
