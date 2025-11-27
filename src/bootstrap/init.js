@@ -9,7 +9,7 @@ import fetchMinio from "./fetchMinio.js";
 import { initR2, listFontsRecursive } from "../utils/r2.js";
 import { generateSitemap } from "../website/api.js";
 import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
-import {generateCSSMap} from "../website/generateCSSMap.js"
+import { generateCSSMap } from "../website/generateCSSMap.js";
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -62,7 +62,7 @@ async function insertFontTypes() {
                     fontData.push({
                         fontName: one_font_family, // font id (folder name)
                         sample_file: `${itemPath}/${fontFile}`, //absolute font file path
-                        weights:weight//number , is sample font weitght
+                        weights: weight //number , is sample font weitght
                     });
                 }
                 fontWeightsMap.get(one_font_family).add(parseInt(weight));
@@ -156,14 +156,11 @@ async function get_bullet() {
         throw err;
     }
 }
-async function gen_css(state)
-{
-    const rows = await db.query(`select id, weights from font_family ;`)
+async function gen_css(state) {
+    const rows = await db.query(`select id, weights from font_family ;`);
     for (const row of rows.rows) {
-        for (const w of row.weights)
-        {
-            await generateCSSMap(row.id, w,state);
-
+        for (const w of row.weights) {
+            await generateCSSMap(row.id, w, state);
         }
     }
 }
@@ -176,18 +173,15 @@ async function initCheck(state) {
         // await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await fetchMinio(state);
         await initR2(state);
-        if (!process.env.SKIP_FONT_CHECK) await insertFontTypes();
+        if (state.FONT_CHECK) await insertFontTypes();
         else console.log("⚠️  跳過字體檢查");
-        if (state.SKIP_REGEN) {
-            console.log("⚠️  跳過靜態字體生成");
-        } else {
-            const have_gen_list = await get_generated_static_floders();
+        if (state.REGEN_STATIC) {
             state.bulletin = "📠 正在生成靜態字型，請稍後...";
-            await regenerateAllStaticFont(state, have_gen_list);
-        }
-        if ((state.REGEN_CSS)) {
-            //regenerated static font css map
-            await gen_css(state)
+            await regenerateAllStaticFont(state, await get_generated_static_floders());
+        } else console.log("⚠️  跳過靜態字體生成");
+        if (state.REGEN_CSS) {
+            console.log("🔄  重新生成靜態字型 CSS 映射表");
+            await gen_css(state);
         }
         const all_file_on_r2 = await listFontsRecursive(state);
         await sync_r2_and_db(state, all_file_on_r2);

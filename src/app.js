@@ -25,10 +25,10 @@ const port = process.env.PORT ?? 3000;
 state.baseURL = process.env.BASE_URL ?? `http://localhost:${port}`;
 if (process.env.MINIO_redirect == "true") state.static_font_base = state.baseURL + "/file/_generated";
 else state.static_font_base = "_generated";
-state.SKIP_REGEN = process.env.SKIP_REGEN === "true";
-state.REGEN_CSS = process.env.SKIP_CSS === "ture";
+state.REGEN_STATIC = process.env.REGEN_STATIC === "true";
+state.REGEN_CSS = process.env.REGEN_CSS === "true";
 state.R2_PUB_URL_BASE = process.env.R2_PUB_URL_BASE ?? "";
-
+state.FONT_CHECK = process.env.FONT_CHECK === "true";
 const user = {};
 const app = Fastify({ logger: { level: "error" }, ignoreTrailingSlash: true });
 //app.register(fastifyCookie);
