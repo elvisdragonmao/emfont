@@ -22,7 +22,9 @@ export default async state => {
         const data = await LOCAL_MINIO_CLIENT.send(new ListBucketsCommand({}));
         console.log(
             "🗃️  MinIO 連接成功，找到的 Bucket:",
-            data.Buckets.map(b => b.Name)
+            data.Buckets.map(b => b.Name),
+            "目標是",
+            process.env.MINIO_BUCKET
         );
         state.local = false;
     } catch (err) {
