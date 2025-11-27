@@ -158,7 +158,12 @@ async function get_bullet() {
 }
 async function gen_css(state) {
     const rows = await db.query(`select id, weights from font_family ;`);
+    if (!rows || rows.rowCount === 0) return console.warn("⚠️  無字型資料，無法生成 CSS 映射表");
     for (const row of rows.rows) {
+        if (!row.weights || row.weights.length === 0) {
+            console.warn(`⚠️  字型 ${row.id} 無支援字重，跳過 CSS 映射表生成`);
+            continue;
+        }
         for (const w of row.weights) {
             await generateCSSMap(row.id, w, state);
         }

@@ -15,10 +15,6 @@ export default async (app) => {
         decorateReply: false
     });
 
-    app.get("/auth/github", async (req, res) => {
-        return res.redirect(`https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`);
-    });
-
     app.get("/emfont.min.js", async (req, res) => {
         return res.redirect("/emfont.js");
     });

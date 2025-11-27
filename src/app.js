@@ -1,9 +1,6 @@
 // website
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-//import fastifyCookie from "@fastify/cookie";
-//import fastifyJwt from "@fastify/jwt";
-//import axios from "axios";
 
 // font
 import { initCheck } from "./bootstrap/init.js";
@@ -29,10 +26,8 @@ state.REGEN_STATIC = process.env.REGEN_STATIC === "true";
 state.REGEN_CSS = process.env.REGEN_CSS === "true";
 state.R2_PUB_URL_BASE = process.env.R2_PUB_URL_BASE ?? "";
 state.FONT_CHECK = process.env.FONT_CHECK === "true";
-const user = {};
+
 const app = Fastify({ logger: { level: "error" }, ignoreTrailingSlash: true });
-//app.register(fastifyCookie);
-//app.register(fastifyJwt, { secret: process.env.JWT_SECRET });
 
 app.register(cors, {
     origin: "*",
