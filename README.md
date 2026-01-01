@@ -42,7 +42,7 @@ body {
 請先安裝 [pnpm](https://pnpm.io/zh-TW/)、[Node.js](https://nodejs.org)、[Git](https://git-scm.com/)，並架設 [PostgreSQL](https://www.postgresql.org/) 資料庫。
 
 ```bash
-git clone https://github.com/Edit-Mr/emfont.git
+git clone https://github.com/emfont/emfont.git
 pnpm install
 ```
 
