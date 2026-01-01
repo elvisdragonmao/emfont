@@ -8,6 +8,11 @@ export default async state => {
         console.log("⏭️  沒有設定 MINIO_BUCKET 環境變數，跳過下載字型");
         return;
     }
+     if (process.env.DOWNLOAD_MINIO == "false") {
+        console.log("⏭️  DOWNLOAD_MINIO 設定為 false，跳過下載字型");
+        return;
+    }
+
     const LOCAL_MINIO_CLIENT = new S3Client({
         region: "auto",
         endpoint: process.env.MINIO_ENDPOINT,
