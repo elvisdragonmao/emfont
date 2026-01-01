@@ -20,7 +20,7 @@ async function find_dynamic_font({ word_hash, font_id, font_family, font_weight,
     let localPath = path.join(__dirname, "_data", "_generated", little_font_package);
     file_exist = fs.existsSync(localPath);
     // }
-    let file_url = `${state.baseURL}/file/_generated/${little_font_package}`; //預設是本地位置，如果頻繁使用的就會在之後改成 r2 連結
+    let file_url = `${state.baseURL}/_generated/${little_font_package}`; //預設是本地位置，如果頻繁使用的就會在之後改成 r2 連結
     if (file_exist) {
         //+回傳字型檔
         try {
@@ -91,7 +91,7 @@ async function find_dynamic_font({ word_hash, font_id, font_family, font_weight,
             }
             return {
                 status: "success",
-                location: `${state.baseURL}/file/_generated/${generated.location}`
+                location: `${state.baseURL}/_generated/${generated.location}`
             };
         } catch (err) {
             console.error("字體生成失敗:", err);
