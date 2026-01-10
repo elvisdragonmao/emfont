@@ -10,11 +10,11 @@ WORKDIR /app
 
 COPY . .
 
-# RUN \
-# rm -rf /var/lib/apt/lists/* && \
-# corepack enable && corepack prepare pnpm@latest --activate
+RUN \
+rm -rf /var/lib/apt/lists/* && \
+corepack enable && corepack prepare pnpm@latest --activate
 
-# RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # install minio client
 RUN \
