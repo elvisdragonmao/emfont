@@ -1,0 +1,50 @@
+{
+    auto_https off
+}
+
+:80 {
+  @doc path /doc*
+  reverse_proxy @doc doc.zeabur.internal:8080
+
+  @_next path /_next*
+  reverse_proxy @_next doc.zeabur.internal:8080
+
+  @mcp path /mcp*
+  reverse_proxy @mcp mcp.zeabur.internal:8080
+
+  @file path_regexp file ^/file/(.*)$
+  handle @file {
+    rewrite * /zeabur/{http.regexp.file.1}
+    header Cache-Control "public, max-age=2592000, immutable"
+    reverse_proxy minio.zeabur.internal:9000
+  }
+
+  @cssnum path_regexp cssnum ^/css/([^/]+)/([0-9]+)(?:\.css)?$
+  handle @cssnum {
+    rewrite * /zeabur/css/{http.regexp.cssnum.1}/{http.regexp.cssnum.2}.css
+    header Cache-Control "public, max-age=2592000, immutable"
+    reverse_proxy minio.zeabur.internal:9000
+  }
+
+ @generated path /_generated*
+  handle @generated {
+    header Cache-Control "public, max-age=31536000, immutable"
+    reverse_proxy emfont.zeabur.internal:8080 error.zeabur.internal:8080 {
+      lb_policy first
+      lb_try_duration 1s
+      fail_duration 30s
+      transport http {
+        dial_timeout 500ms
+      }
+    }
+  }
+
+  reverse_proxy emfont.zeabur.internal:8080 error.zeabur.internal:8080 {
+    lb_policy first
+    lb_try_duration 1s
+    fail_duration 30s
+    transport http {
+      dial_timeout 500ms
+    }
+  }
+}
