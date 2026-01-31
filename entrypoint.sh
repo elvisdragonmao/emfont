@@ -3,6 +3,12 @@ set -eu
 
 echo "Try to connect to MinIO server at ${MINIO_ENDPOINT-} ..."
 
+# Defaults (allow env override)
+: "${DOWNLOAD_MINIO:=true}"
+: "${LOCAL_TEST:=false}"
+: "${MC_CONFIG_DIR:=/root/.mc/}"
+export MC_CONFIG_DIR
+
 # If required env missing -> skip
 if [ -z "${MINIO_USERNAME-}" ] || \
    [ -z "${MINIO_PASSWORD-}" ] || \

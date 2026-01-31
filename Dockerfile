@@ -15,8 +15,6 @@ FROM node:22-slim AS downloader
 
 WORKDIR /app
 
-COPY . .
-
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends ca-certificates curl; \
