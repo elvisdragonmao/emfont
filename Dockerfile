@@ -6,7 +6,7 @@
 # insatll dependencies in a separate layer
 FROM node:22-slim AS deps
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
@@ -17,19 +17,15 @@ WORKDIR /app
 
 COPY . .
 
-RUN \
-    apt update && \
-    apt install -y --no-install-recommends curl ca-certificates
-# install mc
-RUN curl -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc \
- && chmod +x /usr/local/bin/mc \
- && mc --version
-FROM node:22-slim AS runner
-COPY --from=downloader /usr/local/bin/mc /usr/local/bin/mc
-WORKDIR /app
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates curl; \
+    rm -rf /var/lib/apt/lists/*; \
+    curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc; \
+    chmod +x /usr/local/bin/mc; \
+    mc --version
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
 
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
