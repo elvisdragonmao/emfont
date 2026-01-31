@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 
 import { db, initDb } from "../utils/database.js";
 import { regenerateAllStaticFont } from "./fontNoMin.js";
-import fetchMinio from "./fetchMinio.js";
 import { initR2, listFontsRecursive } from "../utils/r2.js";
 import { generateSitemap } from "../website/api.js";
 import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
@@ -176,7 +175,6 @@ async function initCheck(state) {
         if (!(await initDb())) return false;
         await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
         // await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
-        await fetchMinio(state);
         await initR2(state);
         if (state.FONT_CHECK) await insertFontTypes();
         else console.log("⚠️  跳過字體檢查");

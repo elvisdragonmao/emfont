@@ -5,3 +5,7 @@ Dockerfile
 .git
 *.pyc
 __pycache__/
+src/_data/_generated
+src/_data/css
+src/_data/original-fonts
+.env

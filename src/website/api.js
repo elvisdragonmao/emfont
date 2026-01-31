@@ -51,7 +51,7 @@ const registerApi = async (app, state) => {
             if (req.params.font === "") {
                 return res.status(404).send("/* Please enter font name */");
             }
-            const font_id = req.params.font;
+            const font_id = req.params.font.replace(/\.css$/, "");
             req.body = {};
             req.body.words = req.query.words?.trim() ?? null;
             req.body.weight = req.query.weight?.trim() ?? null;

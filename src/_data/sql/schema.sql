@@ -1,5 +1,26 @@
 -- 創建表格
 
+-- 字型展示句子
+CREATE TABLE IF NOT EXISTS demo_sentence(
+    sid SERIAL PRIMARY KEY,
+    content text,
+    language VARCHAR(10) -- 語言標籤備註，例如 zh-hant, en, fr,jp ...
+);
+-- 填充預設句子
+INSERT INTO demo_sentence (sid, content, language)
+SELECT
+    1,
+    '我個人認為義大利麵就應該拌 42 號混泥土',
+    'zh-hant'
+WHERE NOT EXISTS (
+    SELECT 1 FROM demo_sentence WHERE sid = 1
+);
+
+SELECT setval(
+  pg_get_serial_sequence('demo_sentence', 'sid'),
+  (SELECT MAX(sid) FROM demo_sentence)
+);
+
 -- 收錄字型
 CREATE TABLE IF NOT EXISTS font_family (
     id TEXT PRIMARY KEY, -- 無空格英文簡寫
@@ -21,12 +42,7 @@ CREATE TABLE IF NOT EXISTS font_family (
     CONSTRAINT valid_category CHECK (category IN ('serif', 'sans-serif', 'monospace', 'cursive', 'fantasy')),
     CONSTRAINT  fk_demo_content FOREIGN KEY (demo_content_id) REFERENCES demo_sentence(sid) ON DELETE RESTRICT
 );
--- 字型展示句子
-CREATE TABLE IF NOT EXISTS demo_sentence(
-    sid SERIAL PRIMARY KEY,
-    content text,
-    language VARCHAR(10) -- 語言標籤備註，例如 zh-hant, en, fr,jp ...
-);
+
 CREATE SEQUENCE IF NOT EXISTS custom_bullet_seq START WITH 100;
 
 CREATE TABLE IF NOT EXISTS version(
