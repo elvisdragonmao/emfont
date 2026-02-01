@@ -47,8 +47,11 @@ services:
             echo 'Done.';
             "
     emfont-nodejs:
+        image: emfont:latest # Ensure you have built this image using the Dockerfile. Now I haven't push image to public respository.
         ports:
-            - "8080"
+            - "${PORT}:${PORT}"
+        env_file:
+            - .env
         depends_on:
             - postgres
             - redis
