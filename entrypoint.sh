@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-echo "Try to connect to MinIO server at ${MINIO_ENDPOINT-} ..."
+echo "Try to connect to MinIO server at ${MINIO_ENDPOINT} ..."
 
 # Defaults (allow env override)
 : "${SYNC_WITH_MINIO:=false}"
