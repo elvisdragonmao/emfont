@@ -33,7 +33,7 @@ services:
             interval: 1s
             timeout: 10s
             retries: 5
-    emfont-nodejs:
+    emfont-server:
         image: emfont:latest # Ensure you have built this image using the Dockerfile. Now I haven't push image to public respository.
         ports:
             - "${PORT}:${PORT}"
@@ -46,3 +46,10 @@ services:
                 condition: service_started
             minio:
                 condition: service_healthy
+    prometheus:
+        image: emfont-prometheus:latest
+        ports:
+            - "9090:9090"
+        environment:
+            EMFONT_METRICS_HOST: emfont-server
+            EMFONT_METRICS_PORT: 3000

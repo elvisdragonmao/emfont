@@ -29,6 +29,7 @@
         "cors": "^2.8.5",
         "dotenv": "^16.6.1",
         "fastify": "^5.4.0",
+        "fastify-metrics": "^12.1.0",
         "fontkit": "^2.0.4",
         "ioredis": "^5.6.1",
         "pg": "^8.16.3",

@@ -1,7 +1,10 @@
 import { readFileSync } from "fs";
 import { db } from "../utils/database.js";
+import metricsPlugin from "fastify-metrics"
+//prometheus
 import { join } from "path";
 // Read the HTML file in the same directory
+
 
 export default async app => {
     const template = readFileSync(`${import.meta.dirname}/website.html`, "utf8");
@@ -51,6 +54,9 @@ export default async app => {
             res.status(500).send("Database query failed");
         }
     });
+    
+    //prometheus route
+    await app.register(metricsPlugin, { endpoint: '/metrics' });
 
     app.get("/login", async (req, res) => {
         return renderSite(res, { page: "login", title: "登入 - emfont" });
