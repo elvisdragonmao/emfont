@@ -32,16 +32,20 @@ const envToLogger = {
     transport: {
       target: 'pino-pretty',
       options: {
-        translateTime: 'HH:MM:ss Z',
+        
+      translateTime: 'SYS:yyyy-mm-dd HH:MM:ss Z',
         ignore: 'pid,hostname',
+        colorize: true
       },
-    },
+    }
   },
-  production: true,
-  test: false,
+    production: true,
+    test: false,
+
 }
 const app = Fastify({
     //todo: 把 logger 改成環境變數控制
+    disableRequestLogging: true,
   logger: envToLogger['development'] ?? true // defaults to true if no entry matches in the map
 })
 // const app = Fastify({ logger: { level: "info" ,prettyPrint: true,}, ignoreTrailingSlash: true });
@@ -60,9 +64,7 @@ await registerStatic(app);
 // Start server
 const start = async () => {
     try {
-        app.listen({ port: port, host: "0.0.0.0" }, () => {
-            app.log.info(`🔗 網頁啟動在 ${state.baseURL}`, { service: "emfont", phase: "startup" });
-        });
+        app.listen({ port: port, host: "0.0.0.0" });
     } catch (err) {
         app.log.error(err);
         process.exit(1);
@@ -77,9 +79,9 @@ app.ready().then(async () => {
     await generateEmfontJS(state);
 
     if (state.alive) {
-        app.log.info("🎉 初始化成功，服務已啟動");
+        app.log.info("🎉 initialize success. emfont is up!");
     } else {
-        app.log.error("🤨 初始化失敗，網頁仍在運行");
+        app.log.fatal("🤨 initialize failed. But web page is still running");
         if (!state.bulletin) state.bulletin += "<br>😭emfont 啟動失敗，暫時無法使用。<br>";
     }
 });

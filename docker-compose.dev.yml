@@ -1,5 +1,10 @@
 version: "5.0.2"
 name: emfont-dev
+
+x-common-env: &common-env
+  TZ: Asia/Taipei
+# for logging timezone correctly display. You can change it to your local timezone.
+           
 services:
     postgres:
         image: postgres:16
@@ -39,6 +44,8 @@ services:
             - "${PORT}:${PORT}"
         env_file:
             - .env
+        environment:
+            <<: *common-env
         depends_on:
             postgres:
                 condition: service_started
@@ -53,3 +60,4 @@ services:
         environment:
             EMFONT_METRICS_HOST: emfont-server
             EMFONT_METRICS_PORT: 3000
+            <<: *common-env
