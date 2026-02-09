@@ -1,8 +1,7 @@
 // website
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-
-// font
+import {loggerStorage, setBaseLogger} from "./utils/logger.js"// font
 import { initCheck } from "./bootstrap/init.js";
 import dotenv from "dotenv";
 
@@ -27,27 +26,31 @@ state.REGEN_CSS = process.env.REGEN_CSS === "true";
 state.R2_PUB_URL_BASE = process.env.R2_PUB_URL_BASE ?? "";
 state.FONT_CHECK = process.env.FONT_CHECK === "true";
 
-const envToLogger = {
-  development: {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        
-      translateTime: 'SYS:yyyy-mm-dd HH:MM:ss Z',
-        ignore: 'pid,hostname',
-        colorize: true
-      },
-    }
-  },
-    production: true,
-    test: false,
 
+function getLoggerConfig() {
+  const envToLogger = {
+    development: {
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          translateTime: 'SYS:yyyy-mm-dd HH:MM:ss Z',
+          ignore: 'pid,hostname',
+          colorize: true,
+        },
+      },
+    },
+    production: true, // Fastify default pino
+    test: false,      // disable logging
+  };
+
+  return envToLogger[process.env.NODE_ENV] ?? true;
 }
 const app = Fastify({
-    //todo: 把 logger 改成環境變數控制
-    disableRequestLogging: true,
-  logger: envToLogger['development'] ?? true // defaults to true if no entry matches in the map
-})
+  disableRequestLogging: true,
+  logger: getLoggerConfig(),
+});
+
+setBaseLogger(app.log);
 // const app = Fastify({ logger: { level: "info" ,prettyPrint: true,}, ignoreTrailingSlash: true });
 
 app.register(cors, {
@@ -84,4 +87,7 @@ app.ready().then(async () => {
         app.log.fatal("🤨 initialize failed. But web page is still running");
         if (!state.bulletin) state.bulletin += "<br>😭emfont 啟動失敗，暫時無法使用。<br>";
     }
+});
+app.addHook('onRequest', (request, _reply, done) => {
+  loggerStorage.run(request.log, done);
 });

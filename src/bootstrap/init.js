@@ -9,6 +9,7 @@ import { initR2, listFontsRecursive } from "../utils/r2.js";
 import { generateSitemap } from "../website/api.js";
 import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
 import { generateCSSMap } from "../website/generateCSSMap.js";
+import { logger } from "../utils/logger.js";
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -29,14 +30,14 @@ async function executeSQLFile(filePath) {
 }
 
 //check database
-async function insertFontTypes(log) {
+async function insertFontTypes() {
     try {
         if (!fs.existsSync(sotrge_original_fontsDir)) fs.mkdirSync(sotrge_original_fontsDir, { recursive: true });
         if (!fs.existsSync(sotrge_generated_fontsDir)) fs.mkdirSync(sotrge_generated_fontsDir, { recursive: true });
         // 取得 `sotrge_original_fontsDir` 下的所有子項目
         const ALL_FONTS_dir = await readdir(sotrge_original_fontsDir);
         let fontData = []; // include arbitrarily font weight in specis font family folder. each font family can exist one record in this array
-        log.info(`🗃️  找到 ${ALL_FONTS_dir.join(", ")}`);
+        logger.debug(`🗃️  找到 ${ALL_FONTS_dir.join(", ")}`);
         let skipped = [];
         const fontWeightsMap = new Map(); //紀錄字型名稱＝> 存在的字重
         let file_count = 0;
@@ -69,8 +70,8 @@ async function insertFontTypes(log) {
             }
         }
 
-        log.info(`📦 收錄 ${file_count} 個字體`);
-        if (skipped.length > 0) log.warn(`⏭️ 已跳過: ${skipped.join(", ")}`);
+        logger.debug(`📦 收錄 ${file_count} 個字體`);
+        if (skipped.length > 0) logger.warn(`⏭️ 已跳過: ${skipped.join(", ")}`);
         if (fontData.length === 0) throw new Error("🔍 沒有找到任何字體");
 
         // 把所有 fontName 一次查詢（避免每次都查一次 DB）
@@ -81,7 +82,7 @@ async function insertFontTypes(log) {
 
         for (const [fontName, weightsSet] of fontWeightsMap.entries()) {
             if (!validFontIds.has(fontName)) {
-                log.warn(`❔ 資料庫不認識: ${fontName}`);
+                logger.warn(`❔ 資料庫不認識: ${fontName}`);
                 fontData = fontData.filter(font => font.fontName !== fontName);
                 continue;
             }
@@ -91,9 +92,9 @@ async function insertFontTypes(log) {
             await db.query(`UPDATE font_family SET weights = $1 WHERE id = $2`, [weights, fontName]);
         }
         await analyseFontsInBatches(fontData);
-        log.info("✅ 字體資料已更新");
+        logger.info("✅ 字體資料已更新");
     } catch (error) {
-        log.error(`Error when check font file`, error);
+        logger.error(`Error when check font file`, error);
         throw error;
     }
 }
@@ -140,6 +141,7 @@ async function sync_r2_and_db(state, fontRecords) {
         const values = fontRecords.flatMap(record => [record.prefix, record.fileName, record.lastModified]);
         await db.query(query, values);
         console.log("✅ R2 、資料庫同步成功");
+        
     } catch (err) {
         console.error("同步資料庫、r2 時發生錯誤：", err);
         throw err;
@@ -177,13 +179,13 @@ async function initCheck(state, log) {
         // await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
         await initR2(state);
         if (state.FONT_CHECK) await insertFontTypes(log);
-        else log.info("⚠️  跳過字體檢查");
+        else logger.info("⚠️  跳過字體檢查");
         if (state.REGEN_STATIC) {
             state.bulletin = "📠 正在生成靜態字型，請稍後...";
             await regenerateAllStaticFont(state, await get_generated_static_floders());
-        } else log.info("⚠️  跳過靜態字體生成");
+        } else logger.info("⚠️  跳過靜態字體生成");
         if (state.REGEN_CSS) {
-            log.info("🔄  重新生成靜態字型 CSS 映射表");
+            logger.info("🔄  重新生成靜態字型 CSS 映射表");
             await gen_css(state);
         }
         const all_file_on_r2 = await listFontsRecursive(state);
@@ -192,10 +194,10 @@ async function initCheck(state, log) {
         state.static_font_version = await get_bullet(state);
         state.alive = true;
         state.bulletin = originalBulletin;
-        log.info("✅ 初始化完成");
+        logger.info("✅ 初始化完成");
         return true;
     } catch (err) {
-        log.error("❌ 初始化失敗:", err);
+        logger.error("❌ 初始化失敗:", err);
         return false;
     }
 }
