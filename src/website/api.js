@@ -3,6 +3,8 @@ import { db } from "../utils/database.js";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { Redis } from "ioredis";
+import {logger} from "../utils/logger.js";
+
 const redis = new Redis(process.env.REDIS_URL);
 const generateSitemap = async state => {
 	const { rows } = await db.query(`SELECT id FROM font_family`);
@@ -43,10 +45,11 @@ const registerApi = async (app, state) => {
 					.status(404)
 					.send({ status: "failed", message: "Font not found" });
 			}
+      logger.debug(`Received font generation request for font: ${req.params.font} with body: ${JSON.stringify(req.body)}`);
 			const response = await genFont(req, res, state);
 			res.status(response.code).send(response);
 		} catch (error) {
-			console.error("字體請求錯誤: ", error.stack);
+      logger.error(`字體請求錯誤: ${error.message}`);
 			res.status(500).send({ status: "failed", message: error.message });
 		}
 	});
