@@ -26,7 +26,29 @@ async function executeSQLFile(filePath) {
 		await db.query(sql);
 		logger.info(`✅ SQL 執行成功: ${filePath}`);
 	} catch (err) {
-		logger.error(`❌ SQL 執行失敗: ${filePath}`, err);
+		const pos = Number(err.position);
+
+		let context = null;
+		if (!Number.isNaN(pos)) {
+			const start = Math.max(0, pos - 120);
+			const end = Math.min(sql.length, pos + 120);
+			context = sql.slice(start, end);
+		}
+
+		logger.error(
+			{
+				filePath,
+				message: err.message,
+				code: err.code,
+				detail: err.detail,
+				where: err.where,
+				position: err.position,
+				context,
+			},
+			"SQL failed",
+		);
+
+		throw err;
 	}
 }
 
