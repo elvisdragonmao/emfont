@@ -24,8 +24,9 @@ async function executeSQLFile(filePath) {
 	const sql = await fs.promises.readFile(filePath, "utf-8");
 	try {
 		await db.query(sql);
+		logger.info(`✅ SQL 執行成功: ${filePath}`);
 	} catch (err) {
-		throw new Error(`❌ SQL 執行失敗: ${filePath}`);
+		logger.error(`❌ SQL 執行失敗: ${filePath}`, err);
 	}
 }
 
