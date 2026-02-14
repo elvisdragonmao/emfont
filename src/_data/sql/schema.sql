@@ -24,7 +24,7 @@ SELECT setval(
 -- 收錄字型
 CREATE TABLE IF NOT EXISTS font_family (
     id TEXT PRIMARY KEY, -- 無空格英文簡寫
-    name TEXT UNIQUE,-- 通用名稱（英文）
+    name TEXT UNIQUE NOT NULL,-- 通用名稱（英文）
     name_zh TEXT DEFAULT NULL,-- 中文名稱（繁體中文）
     name_en TEXT DEFAULT NULL,-- 英文名稱
     weights SMALLINT[] DEFAULT NULL,
