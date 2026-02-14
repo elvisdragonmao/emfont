@@ -144,3 +144,4 @@ src/_data/original-fonts/**
 !src/_data/original-fonts/.gitkeep
 .prettierrc
 src/_data/**
+!src/_data/sql/

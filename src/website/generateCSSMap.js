@@ -1,6 +1,7 @@
 import { db } from "../utils/database.js";
 import path from "path";
 import { promises as fs } from "fs";
+import { logger } from "../utils/logger.js";
 async function writeCssFile(font_id, weight, cssBlocks) {
 	const __dirname = import.meta.dirname;
 	const put_folder = `../_data/css/${font_id}`;
@@ -9,19 +10,19 @@ async function writeCssFile(font_id, weight, cssBlocks) {
 	const fileName = `${destFolder}/${weight}.css`;
 	try {
 		await fs.writeFile(fileName, cssBlocks, "utf8");
-		console.log(`✅ 已產生 CSS 檔案: ${fileName}`);
+		logger.info(`✅ 已產生 CSS 檔案: ${fileName}`);
 	} catch (err) {
-		console.error("❌ 寫檔失敗:", err);
+		logger.error("❌ CSS 寫檔失敗:", err);
 	}
 }
 async function generateCSSMap(font_id, weight, state) {
 	const { rows } = await db.query(
 		`select pack,string_agg("char" , '') AS chars  from static_fonts where $1 = any (families) group by pack`,
-		[font_id]
+		[font_id],
 	);
 	// from char to unicode-range
-	const packs = rows.map((row) => {
-		const codePoints = Array.from(row.chars).map((ch) => ch.codePointAt(0));
+	const packs = rows.map(row => {
+		const codePoints = Array.from(row.chars).map(ch => ch.codePointAt(0));
 		codePoints.sort((a, b) => a - b);
 
 		const ranges = [];
@@ -42,9 +43,7 @@ async function generateCSSMap(font_id, weight, state) {
 		ranges.push([start, prev]);
 		// 格式化成 CSS 的 unicode-range
 		const unicodeRanges = ranges.map(([a, b]) =>
-			a === b
-				? `U+${a.toString(16)}`
-				: `U+${a.toString(16)}-${b.toString(16)}`
+			a === b ? `U+${a.toString(16)}` : `U+${a.toString(16)}-${b.toString(16)}`,
 		);
 
 		return {
@@ -54,7 +53,7 @@ async function generateCSSMap(font_id, weight, state) {
 	});
 	// 產生 CSS
 	// src: url.
-	const cssBlocks = packs.map((p) => {
+	const cssBlocks = packs.map(p => {
 		const paddedPack = String(p.pack).padStart(3, "0");
 		return `@font-face {
     font-family: '${font_id}';

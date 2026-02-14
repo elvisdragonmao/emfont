@@ -5,7 +5,8 @@ Dockerfile
 .git
 *.pyc
 __pycache__/
-src/_data/_generated
+# ignore file in _generated, but not the folder itself. Because this path is required for font caching.
+src/_data/_generated/*
 src/_data/css
 src/_data/original-fonts
 .env

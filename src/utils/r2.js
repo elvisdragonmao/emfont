@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import {logger} from "./logger.js";
 import dotenv from "dotenv";
 import fs from "fs";
 
@@ -20,7 +21,7 @@ const initR2 = async state => {
     try {
         if (!process.env.R2_ENDPOINT || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !process.env.R2_BUCKET_NAME || !process.env.R2_PUB_URL_BASE) {
             state.r2 = false;
-            console.log("🏠 R2 沒有設定，會在本地提供字體");
+            logger.warn("R2 沒有設定，會在本地提供字體。請確認以下環境變數是否已設定： R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUB_URL_BASE");
             return;
         }
         // 檢查 R2 連線
@@ -30,10 +31,11 @@ const initR2 = async state => {
             Body: "test"
         };
         await s3Client.send(new PutObjectCommand(params));
-        console.log("✅ R2 測試成功");
+        logger.info("R2 connect successfully")
         state.r2 = true;
     } catch (error) {
         console.log("❌ R2 測試失敗:", error);
+        // logger.error("")
     }
 };
 

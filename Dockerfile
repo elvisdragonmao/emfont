@@ -17,7 +17,7 @@ WORKDIR /app
 
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ca-certificates curl; \
+    apt-get install -y --no-install-recommends ca-certificates curl unzip; \
     rm -rf /var/lib/apt/lists/*; \
     curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc; \
     chmod +x /usr/local/bin/mc; \
