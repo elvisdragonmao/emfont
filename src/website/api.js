@@ -46,7 +46,7 @@ const registerApi = async (app, state) => {
 					.send({ status: "failed", message: "Font not found" });
 			}
 			logger.debug(
-				`Received font generation request for font: ${req.params.font} with body: ${JSON.stringify(req.body)}`,
+				`/g/:font route 收到字型請求: ${req.params.font} with body: ${JSON.stringify(req.body)}`,
 			);
 			const response = await genFont(req, res, state);
 			res.status(response.code).send(response);

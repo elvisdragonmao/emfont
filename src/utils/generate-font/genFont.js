@@ -23,20 +23,15 @@ async function hashString(str) {
 //   })();
 
 ///g/:font 路由 呼叫的函式。會根據前端需要的字集，回傳字型檔
-//靜態字型檔 solution
-async function checkFormat(WORD_SET, FONT_NAME) {
-	//return request {FONT_NAME}'s id in database(if exist)
-	if (!WORD_SET) {
-		throw new Error("words_set are required"); // 使用 throw 讓 genFont 捕捉
-	}
-	const result = await db.query("SELECT id FROM font_family WHERE id = $1", [
-		FONT_NAME,
-	]);
-	if (result.rowCount === 0) {
-		return false;
-	}
-	const font_id = result.rows[0].id; // Extracting the id value
-	return font_id; // 如果沒問題，就回傳字型編號
+
+async function getFontFamilyMeta(fontId) {
+	const { rows } = await db.query(
+		`SELECT id, weights, family, name
+     FROM font_family
+     WHERE id = $1`,
+		[fontId],
+	);
+	return rows[0] || null;
 }
 
 export const genFont = async (req, res, state) => {
@@ -51,11 +46,15 @@ export const genFont = async (req, res, state) => {
 			};
 		}
 		//req_word_set,min_flag,font_weight 有可能是 undefined
+		//req.body.words 是使用者請求的字集
 		const req_word_set = req.body.words;
 		const min_flag = req.body.min;
 		const req_source = req.headers.referer || req.headers.origin || "unknown"; //請求網域
 		const font_family_name = req.params.font;
-		const font_id = await checkFormat(req_word_set, font_family_name);
+		let font_weight = req.body.weight;
+		const meta = await getFontFamilyMeta(font_family_name);
+		const font_id = meta ? meta.id : null;
+
 		if (!font_id) {
 			return {
 				code: 404,
@@ -63,41 +62,26 @@ export const genFont = async (req, res, state) => {
 				message: `${font_family_name} doesn't exist`,
 			};
 		}
-		//req.body.word 是使用者請求的字集
 		//請求字重
-		let font_weight = req.body.weight;
-		const { rows } = await db.query(
-			`
-                SELECT id, name, name_zh, name_en, weights, category, tags, family,
-                       version, license, repo_url AS source, authors, description
-                FROM font_family
-                WHERE id = $1
-            `,
-			[font_id],
-		);
-		if (rows.length === 0)
-			return {
-				code: 404,
-				status: "failed",
-				message: "Font not found",
-			};
-		const allWeights = rows[0].weights;
+		const allWeights = meta.weights;
 		if (allWeights.length === 0)
 			return {
 				code: 503,
 				status: "failed",
 				message: "Font missing, temporary can't be use.",
 			};
+		//如果請求的字重不存在，則選擇最接近的字重
 		if (!allWeights.includes(font_weight)) {
 			const target = !font_weight || font_weight == "null" ? 400 : font_weight;
 			font_weight = allWeights.reduce((prev, curr) => {
 				return Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev;
 			});
 		}
-		await db.query(
-			`INSERT INTO usage_log (family_id ,weight,referer,text,min) VALUES ($1,$2,$3,$4,$5)`,
-			[font_id, font_weight, req_source, req_word_set, min_flag],
-		);
+		//正在規劃重構，改用 prometheus 監控請求量
+		// await db.query(
+		// 	`INSERT INTO usage_log (family_id ,weight,referer,text,min) VALUES ($1,$2,$3,$4,$5)`,
+		// 	[font_id, font_weight, req_source, req_word_set, min_flag],
+		// );
 		if (min_flag || process.env.FORCE_MIN == "true") {
 			const summery = {
 				// This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.

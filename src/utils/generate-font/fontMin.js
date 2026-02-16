@@ -38,11 +38,11 @@ async function find_dynamic_font({
 	if (file_exist) {
 		//+回傳字型檔
 		try {
-			await db.query(
-				`INSERT INTO dynamic_fonts (hash, family_id,weight) VALUES ($1, $2,$3) ON CONFLICT (hash) DO 
-                            UPDATE SET last_use = NOW() ,use_count=dynamic_fonts.use_count+1`,
-				[word_hash, font_id, font_weight],
-			);
+			// await db.query(
+			// 	`INSERT INTO dynamic_fonts (hash, family_id,weight) VALUES ($1, $2,$3) ON CONFLICT (hash) DO
+			//                 UPDATE SET last_use = NOW() ,use_count=dynamic_fonts.use_count+1`,
+			// 	[word_hash, font_id, font_weight],
+			// );
 			const upload_r2_yet = //查詢字型包是否使用超過 20 次且尚未上傳到 r2
 				(
 					await db.query(
@@ -60,7 +60,7 @@ async function find_dynamic_font({
 						[word_hash, little_font_package],
 					)
 				).rows[0];
-			if (upload_r2_yet.more_than_stander && state.r2) {
+			if (state.r2 && upload_r2_yet.more_than_stander) {
 				//足夠頻繁使用但還沒上傳 r2
 				file_url = await uploadToR2(localPath, little_font_package);
 				await db.query(
@@ -71,7 +71,7 @@ async function find_dynamic_font({
 				file_url = `${state.R2_PUB_URL_BASE}/fonts/${little_font_package}`;
 			}
 		} catch (err) {
-			console.error("❌ 資料庫紀錄失敗", err);
+			logger.error("資料庫紀錄失敗", err);
 		}
 		logger.debug(
 			`動態字型檔 ${little_font_package} 已存在，直接回傳 URL 快取: ${file_url}`,
@@ -84,36 +84,10 @@ async function find_dynamic_font({
 	//如果不存在，則在本地生成字型檔直接回傳路徑
 	else {
 		try {
-			const { rows } = await db.query(
-				`SELECT weights FROM font_family WHERE id = $1`,
-				[font_id],
-			);
-			if (rows.length === 0)
-				return {
-					code: 404,
-					status: "failed",
-					message: "Font not found",
-				};
-			let allWeights = rows[0].weights;
-			if (allWeights.rowCount === 0) {
-				return {
-					code: 404,
-					status: "failed",
-					message: "No weights available for this font",
-				};
-			} else if (!allWeights.includes(font_weight)) {
-				// calculate the closest weight
-				font_weight = allWeights.reduce((prev, curr) =>
-					Math.abs(curr - font_weight) < Math.abs(prev - font_weight)
-						? curr
-						: prev,
-				);
-			}
-
-			await db.query(
-				"INSERT INTO dynamic_fonts (hash, family_id,weight) VALUES ($1, $2,$3) ON CONFLICT (hash) DO NOTHING",
-				[word_hash, font_id, font_weight],
-			);
+			// await db.query(
+			// 	"INSERT INTO dynamic_fonts (hash, family_id,weight) VALUES ($1, $2,$3) ON CONFLICT (hash) DO NOTHING",
+			// 	[word_hash, font_id, font_weight],
+			// );
 			//+生成字型檔
 			let generated = await generateFont(
 				font_family,
@@ -129,7 +103,7 @@ async function find_dynamic_font({
 				location: `${state.baseURL}/_generated/${generated.location}`,
 			};
 		} catch (err) {
-			console.error("字體生成失敗:", err);
+			logger.error(`字體生成失敗: ${err.message}`);
 			throw new Error("Font generation failed", err);
 		}
 	}
