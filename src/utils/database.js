@@ -1,38 +1,27 @@
-// import { drizzle } from "drizzle-orm/node-postgres";
-// import pkg from "pg";
-// const { Pool, Client } = pkg;
-// import * as schema from "./schema.js";
-// import "dotenv/config";
-
-// const pool = new Pool({
-//     connectionString: process.env.DATABASE_URL,
-// });
-
-// export const db = drizzle(pool, { schema });
-
-// // Create tables if they don't exist
-// db.js
 import pg from "pg";
 import dotenv from "dotenv";
 import { logger } from "./logger.js";
 
 dotenv.config();
 
-const { Client } = pg;
+const { Pool } = pg;
 
-const db = new Client({
+const pool = new Pool({
 	connectionString: process.env.DATABASE_URL,
+	max: 10, // pool size
+	idleTimeoutMillis: 30_000,
+	connectionTimeoutMillis: 2000,
 });
 
 async function initDb() {
 	try {
-		await db.connect();
-		logger.info("✅ PostgreSQL 連接成功");
+		await pool.query("SELECT 1");
+		logger.info("✅ PostgreSQL pool 連接成功");
 		return true;
 	} catch (err) {
-		logger.error("❌ PostgreSQL 連接失敗:", err);
+		logger.error("❌ PostgreSQL pool 連接失敗:", err);
 		return false;
 	}
 }
 
-export { db, initDb };
+export { pool as db, initDb };

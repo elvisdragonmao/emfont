@@ -4,60 +4,72 @@ name: emfont-dev
 x-common-env: &common-env
   TZ: Asia/Taipei
 # for logging timezone correctly display. You can change it to your local timezone.
-           
+
 services:
-    postgres:
-        image: postgres:16
-        environment:
-            POSTGRES_USER: ${POSTGRES_USER}
-            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-            POSTGRES_DB: ${POSTGRES_DB}
-        ports:
-            - "${POSTGRES_PORT}:5432"
-        volumes:
-            - ./src/_data/docker/postgres:/var/lib/postgresql/data
-    redis:
-        image: redis:7
-        ports:
-            - "${REDIS_PORT}:6379"
-        healthcheck:
-            test: redis-cli ping || exit 1
-    minio:
-        image: minio/minio:latest
-        command: server /data --console-address ":9001"
-        environment:
-            MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-            MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-        ports:
-            - "${MINIO_PORT}:9000"
-            - "${MINIO_CONSOLE_PORT}:9001"
-        volumes:
-            - ./src/_data/docker/minio:/data
-        healthcheck:
-            test: "curl -k -f http://127.0.0.1:9001/minio/health/live || exit 1"
-            interval: 1s
-            timeout: 10s
-            retries: 5
-    emfont-server:
-        image: emfont:latest # Ensure you have built this image using the Dockerfile. Now I haven't push image to public respository.
-        ports:
-            - "${PORT}:${PORT}"
-        env_file:
-            - .env
-        environment:
-            <<: *common-env
-        depends_on:
-            postgres:
-                condition: service_started
-            redis:
-                condition: service_started
-            minio:
-                condition: service_healthy
-    prometheus:
-        image: emfont-prometheus:latest
-        ports:
-            - "9090:9090"
-        environment:
-            EMFONT_METRICS_HOST: emfont-server
-            EMFONT_METRICS_PORT: 3000
-            <<: *common-env
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./src/_data/docker/postgres:/var/lib/postgresql/data
+  redis:
+    image: redis:7
+    ports:
+      - "${REDIS_PORT}:6379"
+    healthcheck:
+      test: redis-cli ping || exit 1
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    volumes:
+      - ./src/_data/docker/minio:/data
+    healthcheck:
+      test: "curl -k -f http://127.0.0.1:9001/minio/health/live || exit 1"
+      interval: 1s
+      timeout: 10s
+      retries: 5
+  emfont-server:
+    image: emfont:latest # Ensure you have built this image using the Dockerfile. Now I haven't push image to public respository.
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - .env
+    environment:
+      <<: *common-env
+      PYROSCOPE_SERVER_ADDRESS: "http://pyroscope:4040"
+      PYROSCOPE_APPLICATION_NAME: "emfont-server"
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+      pyroscope:
+        condition: service_started
+  prometheus:
+    image: emfont-prometheus:latest
+    ports:
+      - "9090:9090"
+    environment:
+      EMFONT_METRICS_HOST: emfont-server
+      EMFONT_METRICS_PORT: 3000
+      <<: *common-env
+  pyroscope:
+    image: grafana/pyroscope:latest
+    ports:
+      - "4040:4040"
+    environment:
+      <<: *common-env

@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import { loggerStorage, setBaseLogger } from "./utils/logger.js"; // font
 import { initCheck } from "./bootstrap/init.js";
 import dotenv from "dotenv";
+import Pyroscope from "@pyroscope/nodejs";
 
 // routes
 import registerPages from "./website/pages.js";
@@ -50,7 +51,7 @@ function getLoggerConfig() {
 					colorize: true,
 				},
 			},
-			level: "debug",
+			level: "info",
 		},
 		production: true, // Fastify default pino
 		test: false, // disable logging
@@ -76,6 +77,28 @@ await registerPages(app);
 await registerApi(app, state);
 await registerStatic(app);
 
+if (process.env.NODE_ENV != "zeabur") {
+	Pyroscope.init({
+		serverAddress: "http://pyroscope:4040",
+		appName: "emfont-server",
+		// Enable CPU time collection for wall profiles
+		// This is required for CPU profiling functionality
+		wall: {
+			collectCpuTime: true,
+		},
+	});
+
+	Pyroscope.start();
+	app.addHook("onRequest", (request, _reply, done) => {
+		loggerStorage.run(request.log, done);
+	});
+	app.addHook("preHandler", (request, reply, done) => {
+		const route = request.routeOptions?.url;
+		const method = request.method;
+
+		Pyroscope.wrapWithLabels({ route, method }, () => done());
+	});
+}
 // Start server
 const start = async () => {
 	try {
@@ -100,7 +123,4 @@ app.ready().then(async () => {
 		if (!state.bulletin)
 			state.bulletin += "<br>😭emfont 啟動失敗，暫時無法使用。<br>";
 	}
-});
-app.addHook("onRequest", (request, _reply, done) => {
-	loggerStorage.run(request.log, done);
 });

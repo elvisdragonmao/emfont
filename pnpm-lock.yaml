@@ -19,6 +19,9 @@ importers:
       "@fastify/static":
         specifier: ^8.2.0
         version: 8.2.0
+      "@pyroscope/nodejs":
+        specifier: ^0.4.10
+        version: 0.4.10(fastify@5.4.0)
       "@types/subset-font":
         specifier: ^2.3.0
         version: 2.3.0
@@ -335,6 +338,13 @@ packages:
       }
     engines: { node: ">=18.0.0" }
 
+  "@datadog/pprof@5.13.3":
+    resolution:
+      {
+        integrity: sha512-G25IicP7pc5CXmAfVz7nrIERsKK9hvPz6p7xsLTUwG4Qs+Zgd5KFedKCVsnvNasLc7l7OXQ6839ajowgQLWTyw==,
+      }
+    engines: { node: ">=16" }
+
   "@fastify/accept-negotiator@2.0.1":
     resolution:
       {
@@ -479,6 +489,21 @@ packages:
         integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==,
       }
     engines: { node: ^12.20.0 || ^14.18.0 || >=16.0.0 }
+
+  "@pyroscope/nodejs@0.4.10":
+    resolution:
+      {
+        integrity: sha512-MhRT1O4CeKQo5Zqbl64wQS+EyyrKG5oToFj0+fH+YZHcjEFEdEgqSZb22HMkbwXKTr6HvIbSdwoHd3BpVl96bA==,
+      }
+    engines: { node: ">=20" }
+    peerDependencies:
+      express: ^4.0.0 || ^5.0.0
+      fastify: ^5.7.3
+    peerDependenciesMeta:
+      express:
+        optional: true
+      fastify:
+        optional: true
 
   "@smithy/abort-controller@4.0.4":
     resolution:
@@ -1160,6 +1185,25 @@ packages:
       supports-color:
         optional: true
 
+  debug@4.4.3:
+    resolution:
+      {
+        integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==,
+      }
+    engines: { node: ">=6.0" }
+    peerDependencies:
+      supports-color: "*"
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+
+  delay@5.0.0:
+    resolution:
+      {
+        integrity: sha512-ReEBKkIfe4ya47wlPYf/gu5ib6yUG0/Aez0JQZQz94kiWtRQvZIQbTiehsnwHvLSWJnQdhVeqYue7Id1dKr0qw==,
+      }
+    engines: { node: ">=10" }
+
   delayed-stream@1.0.0:
     resolution:
       {
@@ -1696,6 +1740,13 @@ packages:
         integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==,
       }
 
+  node-gyp-build@3.9.0:
+    resolution:
+      {
+        integrity: sha512-zLcTg6P4AbcHPq465ZMFNXx7XpKKJh+7kkN699NiQWisR2uWYOWNWqRHAmbnmKiL4e9aLSlmy5U7rEMUXV59+A==,
+      }
+    hasBin: true
+
   nodemon@3.1.10:
     resolution:
       {
@@ -1737,6 +1788,13 @@ packages:
         integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==,
       }
     engines: { node: ">=10" }
+
+  p-limit@7.3.0:
+    resolution:
+      {
+        integrity: sha512-7cIXg/Z0M5WZRblrsOla88S4wAK+zOQQWeBYfV3qJuJXMr+LnbYjaadrFaS0JILfEDPVqHyKnZ1Z/1d6J9VVUw==,
+      }
+    engines: { node: ">=20" }
 
   package-json-from-dist@1.0.1:
     resolution:
@@ -1908,6 +1966,12 @@ packages:
       }
     engines: { node: ">=0.10.0" }
 
+  pprof-format@2.2.1:
+    resolution:
+      {
+        integrity: sha512-p4tVN7iK19ccDqQv8heyobzUmbHyds4N2FI6aBMcXz6y99MglTWDxIyhFkNaLeEXs6IFUEzT0zya0icbSLLY0g==,
+      }
+
   prettier@3.8.1:
     resolution:
       {
@@ -1996,6 +2060,12 @@ packages:
         integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==,
       }
     engines: { node: ">=4" }
+
+  regenerator-runtime@0.14.1:
+    resolution:
+      {
+        integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==,
+      }
 
   require-from-string@2.0.2:
     resolution:
@@ -2128,6 +2198,13 @@ packages:
         integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==,
       }
     engines: { node: ">=0.10.0" }
+
+  source-map@0.7.6:
+    resolution:
+      {
+        integrity: sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ==,
+      }
+    engines: { node: ">= 12" }
 
   split2@4.2.0:
     resolution:
@@ -2361,6 +2438,13 @@ packages:
         integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==,
       }
     engines: { node: ">=10" }
+
+  yocto-queue@1.2.2:
+    resolution:
+      {
+        integrity: sha512-4LCcse/U2MHZ63HAJVE+v71o7yOdIe4cZ70Wpf8D/IyjDKYQLV5GD46B+hSTjJsvV5PztjvHoU580EftxjDZFQ==,
+      }
+    engines: { node: ">=12.20" }
 
 snapshots:
   "@aws-crypto/crc32@5.2.0":
@@ -2829,6 +2913,14 @@ snapshots:
       "@smithy/types": 4.3.1
       tslib: 2.8.1
 
+  "@datadog/pprof@5.13.3":
+    dependencies:
+      delay: 5.0.0
+      node-gyp-build: 3.9.0
+      p-limit: 3.1.0
+      pprof-format: 2.2.1
+      source-map: 0.7.6
+
   "@fastify/accept-negotiator@2.0.1": {}
 
   "@fastify/ajv-compiler@4.0.2":
@@ -2922,6 +3014,18 @@ snapshots:
   "@opentelemetry/api@1.9.0": {}
 
   "@pkgr/core@0.2.9": {}
+
+  "@pyroscope/nodejs@0.4.10(fastify@5.4.0)":
+    dependencies:
+      "@datadog/pprof": 5.13.3
+      debug: 4.4.3
+      p-limit: 7.3.0
+      regenerator-runtime: 0.14.1
+      source-map: 0.7.6
+    optionalDependencies:
+      fastify: 5.4.0
+    transitivePeerDependencies:
+      - supports-color
 
   "@smithy/abort-controller@4.0.4":
     dependencies:
@@ -3415,6 +3519,12 @@ snapshots:
     optionalDependencies:
       supports-color: 5.5.0
 
+  debug@4.4.3:
+    dependencies:
+      ms: 2.1.3
+
+  delay@5.0.0: {}
+
   delayed-stream@1.0.0: {}
 
   denque@2.1.0: {}
@@ -3713,6 +3823,8 @@ snapshots:
 
   ms@2.1.3: {}
 
+  node-gyp-build@3.9.0: {}
+
   nodemon@3.1.10:
     dependencies:
       chokidar: 3.6.0
@@ -3739,6 +3851,10 @@ snapshots:
   p-limit@3.1.0:
     dependencies:
       yocto-queue: 0.1.0
+
+  p-limit@7.3.0:
+    dependencies:
+      yocto-queue: 1.2.2
 
   package-json-from-dist@1.0.1: {}
 
@@ -3844,6 +3960,8 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
+  pprof-format@2.2.1: {}
+
   prettier@3.8.1: {}
 
   pretty-quick@4.2.2(prettier@3.8.1):
@@ -3888,6 +4006,8 @@ snapshots:
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
+
+  regenerator-runtime@0.14.1: {}
 
   require-from-string@2.0.2: {}
 
@@ -3939,6 +4059,8 @@ snapshots:
       source-map: 0.6.1
 
   source-map@0.6.1: {}
+
+  source-map@0.7.6: {}
 
   split2@4.2.0: {}
 
@@ -4059,3 +4181,5 @@ snapshots:
   xtend@4.0.2: {}
 
   yocto-queue@0.1.0: {}
+
+  yocto-queue@1.2.2: {}
