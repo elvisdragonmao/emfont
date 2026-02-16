@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { db } from "../utils/database.js";
-import metricsPlugin from "fastify-metrics"; //prometheus
+import { metricsPlugin } from "../utils/metrics.js";
 import { logger } from "../utils/logger.js";
 //prometheus
 // Read the HTML file in the same directory
@@ -48,7 +48,8 @@ export default async app => {
 			if (rows.length === 0) {
 				//user try to access a font that is not in database, log a warning and render notFound page
 				logger.warn(
-					`${req.params.font} is not available record in database. It might be user try to access a font that is not in database, or the font record is not inserted into database successfully. Check if the font record is inserted into database successfully and check if user try to access a font that is not in database.`,
+					`${req.params.font} is not available record in database. 
+					It might be user try to access a font that is not in database, or the font record is not inserted into database successfully. Check if the font record is inserted into database successfully and check if user try to access a font that is not in database.`,
 				);
 				return renderSite(
 					res,
@@ -71,10 +72,7 @@ export default async app => {
 		}
 	});
 
-	//prometheus route
-	if (process.env.NODE_ENV != "zeabur") {
-		await app.register(metricsPlugin, { endpoint: "/metrics" });
-	}
+	await app.register(metricsPlugin);
 
 	app.get("/login", async (req, res) => {
 		return renderSite(res, { page: "login", title: "登入 - emfont" });
