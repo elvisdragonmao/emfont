@@ -77,26 +77,28 @@ await registerPages(app);
 await registerApi(app, state);
 await registerStatic(app);
 
-Pyroscope.init({
-	serverAddress: "http://pyroscope:4040",
-	appName: "emfont-server",
-	// Enable CPU time collection for wall profiles
-	// This is required for CPU profiling functionality
-	wall: {
-		collectCpuTime: true,
-	},
-});
+if (process.env.NODE_ENV != "zeabur") {
+	Pyroscope.init({
+		serverAddress: "http://pyroscope:4040",
+		appName: "emfont-server",
+		// Enable CPU time collection for wall profiles
+		// This is required for CPU profiling functionality
+		wall: {
+			collectCpuTime: true,
+		},
+	});
 
-Pyroscope.start();
-app.addHook("onRequest", (request, _reply, done) => {
-	loggerStorage.run(request.log, done);
-});
-app.addHook("preHandler", (request, reply, done) => {
-	const route = request.routeOptions?.url;
-	const method = request.method;
+	Pyroscope.start();
+	app.addHook("onRequest", (request, _reply, done) => {
+		loggerStorage.run(request.log, done);
+	});
+	app.addHook("preHandler", (request, reply, done) => {
+		const route = request.routeOptions?.url;
+		const method = request.method;
 
-	Pyroscope.wrapWithLabels({ route, method }, () => done());
-});
+		Pyroscope.wrapWithLabels({ route, method }, () => done());
+	});
+}
 // Start server
 const start = async () => {
 	try {

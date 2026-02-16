@@ -72,7 +72,9 @@ export default async app => {
 	});
 
 	//prometheus route
-	await app.register(metricsPlugin, { endpoint: "/metrics" });
+	if (process.env.NODE_ENV != "zeabur") {
+		await app.register(metricsPlugin, { endpoint: "/metrics" });
+	}
 
 	app.get("/login", async (req, res) => {
 		return renderSite(res, { page: "login", title: "登入 - emfont" });
