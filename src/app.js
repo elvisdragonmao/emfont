@@ -82,9 +82,9 @@ Pyroscope.init({
 	appName: "emfont-server",
 	// Enable CPU time collection for wall profiles
 	// This is required for CPU profiling functionality
-	// wall: {
-	//   collectCpuTime: true
-	// }
+	wall: {
+		collectCpuTime: true,
+	},
 });
 
 Pyroscope.start();
