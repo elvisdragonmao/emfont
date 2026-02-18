@@ -80,7 +80,7 @@ async function complete_ff_name_support_char_in_db(ff_name, lost_chars) {
 		let packCount = 0;
 
 		const { pack, count } = rows[0] ?? {};
-		currentPack = pack ? parseInt(pack, 10) : null;
+		currentPack = pack ? parseInt(pack, 10) : 0;
 		packCount = count ?? 0;
 
 		const inserts = [];
@@ -99,6 +99,12 @@ async function complete_ff_name_support_char_in_db(ff_name, lost_chars) {
 			packCount += 1;
 		}
 
+		logger.debug(
+			"新字數量:",
+			no_record_chars.length,
+			"需要新增的資料筆數:",
+			inserts.length,
+		);
 		// 4. 把新字 insert 進去，每次語句插入 1000 個字
 		for (let i = 0; i < inserts.length; i += 1000) {
 			const batch = inserts.slice(i, i + 1000);
@@ -120,7 +126,7 @@ async function complete_ff_name_support_char_in_db(ff_name, lost_chars) {
 		}
 		return true;
 	} catch (err) {
-		console.error(err);
+		logger.error("更新字型支援清單到資料庫發生錯誤:", err);
 		return false;
 	}
 }
@@ -141,20 +147,16 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 			await db.query(`SELECT bullet from version order BY start DESC limit 1;`)
 		).rows; //[0].bullet
 		version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
-		logger.info("目前版本: ", version_num);
+		logger.info(`目前字型版本: ${version_num}`);
+		logger.info(`總共有 ${all_fonts.length} 種字型需要檢查是否需要重新生成`);
 		// get length of all_fonts
 		const all_fonts_length = all_fonts.length;
 		let currentIndex = 0;
 		for (const { ff_name, support_weights } of all_fonts) {
 			currentIndex++;
-			state.bulletin =
-				"⌨️ 正在生成 " +
-				ff_name +
-				" 的靜態字型 (總進度 " +
-				currentIndex +
-				"/" +
-				all_fonts_length +
-				")";
+			logger.debug(
+				`正在確認字型 ${ff_name} ${support_weights} 的靜態生成 (${currentIndex}/${all_fonts_length})`,
+			);
 			const this_font = {
 				version: version_num,
 				fontName: ff_name, // 字型名稱（資料夾名稱）
@@ -163,7 +165,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 			//讀字型檔案，取出所有支援的字型
 			const readFile_res = await readFontBuffer(ff_name, support_weights, true);
 			if (readFile_res.success == false) {
-				console.warn("讀取字型檔案失敗！");
+				logger.warn(`讀取字型檔案失敗！${ff_name} ${support_weights}`);
 				continue;
 			}
 			const fontfile = readFile_res.fontfile;
@@ -172,10 +174,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 				.map(cp => String.fromCodePoint(cp))
 				.filter(char => char !== "\x00");
 			logger.info(
-				"╔ " + ff_name + " " + support_weights,
-				"有",
-				charArray.length,
-				"個字",
+				`╔ ${ff_name} ${support_weights} 有 ${charArray.length} 個字`,
 			);
 			// 1. 查出資料紀錄不完全的字
 			//       |資料庫存在該字|自型支援清單|
@@ -237,7 +236,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 				ready_regen = all_pack_numbers;
 			}
 			logger.info(
-				`╠ 正在生成 ${ff_name} ${support_weights} 缺少的 ${all_pack_numbers.length - existPack.length} 包靜態字型`,
+				`╠ 生成 ${ff_name} ${support_weights} 缺少的 ${all_pack_numbers.length - existPack.length} 包靜態字型`,
 			);
 			//重新生成
 			let word_package_pair = (
@@ -262,7 +261,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 			word_package_pair = word_package_pair.filter(
 				entry => !existPack.includes(entry.pack),
 			);
-			logger.info("╠ 正在生成", word_package_pair.length, "包字體");
+			logger.info(`╠ 正在生成 ${word_package_pair.length} 包字體`);
 			for (let i = 0; i < word_package_pair.length; i += batchSize) {
 				const batch = word_package_pair.slice(i, i + batchSize);
 				const tasks = batch.map(({ pack, words }) => {
@@ -304,9 +303,11 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 			}
 
 			await db.query("COMMIT");
+			return true;
 		}
 	} catch (err) {
-		logger.error(err);
+		logger.error("生成靜態字體時發生錯誤:", err);
+		return false;
 	}
 	logger.info("✨ 所有靜態字體生成完成！");
 }
