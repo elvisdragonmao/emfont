@@ -904,7 +904,7 @@ body:has(#lightmode:checked) .font-preview[style="color: rgb(112, 37, 37);"] {
     right: 0;
     width: 2em;
     height: 100%;
-    background: linear-gradient(to left, var(--background) 0%, transparent 100%);
+    
 }
 
 .font-actions a,
