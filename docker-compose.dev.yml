@@ -1,4 +1,3 @@
-version: "5.0.2"
 name: emfont-dev
 
 x-common-env: &common-env
@@ -16,6 +15,11 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - ./src/_data/docker/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
   redis:
     image: redis:7
     ports:
@@ -50,7 +54,7 @@ services:
       PYROSCOPE_APPLICATION_NAME: "emfont-server"
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
       minio:

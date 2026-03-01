@@ -214,7 +214,7 @@ async function initCheck(state, log) {
 		let originalBulletin = state.bulletin;
 		state.bulletin = "🔁 正在初始化中，請稍後...";
 		if (!(await initDb())) return false;
-		await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
+		// await executeSQLFile(path.resolve("src/_data/sql/schema.sql"));
 		// await executeSQLFile(path.resolve("src/_data/sql/words.sql"));
 		await initR2(state);
 		if (state.FONT_CHECK) await insertFontTypes(log);
