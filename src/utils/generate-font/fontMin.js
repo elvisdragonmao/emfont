@@ -43,23 +43,26 @@ async function find_dynamic_font({
 			//                 UPDATE SET last_use = NOW() ,use_count=dynamic_fonts.use_count+1`,
 			// 	[word_hash, font_id, font_weight],
 			// );
-			const upload_r2_yet = //查詢字型包是否使用超過 20 次且尚未上傳到 r2
-				(
+			let upload_r2_yet = { more_than_stander: false };
+			if (state.r2) {
+				//查詢字型包是否使用超過 10 次且尚未上傳到 r2
+				upload_r2_yet = (
 					await db.query(
 						`SELECT EXISTS (
-                                     SELECT 1 
-                                     FROM dynamic_fonts 
-                                     WHERE use_count > 10 
-                                       AND hash = $1
-                                       AND NOT EXISTS (
                                          SELECT 1 
-                                         FROM r2_files 
-                                         WHERE file_name = $2
-                                       )
-                                   ) AS more_than_stander`,
+                                         FROM dynamic_fonts 
+                                         WHERE use_count > 10 
+                                           AND hash = $1
+                                           AND NOT EXISTS (
+                                             SELECT 1 
+                                             FROM r2_files 
+                                             WHERE file_name = $2
+                                           )
+                                       ) AS more_than_stander`,
 						[word_hash, little_font_package],
 					)
 				).rows[0];
+			}
 			if (state.r2 && upload_r2_yet.more_than_stander) {
 				//足夠頻繁使用但還沒上傳 r2
 				file_url = await uploadToR2(localPath, little_font_package);
