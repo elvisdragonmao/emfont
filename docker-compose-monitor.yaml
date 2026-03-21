@@ -1,0 +1,22 @@
+x-common-env: &common-env
+  TZ: Asia/Taipei
+services:
+  prometheus:
+    image: emfont-prometheus:latest
+    ports:
+      - "9090:9090"
+    environment:
+      EMFONT_METRICS_HOST: emfont-server
+      EMFONT_METRICS_PORT: 3000
+      <<: *common-env
+  pyroscope:
+    image: grafana/pyroscope:latest
+    ports:
+      - "4040:4040"
+  emfont-server:
+    environment:
+      depends_on:
+        prometheus:
+          condition: service_started
+        pyroscope:
+          condition: service_started

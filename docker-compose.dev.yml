@@ -59,21 +59,3 @@ services:
         condition: service_started
       minio:
         condition: service_healthy
-      prometheus:
-        condition: service_started
-      pyroscope:
-        condition: service_started
-  prometheus:
-    image: emfont-prometheus:latest
-    ports:
-      - "9090:9090"
-    environment:
-      EMFONT_METRICS_HOST: emfont-server
-      EMFONT_METRICS_PORT: 3000
-      <<: *common-env
-  pyroscope:
-    image: grafana/pyroscope:latest
-    ports:
-      - "4040:4040"
-    environment:
-      <<: *common-env
