@@ -20,6 +20,7 @@ fi
 
 # Set alias
 mc alias set emfont "$MINIO_ENDPOINT" "$MINIO_USERNAME" "$MINIO_PASSWORD"
+mc mb --ignore-existing emfont/${MINIO_BUCKET}
 
 # Handle example fonts request
 if [ "$NEED_EXAMPLE_FONTS" = "true" ]; then
