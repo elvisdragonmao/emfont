@@ -21,7 +21,7 @@ function hashString(str) {
 
 ///g/:font 路由 呼叫的函式。會根據前端需要的字集，回傳字型檔
 
-async function getFontFamilyMeta(fontId) {
+export async function getFontFamilyMeta(fontId) {
 	const cached = fontMetaCache.get(fontId);
 	const now = Date.now();
 	if (cached && now - cached.ts < FONT_META_TTL_MS) return cached.meta;

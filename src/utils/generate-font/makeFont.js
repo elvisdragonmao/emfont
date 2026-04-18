@@ -31,7 +31,7 @@ async function generateFont(
 		}
 		// // 確保資料夾存在
 		const destFolder = path.join(__dirname, put_folder);
-		fs.mkdirSync(destFolder, { recursive: true });
+		await fs.promises.mkdir(destFolder, { recursive: true });
 
 		// It is possible to generate a file without any fonts, which happens when the original font file doesn't support any of the requested fonts
 		// The users's browser will report an error if it reads it empty file.
@@ -40,18 +40,12 @@ async function generateFont(
 		// I don't intend to do any checking, because the time cost of preventing this is much greater than the time it takes to request an empty file.
 
 		const outputPath = path.join(destFolder, `${output_name}`);
-		await subsetFont(fontfile, words, {
+		const resultBuffer = await subsetFont(fontfile, words, {
 			targetFormat: "woff2",
 
 			// output: path.join(destFolder, output_name), // Set custom output file path
-		})
-			.then(resultBuffer => {
-				// save font file to disk
-				fs.writeFileSync(outputPath, resultBuffer);
-			})
-			.catch(err => {
-				console.error("Error creating subset font:", err);
-			});
+		});
+		await fs.promises.writeFile(outputPath, resultBuffer);
 
 		logger.debug(
 			`sub font generate successfuly: ${output_name} (${words.length} glyphs)`,

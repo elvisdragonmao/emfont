@@ -1,4 +1,4 @@
-import { genFont } from "../utils/generate-font/genFont.js";
+import { genFont, getFontFamilyMeta } from "../utils/generate-font/genFont.js";
 import { db } from "../utils/database.js";
 import { writeFile } from "fs/promises";
 import { join } from "path";
@@ -75,18 +75,15 @@ const registerApi = async (app, state) => {
 			req.body.words = req.query.words?.trim() ?? null;
 			req.body.weight = req.query.weight?.trim() ?? null;
 			if (!req.body.words) {
-				const { rows } = await db.query(
-					`SELECT name, weights FROM font_family WHERE id = $1`,
-					[font_id],
-				);
-				if (rows.length === 0)
-					return {
+				const meta = await getFontFamilyMeta(font_id);
+				if (!meta)
+					return res.status(404).send({
 						code: 404,
 						status: "failed",
 						message: "Font not found",
-					};
-				let allWeights = rows[0].weights;
-				if (allWeights.rowCount === 0) {
+					});
+				let allWeights = meta.weights || [];
+				if (allWeights.length === 0) {
 					return res.status(404).send({
 						code: 404,
 						status: "failed",
