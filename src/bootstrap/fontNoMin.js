@@ -320,37 +320,44 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 //  */
 async function find_static_font(word_set, hash) {
 	try {
-		word_set = [...word_set];
 		const this_key = "s-" + hash; //static font use prefix
-		const packs = new Set();
+		// word_set 已經在上層做過去重與排序，這裡只需要轉成陣列供 SQL 使用。
+		const wordArray = [...word_set];
+		// Redis 先查，命中就直接回傳，避免每次都打 PostgreSQL。
 		const hash_record = await redis.smembers(this_key);
 		// 若有 Redis miss 的字，就查 PostgreSQL
 		if (hash_record.length == 0) {
+			// 只需要 pack 編號，不需要把 char 一起拉回來。
+			// 這可以減少 DB 傳輸量，也讓後續去重工作變得不必要。
 			const query = `
-            SELECT DISTINCT pack,char
+            SELECT DISTINCT pack
             FROM static_fonts 
             WHERE char = ANY($1::text[]);
         `; //不會比對該字型是否支援這個字，優點是不用根據不同的字體就重新去查，資料庫有紀錄的字都會給 pack number ，目標是通用兼容。如果請求到字型沒有的會給出不存在的包，前端會跳 404
-			const res = await db.query(query, [word_set]);
+			const res = await db.query(query, [wordArray]);
+			// 查到的 pack 同步寫回 Redis，供下一次同字集直接命中。
 			const redisSetPipeline = redis.pipeline();
 			for (const row of res.rows) {
 				const paddedPack = String(row.pack).padStart(3, "0");
-				packs.add(paddedPack);
 				// 寫回 Redis 快取
 				redisSetPipeline.sadd(this_key, paddedPack);
 			}
 			//key will expire after 3 Day(60*60*24*3)
 			redisSetPipeline.expire(this_key, 259200);
 			await redisSetPipeline.exec();
-			return Array.from(packs);
+			// 回傳前排序，確保輸出穩定，方便上層和快取比對。
+			return res.rows
+				.map(row => String(row.pack).padStart(3, "0"))
+				.sort((a, b) => Number(a) - Number(b));
 		} else {
+			// Redis 命中時也做排序，避免 set 回傳順序不固定造成上層行為不一致。
 			const currentTTL = await redis.ttl(this_key);
 			// 如果 key 是永久存在（TTL = -1），選擇不動作complete_ff_name_support_char_in_db
 			if (currentTTL > 0) {
 				const newTTL = currentTTL + 3600; // 重複使用的 key 幫他加 ttl 1 hr
 				await redis.expire(this_key, newTTL);
 			}
-			return hash_record;
+			return hash_record.sort((a, b) => Number(a) - Number(b));
 		}
 	} catch (err) {
 		logger.error("查詢靜態字型發生錯誤:", err);

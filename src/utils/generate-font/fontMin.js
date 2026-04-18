@@ -1,10 +1,10 @@
-import fs, { stat } from "fs";
+import fs from "fs";
 import path from "path";
-import { db } from "../database.js";
-import { uploadToR2 } from "../r2.js";
 import { generateFont } from "./makeFont.js";
 import { logger } from "../logger.js";
+
 const __dirname = import.meta.dirname;
+const dynamicFontUrlCache = new Map();
 
 async function find_dynamic_font({
 	word_hash,
@@ -14,68 +14,47 @@ async function find_dynamic_font({
 	original_word_set,
 	state,
 }) {
-	//return a R2 url client need
-	//用 hash 值查詢動態字型檔是否存在
-	// const exist_search = await db.query('SELECT * FROM dynamic_fonts WHERE hash_index = $1 AND font_family_id = $2', [word_hash, font_id]);
-	// const exist = exist_search.rows[0];
-	// //如果存在，回傳字型檔
 	const little_font_package = `${word_hash}-${font_family}-${font_weight}.woff2`;
-	let file_exist;
-	// if (state.r2) file_exist = await checkR2FileExists(little_font_package);
-	// else {
-	let localPath = path.join(
+	const cached = dynamicFontUrlCache.get(little_font_package);
+	if (cached && cached.expiresAt > Date.now()) {
+		// 邏輯上假定檔案存在 直接回傳快取的 URL，不需要再檢查一次檔案是否存在，因為我們在設定快取時就已經確認過檔案存在了。
+		// 如果檔案被刪除了，那麼即使 cache hit，回傳的 URL 會是無效的，但這種情況應該是非常罕見的，且我們可以接受這種風險，反正快取也就 5 分鐘
+		logger.debug(
+			`dynamic font ${little_font_package} cache hit, returning cached URL: ${cached.url}`,
+		);
+		return {
+			status: "success",
+			location: cached.url,
+		};
+	}
+
+	const localPath = path.join(
 		__dirname,
+		"..",
+		"..",
 		"_data",
 		"_generated",
 		little_font_package,
 	);
-	file_exist = fs.existsSync(localPath);
-	// }
-	let file_url = `${state.baseURL}/_generated/${little_font_package}`; //預設是本地位置，如果頻繁使用的就會在之後改成 r2 連結
+	logger.debug(`Checking if dynamic font file exists at path: ${localPath}`);
+	let file_exist = false;
+	try {
+		await fs.promises.access(localPath, fs.constants.F_OK);
+		file_exist = true;
+	} catch {
+		file_exist = false;
+	}
+
+	const file_url = `${state.baseURL}/_generated/${little_font_package}`;
 	logger.debug(
 		`Checking dynamic font: ${little_font_package}, cache exist: ${file_exist}`,
 	);
 	if (file_exist) {
-		//+回傳字型檔
-		try {
-			// await db.query(
-			// 	`INSERT INTO dynamic_fonts (hash, family_id,weight) VALUES ($1, $2,$3) ON CONFLICT (hash) DO
-			//                 UPDATE SET last_use = NOW() ,use_count=dynamic_fonts.use_count+1`,
-			// 	[word_hash, font_id, font_weight],
-			// );
-			let upload_r2_yet = { more_than_stander: false };
-			if (state.r2) {
-				//查詢字型包是否使用超過 10 次且尚未上傳到 r2
-				upload_r2_yet = (
-					await db.query(
-						`SELECT EXISTS (
-                                         SELECT 1 
-                                         FROM dynamic_fonts 
-                                         WHERE use_count > 10 
-                                           AND hash = $1
-                                           AND NOT EXISTS (
-                                             SELECT 1 
-                                             FROM r2_files 
-                                             WHERE file_name = $2
-                                           )
-                                       ) AS more_than_stander`,
-						[word_hash, little_font_package],
-					)
-				).rows[0];
-			}
-			if (state.r2 && upload_r2_yet.more_than_stander) {
-				//足夠頻繁使用但還沒上傳 r2
-				file_url = await uploadToR2(localPath, little_font_package);
-				await db.query(
-					`INSERT INTO r2_files (prefix, file_name) VALUES('fonts/',$1)`,
-					[little_font_package],
-				);
-			} else if (state.r2) {
-				file_url = `${state.R2_PUB_URL_BASE}/fonts/${little_font_package}`;
-			}
-		} catch (err) {
-			logger.error("資料庫紀錄失敗", err);
-		}
+		dynamicFontUrlCache.set(little_font_package, {
+			url: file_url,
+			expiresAt: Date.now() + 5 * 60 * 1000,
+			// expires for 5 minutes
+		});
 		logger.debug(
 			`動態字型檔 ${little_font_package} 已存在，直接回傳 URL 快取: ${file_url}`,
 		);
@@ -84,31 +63,29 @@ async function find_dynamic_font({
 			location: file_url,
 		};
 	}
-	//如果不存在，則在本地生成字型檔直接回傳路徑
-	else {
-		try {
-			// await db.query(
-			// 	"INSERT INTO dynamic_fonts (hash, family_id,weight) VALUES ($1, $2,$3) ON CONFLICT (hash) DO NOTHING",
-			// 	[word_hash, font_id, font_weight],
-			// );
-			//+生成字型檔
-			let generated = await generateFont(
-				font_family,
-				font_weight,
-				original_word_set,
-				little_font_package,
-			);
-			if (generated.status === "failed") {
-				return generated;
-			}
-			return {
-				status: "success",
-				location: `${state.baseURL}/_generated/${generated.location}`,
-			};
-		} catch (err) {
-			logger.error(`字體生成失敗: ${err.message}`);
-			throw new Error("Font generation failed", err);
+
+	try {
+		const generated = await generateFont(
+			font_family,
+			font_weight,
+			original_word_set,
+			little_font_package,
+		);
+		if (generated.status === "failed") {
+			return generated;
 		}
+		const generatedUrl = `${state.baseURL}/_generated/${generated.location}`;
+		dynamicFontUrlCache.set(little_font_package, {
+			url: generatedUrl,
+			expiresAt: Date.now() + 10 * 60 * 1000,
+		});
+		return {
+			status: "success",
+			location: generatedUrl,
+		};
+	} catch (err) {
+		logger.error(`字體生成失敗: ${err.message}`);
+		throw new Error("Font generation failed", err);
 	}
 }
 export { find_dynamic_font };
