@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-Hant">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>編輯字型資訊 - emfont 管理</title>
+		<link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
+		<link rel="stylesheet" href="/assets/admin-font-upload.css" />
+	</head>
+	<body>
+		<main class="admin-shell admin-shell-wide">
+			<header>
+				<a href="/" aria-label="回到首頁">
+					<img src="/assets/img/logo/emfont-logo-light.svg" alt="emfont" />
+				</a>
+				<div>
+					<p>管理者工具</p>
+					<h1>編輯字型資訊</h1>
+				</div>
+				<nav class="admin-nav" aria-label="管理頁面">
+					<a href="/admin/fonts">新增字型</a>
+				</nav>
+			</header>
+
+			<section class="workspace" aria-label="字型篩選">
+				<div class="toolbar-grid">
+					<label>
+						<span>管理 Token</span>
+						<input
+							id="admin-token"
+							type="password"
+							autocomplete="current-password"
+						/>
+					</label>
+					<label>
+						<span>搜尋字型</span>
+						<input
+							id="font-search"
+							type="search"
+							placeholder="搜尋名稱、ID、作者"
+						/>
+					</label>
+					<label>
+						<span>分類</span>
+						<select id="category-filter">
+							<option value="all">所有分類</option>
+						</select>
+					</label>
+				</div>
+			</section>
+
+			<div class="admin-editor-layout">
+				<section class="workspace font-browser" aria-label="字型清單">
+					<div id="font-list" class="admin-font-list"></div>
+				</section>
+
+				<section class="workspace editor-panel" aria-label="編輯字型資訊">
+					<form id="font-edit-form" hidden>
+						<div class="form-grid">
+							<label>
+								<span>字型 ID</span>
+								<input name="id" readonly />
+							</label>
+							<label>
+								<span>通用名稱</span>
+								<input name="name" required />
+							</label>
+							<label>
+								<span>分類</span>
+								<select name="category" required>
+									<option value="sans-serif">sans-serif</option>
+									<option value="serif">serif</option>
+									<option value="monospace">monospace</option>
+									<option value="cursive">cursive</option>
+									<option value="fantasy">fantasy</option>
+								</select>
+							</label>
+							<label>
+								<span>中文名稱</span>
+								<input name="nameZh" />
+							</label>
+							<label>
+								<span>英文名稱</span>
+								<input name="nameEn" />
+							</label>
+							<label>
+								<span>字重</span>
+								<input name="weights" required placeholder="400, 700" />
+							</label>
+							<label>
+								<span>家族</span>
+								<input name="family" />
+							</label>
+							<label>
+								<span>標籤</span>
+								<input name="tags" placeholder="圓體, 可愛" />
+							</label>
+							<label>
+								<span>作者</span>
+								<input name="authors" placeholder="justfont" />
+							</label>
+							<label>
+								<span>授權</span>
+								<input name="license" />
+							</label>
+							<label>
+								<span>版本</span>
+								<input name="version" />
+							</label>
+							<label>
+								<span>格式</span>
+								<select name="format" required>
+									<option value="ttf">ttf</option>
+									<option value="otf">otf</option>
+								</select>
+							</label>
+							<label class="wide">
+								<span>展示句</span>
+								<select name="demoContentId" id="demo-sentence-select"></select>
+							</label>
+							<label class="wide">
+								<span>來源網址</span>
+								<input name="repoUrl" type="url" />
+							</label>
+							<label class="wide">
+								<span>描述</span>
+								<textarea name="description" rows="4"></textarea>
+							</label>
+						</div>
+
+						<div class="actions">
+							<button type="submit">儲存修改</button>
+							<a
+								id="font-preview-link"
+								class="text-link"
+								href="#"
+								target="_blank"
+							>
+								開啟字型頁
+							</a>
+						</div>
+					</form>
+					<p id="edit-status" role="status" aria-live="polite">
+						請從左側選擇一個字型。
+					</p>
+				</section>
+			</div>
+
+			<section class="workspace" aria-label="新增展示句">
+				<form id="sentence-create-form" class="sentence-form">
+					<label>
+						<span>新增展示句</span>
+						<textarea name="content" rows="3" required></textarea>
+					</label>
+					<label>
+						<span>語言</span>
+						<input name="language" placeholder="zh-hant" />
+					</label>
+					<button type="submit">新增句子</button>
+				</form>
+				<p id="sentence-status" role="status" aria-live="polite"></p>
+			</section>
+		</main>
+		<script src="/assets/admin-font-edit.js"></script>
+	</body>
+</html>

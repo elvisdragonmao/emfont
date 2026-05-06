@@ -19,6 +19,10 @@ const allowedCategories = new Set([
 	"fantasy",
 ]);
 
+function fontInfoUrl(state, fontId) {
+	return `${state.baseURL.replace(/\/$/, "")}/fonts/${encodeURIComponent(fontId)}`;
+}
+
 function requireAdmin(req, res) {
 	const expected = process.env.ADMIN_UPLOAD_TOKEN || process.env.PASSWORD;
 	if (!expected) return true;
@@ -62,6 +66,33 @@ function assertUploadPayload(body) {
 		throw new Error("Invalid category");
 	}
 	if (!body.fileBase64) throw new Error("Font file is required");
+}
+
+function normalizeWeights(value) {
+	const weights = normalizeTextArray(value)
+		.map(Number)
+		.filter(
+			weight => Number.isInteger(weight) && weight >= 1 && weight <= 1000,
+		);
+	return Array.from(new Set(weights)).sort((a, b) => a - b);
+}
+
+function assertFontInfoPayload(body) {
+	if (!body || typeof body !== "object")
+		throw new Error("Missing request body");
+	if (!body.name) throw new Error("Font name is required");
+	if (!allowedCategories.has(body.category))
+		throw new Error("Invalid category");
+	const weights = normalizeWeights(body.weights);
+	if (weights.length === 0) throw new Error("At least one weight is required");
+	const format = String(body.format || "").toLowerCase();
+	if (!["ttf", "otf"].includes(format)) throw new Error("Invalid font format");
+}
+
+function assertDemoSentencePayload(body) {
+	if (!body || typeof body !== "object")
+		throw new Error("Missing request body");
+	if (!body.content?.trim()) throw new Error("Sentence content is required");
 }
 
 async function saveFontRecord(body) {
@@ -126,6 +157,93 @@ async function saveFontRecord(body) {
 	return { id, weight, extension };
 }
 
+async function getFontRecord(id) {
+	const { rows } = await db.query(
+		`
+		SELECT id, name, name_zh, name_en, weights, license, version, description,
+			category, family, tags, repo_url, authors, demo_content_id, format
+		FROM font_family
+		WHERE id = $1
+		`,
+		[id],
+	);
+	return rows[0] || null;
+}
+
+async function updateFontRecord(id, body) {
+	await db.query(
+		`
+		UPDATE font_family
+		SET
+			name = $2,
+			name_zh = $3,
+			name_en = $4,
+			weights = $5,
+			license = $6,
+			version = $7,
+			description = $8,
+			category = $9,
+			family = $10,
+			tags = $11,
+			repo_url = $12,
+			authors = $13,
+			demo_content_id = $14,
+			format = $15
+		WHERE id = $1
+		`,
+		[
+			id,
+			body.name.trim(),
+			body.nameZh?.trim() || null,
+			body.nameEn?.trim() || null,
+			normalizeWeights(body.weights),
+			body.license?.trim() || null,
+			body.version?.trim() || null,
+			body.description?.trim() || null,
+			body.category,
+			body.family?.trim() || null,
+			normalizeTextArray(body.tags),
+			body.repoUrl?.trim() || null,
+			normalizeTextArray(body.authors),
+			Number(body.demoContentId || 1),
+			String(body.format).toLowerCase(),
+		],
+	);
+	await redis.del(`fontinfo:${id}`);
+	return getFontRecord(id);
+}
+
+async function listDemoSentences() {
+	const { rows } = await db.query(
+		`
+		SELECT sid, content, language
+		FROM demo_sentence
+		ORDER BY sid
+		`,
+	);
+	return rows.map(row => ({
+		id: row.sid,
+		content: row.content,
+		language: row.language,
+	}));
+}
+
+async function createDemoSentence(body) {
+	const { rows } = await db.query(
+		`
+		INSERT INTO demo_sentence (content, language)
+		VALUES ($1, $2)
+		RETURNING sid, content, language
+		`,
+		[body.content.trim(), body.language?.trim() || null],
+	);
+	return {
+		id: rows[0].sid,
+		content: rows[0].content,
+		language: rows[0].language,
+	};
+}
+
 async function generateStaticForUploadedFont(job, font) {
 	job.status = "running";
 	job.message = "正在分析字型支援的語言";
@@ -156,6 +274,85 @@ export default async function registerAdmin(app, state) {
 		return res.sendFile("admin-font-upload.html");
 	});
 
+	app.get("/admin/fonts/edit", async (_req, res) => {
+		return res.sendFile("admin-font-edit.html");
+	});
+
+	app.get("/api/admin/config", async (req, res) => {
+		if (!requireAdmin(req, res)) return;
+		res.send({ baseURL: state.baseURL });
+	});
+
+	app.get("/api/admin/demo-sentences", async (req, res) => {
+		if (!requireAdmin(req, res)) return;
+		res.send(await listDemoSentences());
+	});
+
+	app.post("/api/admin/demo-sentences", async (req, res) => {
+		if (!requireAdmin(req, res)) return;
+		try {
+			assertDemoSentencePayload(req.body);
+			const sentence = await createDemoSentence(req.body);
+			res.status(201).send({
+				status: "success",
+				message: "Demo sentence created",
+				sentence,
+			});
+		} catch (error) {
+			res.status(400).send({ status: "failed", message: error.message });
+		}
+	});
+
+	app.get("/api/admin/fonts/:fontId", async (req, res) => {
+		if (!requireAdmin(req, res)) return;
+		const font = await getFontRecord(req.params.fontId);
+		if (!font) {
+			return res
+				.status(404)
+				.send({ status: "failed", message: "Font not found" });
+		}
+		res.send({
+			id: font.id,
+			name: font.name,
+			nameZh: font.name_zh,
+			nameEn: font.name_en,
+			weights: font.weights || [],
+			license: font.license,
+			version: font.version,
+			description: font.description,
+			category: font.category,
+			family: font.family,
+			tags: font.tags || [],
+			repoUrl: font.repo_url,
+			authors: font.authors || [],
+			demoContentId: font.demo_content_id,
+			format: font.format,
+			fontUrl: fontInfoUrl(state, font.id),
+		});
+	});
+
+	app.put("/api/admin/fonts/:fontId", async (req, res) => {
+		if (!requireAdmin(req, res)) return;
+		try {
+			const exists = await getFontRecord(req.params.fontId);
+			if (!exists) {
+				return res
+					.status(404)
+					.send({ status: "failed", message: "Font not found" });
+			}
+			assertFontInfoPayload(req.body);
+			const font = await updateFontRecord(req.params.fontId, req.body);
+			res.send({
+				status: "success",
+				message: "Font info updated",
+				fontId: font.id,
+				fontUrl: fontInfoUrl(state, font.id),
+			});
+		} catch (error) {
+			res.status(400).send({ status: "failed", message: error.message });
+		}
+	});
+
 	app.get("/api/admin/font-upload-jobs/:jobId", async (req, res) => {
 		if (!requireAdmin(req, res)) return;
 		const job = uploadJobs.get(req.params.jobId);
@@ -172,6 +369,7 @@ export default async function registerAdmin(app, state) {
 			error: job.error,
 			createdAt: job.createdAt,
 			completedAt: job.completedAt,
+			fontUrl: fontInfoUrl(state, job.fontId),
 		});
 	});
 
@@ -203,6 +401,7 @@ export default async function registerAdmin(app, state) {
 				status: "accepted",
 				message: "Font uploaded. Static generation started.",
 				jobId,
+				fontUrl: fontInfoUrl(state, font.id),
 			});
 		} catch (error) {
 			res.status(400).send({ status: "failed", message: error.message });

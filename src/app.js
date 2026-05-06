@@ -70,7 +70,7 @@ setBaseLogger(app.log);
 
 app.register(cors, {
 	origin: "*",
-	methods: ["GET", "POST"],
+	methods: ["GET", "POST", "PUT"],
 	allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token"],
 	credentials: true,
 });
