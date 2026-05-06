@@ -55,7 +55,10 @@ form.addEventListener("submit", async event => {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Upload failed");
 		setStatus("已上傳，正在排程切割");
-		await pollJob(data.jobId, payload.token);
+		const job = await pollJob(data.jobId, payload.token);
+		if (job.status === "completed") {
+			alert(`字型上傳完成\n${job.fontUrl || data.fontUrl}`);
+		}
 	} catch (error) {
 		setStatus(error.message, "failed");
 	} finally {
