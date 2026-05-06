@@ -1,0 +1,19 @@
+services:
+  emfont-server:
+    ports: !reset []
+    expose:
+      - "${PORT:-3000}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.emfont.loadbalancer.server.port=${PORT:-3000}"
+      - "traefik.http.routers.emfont-public.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.emfont-public.entrypoints=${TRAEFIK_ENTRYPOINTS:-websecure}"
+      - "traefik.http.routers.emfont-public.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.emfont-public.service=emfont"
+      - "traefik.http.routers.emfont-admin.rule=Host(`${TRAEFIK_HOST}`) && (PathPrefix(`/admin/fonts`) || PathPrefix(`/api/admin`))"
+      - "traefik.http.routers.emfont-admin.priority=100"
+      - "traefik.http.routers.emfont-admin.entrypoints=${TRAEFIK_ENTRYPOINTS:-websecure}"
+      - "traefik.http.routers.emfont-admin.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.emfont-admin.service=emfont"
+      - "traefik.http.routers.emfont-admin.middlewares=emfont-admin-ipallowlist"
+      - "traefik.http.middlewares.emfont-admin-ipallowlist.ipallowlist.sourcerange=${TRAEFIK_ADMIN_ALLOWED_IPS:-127.0.0.1/32}"

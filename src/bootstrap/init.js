@@ -243,4 +243,4 @@ async function initCheck(state, log) {
 		return false;
 	}
 }
-export { initCheck };
+export { get_bullet, get_generated_static_floders, initCheck };

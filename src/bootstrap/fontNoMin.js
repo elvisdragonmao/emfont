@@ -8,10 +8,12 @@ import { Redis } from "ioredis";
 import dotenv from "dotenv";
 dotenv.config();
 import path from "path";
-import os from "os";
 const redis = new Redis(process.env.REDIS_URL);
 const __dirname = import.meta.dirname;
-const cpuCount = os.cpus().length + parseInt(process.env.THREADS ?? 0);
+const staticWorkerCount = Math.max(
+	1,
+	Number.parseInt(process.env.STATIC_FONT_THREADS ?? "1", 10),
+);
 const runWorker = data => {
 	try {
 		return new Promise((resolve, reject) => {
@@ -130,16 +132,28 @@ async function complete_ff_name_support_char_in_db(ff_name, lost_chars) {
 		return false;
 	}
 }
-async function regenerateAllStaticFont(state, have_gen_list) {
+async function regenerateAllStaticFont(
+	state,
+	have_gen_list,
+	onlyFontIds = null,
+) {
 	// list all have to regenerate fonts family and theirs support weights .
 	try {
+		const queryParams = [];
+		let whereClause = "";
+		if (onlyFontIds && onlyFontIds.length > 0) {
+			queryParams.push(onlyFontIds);
+			whereClause = "WHERE ff.id = ANY($1)";
+		}
 		const all_fonts = (
 			await db.query(
 				`SELECT ff.id AS ff_name, w AS support_weights
                 FROM font_family ff
                 JOIN LATERAL unnest(ff.weights) AS w ON true
+                ${whereClause}
                 ORDER BY ff.id,support_weights;
             ;`,
+				queryParams,
 			)
 		).rows;
 		//取得字型版本號，版本號定期更新，所以會自動重切
@@ -255,7 +269,7 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 
 			// 並行生成所有 pack
 			const results = [];
-			let batchSize = cpuCount;
+			let batchSize = staticWorkerCount;
 
 			// remove the index of existPack in
 			word_package_pair = word_package_pair.filter(
@@ -271,7 +285,6 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 						words,
 						pack,
 						version_num,
-						fontfile,
 						r2: state.r2,
 					}).catch(error => ({
 						success: false,
@@ -302,7 +315,6 @@ async function regenerateAllStaticFont(state, have_gen_list) {
 				}
 			}
 
-			await db.query("COMMIT");
 			return true;
 		}
 	} catch (err) {

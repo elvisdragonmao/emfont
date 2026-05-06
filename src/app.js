@@ -9,6 +9,7 @@ import Pyroscope from "@pyroscope/nodejs";
 // routes
 import registerPages from "./website/pages.js";
 import { registerApi } from "./website/api.js";
+import registerAdmin from "./website/admin.js";
 import registerStatic, { generateEmfontJS } from "./website/static.js";
 
 dotenv.config();
@@ -60,6 +61,7 @@ function getLoggerConfig() {
 	return envToLogger[process.env.NODE_ENV] ?? true;
 }
 const app = Fastify({
+	bodyLimit: Number(process.env.ADMIN_UPLOAD_MAX_BYTES ?? 200 * 1024 * 1024),
 	disableRequestLogging: true,
 	logger: getLoggerConfig(),
 });
@@ -69,12 +71,13 @@ setBaseLogger(app.log);
 app.register(cors, {
 	origin: "*",
 	methods: ["GET", "POST"],
-	allowedHeaders: ["Content-Type", "Authorization"],
+	allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token"],
 	credentials: true,
 });
 
 await registerPages(app);
 await registerApi(app, state);
+await registerAdmin(app, state);
 await registerStatic(app);
 
 if (process.env.NODE_ENV != "zeabur") {
