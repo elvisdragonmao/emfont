@@ -39,6 +39,27 @@ function arrayToText(value) {
 	return Array.isArray(value) ? value.join(", ") : value || "";
 }
 
+function fileToBase64(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(String(reader.result).split(",")[1]);
+		reader.onerror = () => reject(reader.error);
+		reader.readAsDataURL(file);
+	});
+}
+
+async function pollJob(jobId) {
+	while (true) {
+		const res = await fetch(`/api/admin/font-upload-jobs/${jobId}`);
+		if (redirectIfUnauthorized(res)) return null;
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.message || "Job polling failed");
+		setStatus(data.message || data.status, data.status);
+		if (data.status === "completed" || data.status === "failed") return data;
+		await new Promise(resolve => setTimeout(resolve, 1800));
+	}
+}
+
 function escapeHtml(value) {
 	return String(value ?? "").replace(
 		/[&<>"']/g,
@@ -83,6 +104,8 @@ function fillForm(font) {
 	editForm.elements.repoUrl.value = font.repoUrl || "";
 	editForm.elements.authors.value = arrayToText(font.authors);
 	editForm.elements.format.value = font.format || "ttf";
+	editForm.elements.replacementWeight.value = font.weights?.[0] || "";
+	editForm.elements.fontFile.value = "";
 	renderDemoSentences(font.demoContentId || 1);
 	previewLink.href = font.fontUrl;
 	editForm.hidden = false;
@@ -196,8 +219,22 @@ editForm.addEventListener("submit", async event => {
 	submit.disabled = true;
 	setStatus("正在儲存");
 	try {
-		const payload = Object.fromEntries(new FormData(editForm).entries());
+		const formData = new FormData(editForm);
+		const file = formData.get("fontFile");
+		const payload = Object.fromEntries(formData.entries());
 		delete payload.id;
+		delete payload.fontFile;
+
+		if (file && file.size > 0) {
+			const extension = file.name.split(".").pop().toLowerCase();
+			editForm.elements.format.value = extension;
+			payload.extension = extension;
+			payload.format = extension;
+			payload.fileBase64 = await fileToBase64(file);
+		} else {
+			delete payload.replacementWeight;
+		}
+
 		const res = await fetch(`/api/admin/fonts/${encodeURIComponent(fontId)}`, {
 			method: "PUT",
 			headers: headers(),
@@ -206,7 +243,16 @@ editForm.addEventListener("submit", async event => {
 		if (redirectIfUnauthorized(res)) return;
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Update failed");
-		setStatus("已儲存", "completed");
+		if (data.jobId) {
+			setStatus("已儲存，正在重新切割靜態字型");
+			const job = await pollJob(data.jobId);
+			if (job?.status === "failed")
+				throw new Error(job.error || "Static generation failed");
+			setStatus("字型檔已更新，靜態字型也切好了", "completed");
+			editForm.elements.fontFile.value = "";
+		} else {
+			setStatus("已儲存", "completed");
+		}
 		alert(`字型資訊已更新\n${data.fontUrl || previewLink.href}`);
 	} catch (error) {
 		setStatus(error.message, "failed");

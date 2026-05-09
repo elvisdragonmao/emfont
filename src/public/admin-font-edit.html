@@ -109,6 +109,24 @@
 									<option value="otf">otf</option>
 								</select>
 							</label>
+							<label>
+								<span>重新上傳字重</span>
+								<input
+									name="replacementWeight"
+									type="number"
+									min="1"
+									max="1000"
+									placeholder="400"
+								/>
+							</label>
+							<label class="wide file-drop">
+								<span>重新上傳原始字型檔</span>
+								<input
+									name="fontFile"
+									type="file"
+									accept=".ttf,.otf,font/ttf,font/otf"
+								/>
+							</label>
 							<label class="wide">
 								<span>展示句</span>
 								<select name="demoContentId" id="demo-sentence-select"></select>
