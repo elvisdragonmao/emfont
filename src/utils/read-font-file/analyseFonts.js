@@ -35,7 +35,7 @@ async function writeToDatabase(values, placeHolder) {
    */
 	await db.query(
 		`
-        INSERT INTO font_family (id, languages)
+        INSERT INTO font_family (id, name, languages)
         VALUES ${placeHolder.join(", ")}
         ON CONFLICT (id)
         DO UPDATE SET languages = EXCLUDED.languages;
@@ -65,8 +65,11 @@ async function analyseFontsInBatches(fontData) {
 			const languageJson = await runFontForgeBatch(chararray);
 
 			values.push(fontId);
+			values.push(fontId);
 			values.push(languageJson);
-			placeHolder.push(`($${loop_counter * 2 + 1},$${loop_counter * 2 + 2})`);
+			placeHolder.push(
+				`($${loop_counter * 3 + 1},$${loop_counter * 3 + 2},$${loop_counter * 3 + 3})`,
+			);
 		} catch (err) {
 			throw new Error(
 				`\n❌ 分析字型失敗 (${fontMeta.fontName} ${fontMeta.weights}):`,

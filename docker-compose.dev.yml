@@ -46,6 +46,9 @@ services:
     image: emfont:latest # Ensure you have built this image using the Dockerfile. Now I haven't push image to public respository.
     ports:
       - "${PORT}:${PORT}"
+    volumes:
+      - ${EMFONT_ORIGINAL_FONTS:-./src/_data/original-fonts}:/app/src/_data/original-fonts
+      - ${EMFONT_GENERATED_FONTS:-./src/_data/_generated}:/app/src/_data/_generated
     env_file:
       - .env
     environment:

@@ -1,6 +1,7 @@
 // website
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import cookie from "@fastify/cookie";
 import { loggerStorage, setBaseLogger } from "./utils/logger.js"; // font
 import { initCheck } from "./bootstrap/init.js";
 import dotenv from "dotenv";
@@ -9,6 +10,7 @@ import Pyroscope from "@pyroscope/nodejs";
 // routes
 import registerPages from "./website/pages.js";
 import { registerApi } from "./website/api.js";
+import registerAdmin from "./website/admin.js";
 import registerStatic, { generateEmfontJS } from "./website/static.js";
 
 dotenv.config();
@@ -60,6 +62,7 @@ function getLoggerConfig() {
 	return envToLogger[process.env.NODE_ENV] ?? true;
 }
 const app = Fastify({
+	bodyLimit: Number(process.env.ADMIN_UPLOAD_MAX_BYTES ?? 200 * 1024 * 1024),
 	disableRequestLogging: true,
 	logger: getLoggerConfig(),
 });
@@ -68,13 +71,15 @@ setBaseLogger(app.log);
 
 app.register(cors, {
 	origin: "*",
-	methods: ["GET", "POST"],
+	methods: ["GET", "POST", "PUT"],
 	allowedHeaders: ["Content-Type", "Authorization"],
 	credentials: true,
 });
+app.register(cookie);
 
 await registerPages(app);
 await registerApi(app, state);
+await registerAdmin(app, state);
 await registerStatic(app);
 
 if (process.env.NODE_ENV != "zeabur") {

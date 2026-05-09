@@ -16,7 +16,10 @@ function hashString(str) {
 }
 
 function normalizeWordSet(wordSet) {
-	return Array.from(new Set([...wordSet])).sort().join("");
+	// 先去重再排序，讓同一批字在不同排列時會產生同一個 hash。
+	return Array.from(new Set([...wordSet]))
+		.sort()
+		.join("");
 }
 
 // hashString 呼叫範例。
@@ -120,10 +123,15 @@ export const genFont = async (req, res, state) => {
 		} else {
 			//請求靜態字型
 			//TODO:確認字型包是否存在r2，若無，怎麼辦
+			// 靜態字型的 pack 索引只跟字元集合有關，不跟輸入順序有關。
+			// 先正規化再算 hash，Redis 才能把相同內容但不同順序的請求視為同一筆。
 			//靜態字型的 hash 不需要跟動態一樣把字體檔案參數放進去，因為 pack number 每種字都一樣，只會有試著請求不支援的字型拿到 404 的問題。這是可以接受的錯誤，故忽略
 			const normalizedWordSet = normalizeWordSet(req_word_set);
 			const hash = hashString(normalizedWordSet);
-			const font_pack_you_need = await find_static_font(normalizedWordSet, hash);
+			const font_pack_you_need = await find_static_font(
+				normalizedWordSet,
+				hash,
+			);
 			const R2font_url = give_static_font({
 				font_family: font_family_name,
 				font_weight: font_weight,
