@@ -1,7 +1,11 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, readdir, rm, writeFile } from "fs/promises";
 import path from "path";
 import { Redis } from "ioredis";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import crypto from "crypto";
 import { promisify } from "util";
 import { db } from "../utils/database.js";
@@ -17,6 +21,8 @@ const adminSessionCookie = "emfont_admin_session";
 const adminSessionMaxAgeSeconds = 60 * 60 * 24 * 3;
 
 const originalFontsDir = path.resolve("src/_data/original-fonts");
+const generatedFontsDir = path.resolve("src/_data/_generated");
+const fontExtensions = ["ttf", "otf"];
 const allowedCategories = new Set([
 	"serif",
 	"sans-serif",
@@ -148,18 +154,46 @@ async function loginAdminUser(userId, password) {
 
 async function syncOriginalFontToMinio({ id, weight, extension, buffer }) {
 	if (process.env.SYNC_WITH_MINIO !== "true") return;
-	if (
-		!process.env.MINIO_ENDPOINT ||
-		!process.env.MINIO_USERNAME ||
-		!process.env.MINIO_PASSWORD ||
-		!process.env.MINIO_BUCKET
-	) {
-		logger.warn(
-			"SYNC_WITH_MINIO=true, but MinIO is not configured. Skip upload.",
-		);
-		return;
+	if (!isMinioConfigured()) {
+		throw new Error("SYNC_WITH_MINIO=true, but MinIO is not configured");
 	}
 
+	const minioClient = createMinioClient();
+	const key = `original-fonts/${id}/${weight}.${extension}`;
+	await minioClient.send(
+		new PutObjectCommand({
+			Bucket: process.env.MINIO_BUCKET,
+			Key: key,
+			Body: buffer,
+			ContentType: extension === "otf" ? "font/otf" : "font/ttf",
+		}),
+	);
+	logger.info(`Synced original font to MinIO: ${key}`);
+}
+
+async function deleteOriginalFontFromMinio({ id, weight, extension }) {
+	if (process.env.SYNC_WITH_MINIO !== "true" || !isMinioConfigured()) return;
+	const minioClient = createMinioClient();
+	const key = `original-fonts/${id}/${weight}.${extension}`;
+	await minioClient.send(
+		new DeleteObjectCommand({
+			Bucket: process.env.MINIO_BUCKET,
+			Key: key,
+		}),
+	);
+	logger.info(`Deleted stale original font from MinIO: ${key}`);
+}
+
+function isMinioConfigured() {
+	return (
+		process.env.MINIO_ENDPOINT &&
+		process.env.MINIO_USERNAME &&
+		process.env.MINIO_PASSWORD &&
+		process.env.MINIO_BUCKET
+	);
+}
+
+function createMinioClient() {
 	const minioClient = new S3Client({
 		region: "auto",
 		endpoint: process.env.MINIO_ENDPOINT,
@@ -169,18 +203,27 @@ async function syncOriginalFontToMinio({ id, weight, extension, buffer }) {
 			secretAccessKey: process.env.MINIO_PASSWORD,
 		},
 	});
+	return minioClient;
+}
 
-	await minioClient.send(
-		new PutObjectCommand({
-			Bucket: process.env.MINIO_BUCKET,
-			Key: `original-fonts/${id}/${weight}.${extension}`,
-			Body: buffer,
-			ContentType: extension === "otf" ? "font/otf" : "font/ttf",
-		}),
-	);
-	logger.info(
-		`Synced original font to MinIO: original-fonts/${id}/${weight}.${extension}`,
-	);
+async function saveOriginalFontFile({ id, weight, extension, fileBase64 }) {
+	if (process.env.SYNC_WITH_MINIO === "true" && !isMinioConfigured()) {
+		throw new Error("SYNC_WITH_MINIO=true, but MinIO is not configured");
+	}
+	const fontDir = path.join(originalFontsDir, id);
+	const fontBuffer = Buffer.from(fileBase64, "base64");
+
+	await syncOriginalFontToMinio({ id, weight, extension, buffer: fontBuffer });
+	await mkdir(fontDir, { recursive: true });
+	await writeFile(path.join(fontDir, `${weight}.${extension}`), fontBuffer);
+
+	for (const oldExtension of fontExtensions) {
+		if (oldExtension === extension) continue;
+		await rm(path.join(fontDir, `${weight}.${oldExtension}`), {
+			force: true,
+		});
+		await deleteOriginalFontFromMinio({ id, weight, extension: oldExtension });
+	}
 }
 
 function normalizeTextArray(value) {
@@ -218,6 +261,16 @@ function assertUploadPayload(body) {
 	if (!body.fileBase64) throw new Error("Font file is required");
 }
 
+function normalizeFontExtension(value) {
+	return String(value || "")
+		.toLowerCase()
+		.replace(/^\./, "");
+}
+
+function escapeRegExp(value) {
+	return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function normalizeWeights(value) {
 	const weights = normalizeTextArray(value)
 		.map(Number)
@@ -239,6 +292,25 @@ function assertFontInfoPayload(body) {
 	if (!["ttf", "otf"].includes(format)) throw new Error("Invalid font format");
 }
 
+function normalizeReplacementFont(body) {
+	if (!body.fileBase64 && !body.replacementWeight && !body.extension)
+		return null;
+	if (!body.fileBase64) throw new Error("Font file is required");
+	const weight = Number(body.replacementWeight);
+	if (!Number.isInteger(weight) || weight < 1 || weight > 1000) {
+		throw new Error("Replacement weight must be an integer between 1 and 1000");
+	}
+	const extension = normalizeFontExtension(body.extension);
+	if (!fontExtensions.includes(extension)) {
+		throw new Error("Only ttf and otf fonts are supported");
+	}
+	const weights = normalizeWeights(body.weights);
+	if (!weights.includes(weight)) {
+		throw new Error("Replacement weight must be included in weights");
+	}
+	return { weight, extension, fileBase64: body.fileBase64 };
+}
+
 function assertDemoSentencePayload(body) {
 	if (!body || typeof body !== "object")
 		throw new Error("Missing request body");
@@ -248,12 +320,13 @@ function assertDemoSentencePayload(body) {
 async function saveFontRecord(body) {
 	const id = body.id.trim();
 	const weight = Number(body.weight);
-	const extension = String(body.extension).toLowerCase().replace(/^\./, "");
-	const fontDir = path.join(originalFontsDir, id);
-	const fontBuffer = Buffer.from(body.fileBase64, "base64");
-	await mkdir(fontDir, { recursive: true });
-	await writeFile(path.join(fontDir, `${weight}.${extension}`), fontBuffer);
-	await syncOriginalFontToMinio({ id, weight, extension, buffer: fontBuffer });
+	const extension = normalizeFontExtension(body.extension);
+	await saveOriginalFontFile({
+		id,
+		weight,
+		extension,
+		fileBase64: body.fileBase64,
+	});
 
 	await db.query(
 		`
@@ -320,6 +393,15 @@ async function getFontRecord(id) {
 }
 
 async function updateFontRecord(id, body) {
+	const replacementFont = normalizeReplacementFont(body);
+	if (replacementFont) {
+		await saveOriginalFontFile({
+			id,
+			...replacementFont,
+		});
+		body.format = replacementFont.extension;
+	}
+
 	await db.query(
 		`
 		UPDATE font_family
@@ -359,7 +441,10 @@ async function updateFontRecord(id, body) {
 		],
 	);
 	await redis.del(`fontinfo:${id}`);
-	return getFontRecord(id);
+	return {
+		font: await getFontRecord(id),
+		replacementFont,
+	};
 }
 
 async function listDemoSentences() {
@@ -404,6 +489,7 @@ async function generateStaticForUploadedFont(job, font) {
 	]);
 
 	job.message = "正在切割靜態字型包";
+	await removeStaticFontPackages(font.id, font.weight);
 	const ok = await regenerateAllStaticFont(
 		job.state,
 		await get_generated_static_floders(),
@@ -416,6 +502,47 @@ async function generateStaticForUploadedFont(job, font) {
 	job.status = "completed";
 	job.message = "字型已新增，靜態字型也切好了";
 	job.completedAt = new Date().toISOString();
+}
+
+async function removeStaticFontPackages(fontId, weight) {
+	const pattern = new RegExp(
+		`^\\d+-${escapeRegExp(fontId)}-${escapeRegExp(weight)}$`,
+	);
+	await mkdir(generatedFontsDir, { recursive: true });
+	const entries = await readdir(generatedFontsDir, { withFileTypes: true });
+	await Promise.all(
+		entries
+			.filter(entry => entry.isDirectory() && pattern.test(entry.name))
+			.map(entry =>
+				rm(path.join(generatedFontsDir, entry.name), {
+					recursive: true,
+					force: true,
+				}),
+			),
+	);
+}
+
+function queueStaticGenerationJob({ state, font, queuedMessage }) {
+	const jobId = `${font.id}-${Date.now().toString(36)}`;
+	const job = {
+		id: jobId,
+		fontId: font.id,
+		status: "queued",
+		message: queuedMessage,
+		state,
+		createdAt: new Date().toISOString(),
+	};
+	uploadJobs.set(jobId, job);
+
+	generateStaticForUploadedFont(job, font).catch(error => {
+		logger.error(`Admin font upload job failed: ${error.message}`);
+		job.status = "failed";
+		job.message = "靜態字型切割失敗";
+		job.error = error.message;
+		job.completedAt = new Date().toISOString();
+	});
+
+	return jobId;
 }
 
 export default async function registerAdmin(app, state) {
@@ -520,12 +647,29 @@ export default async function registerAdmin(app, state) {
 					.send({ status: "failed", message: "Font not found" });
 			}
 			assertFontInfoPayload(req.body);
-			const font = await updateFontRecord(req.params.fontId, req.body);
+			const { font, replacementFont } = await updateFontRecord(
+				req.params.fontId,
+				req.body,
+			);
+			const jobId = replacementFont
+				? queueStaticGenerationJob({
+						state,
+						font: {
+							id: font.id,
+							weight: replacementFont.weight,
+							extension: replacementFont.extension,
+						},
+						queuedMessage: "已更新原始字型，等待重新切割靜態字型",
+					})
+				: null;
 			res.send({
 				status: "success",
-				message: "Font info updated",
+				message: replacementFont
+					? "Font file updated. Static generation started."
+					: "Font info updated",
 				fontId: font.id,
 				fontUrl: fontInfoUrl(state, font.id),
+				jobId,
 			});
 		} catch (error) {
 			res.status(400).send({ status: "failed", message: error.message });
@@ -557,23 +701,10 @@ export default async function registerAdmin(app, state) {
 		try {
 			assertUploadPayload(req.body);
 			const font = await saveFontRecord(req.body);
-			const jobId = `${font.id}-${Date.now().toString(36)}`;
-			const job = {
-				id: jobId,
-				fontId: font.id,
-				status: "queued",
-				message: "已儲存原始字型，等待切割靜態字型",
+			const jobId = queueStaticGenerationJob({
 				state,
-				createdAt: new Date().toISOString(),
-			};
-			uploadJobs.set(jobId, job);
-
-			generateStaticForUploadedFont(job, font).catch(error => {
-				logger.error(`Admin font upload job failed: ${error.message}`);
-				job.status = "failed";
-				job.message = "靜態字型切割失敗";
-				job.error = error.message;
-				job.completedAt = new Date().toISOString();
+				font,
+				queuedMessage: "已儲存原始字型，等待切割靜態字型",
 			});
 
 			res.status(202).send({
