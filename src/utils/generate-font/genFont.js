@@ -93,11 +93,12 @@ export const genFont = async (req, res, state) => {
 		// 	[font_id, font_weight, req_source, req_word_set, min_flag],
 		// );
 		if (min_flag || process.env.FORCE_MIN == "true") {
+			const normalizedWordSet = normalizeWordSet(req_word_set);
 			const summery = {
 				// This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
 				fontFamily: font_family_name,
 				fontWeight: font_weight,
-				wordSet: req_word_set,
+				wordSet: normalizedWordSet,
 			};
 			const hash = hashString(JSON.stringify(summery));
 			const file_path = await find_dynamic_font({
@@ -105,7 +106,7 @@ export const genFont = async (req, res, state) => {
 				font_id: font_id,
 				font_family: font_family_name,
 				font_weight: font_weight,
-				original_word_set: req_word_set,
+				original_word_set: normalizedWordSet,
 				state: state,
 			});
 			if (file_path.status === "failed")
