@@ -2,7 +2,9 @@ import { mkdir, readdir, rm, writeFile } from "fs/promises";
 import path from "path";
 import { Redis } from "ioredis";
 import {
+	DeleteObjectsCommand,
 	DeleteObjectCommand,
+	ListObjectsV2Command,
 	PutObjectCommand,
 	S3Client,
 } from "@aws-sdk/client-s3";
@@ -152,6 +154,20 @@ async function loginAdminUser(userId, password) {
 	return true;
 }
 
+async function verifyAdminUserPassword(userId, password) {
+	if (!userId || !password) return false;
+	const { rows } = await db.query(
+		`
+		SELECT password_hash
+		FROM admin_users
+		WHERE user_id = $1
+		`,
+		[userId],
+	);
+	if (rows.length === 0) return false;
+	return verifyPassword(password, rows[0].password_hash);
+}
+
 async function syncOriginalFontToMinio({ id, weight, extension, buffer }) {
 	if (process.env.SYNC_WITH_MINIO !== "true") return;
 	if (!isMinioConfigured()) {
@@ -182,6 +198,59 @@ async function deleteOriginalFontFromMinio({ id, weight, extension }) {
 		}),
 	);
 	logger.info(`Deleted stale original font from MinIO: ${key}`);
+}
+
+async function deleteMinioPrefix(prefix) {
+	if (process.env.SYNC_WITH_MINIO !== "true" || !isMinioConfigured()) return;
+	const minioClient = createMinioClient();
+	let continuationToken;
+	do {
+		const listed = await minioClient.send(
+			new ListObjectsV2Command({
+				Bucket: process.env.MINIO_BUCKET,
+				Prefix: prefix,
+				ContinuationToken: continuationToken,
+			}),
+		);
+		const objects = (listed.Contents || []).map(item => ({ Key: item.Key }));
+		if (objects.length > 0) {
+			await minioClient.send(
+				new DeleteObjectsCommand({
+					Bucket: process.env.MINIO_BUCKET,
+					Delete: { Objects: objects },
+				}),
+			);
+		}
+		continuationToken = listed.NextContinuationToken;
+	} while (continuationToken);
+	logger.info(`Deleted MinIO prefix: ${prefix}`);
+}
+
+async function deleteMinioObjectsMatching(prefix, matchesKey) {
+	if (process.env.SYNC_WITH_MINIO !== "true" || !isMinioConfigured()) return;
+	const minioClient = createMinioClient();
+	let continuationToken;
+	do {
+		const listed = await minioClient.send(
+			new ListObjectsV2Command({
+				Bucket: process.env.MINIO_BUCKET,
+				Prefix: prefix,
+				ContinuationToken: continuationToken,
+			}),
+		);
+		const objects = (listed.Contents || [])
+			.filter(item => matchesKey(item.Key))
+			.map(item => ({ Key: item.Key }));
+		if (objects.length > 0) {
+			await minioClient.send(
+				new DeleteObjectsCommand({
+					Bucket: process.env.MINIO_BUCKET,
+					Delete: { Objects: objects },
+				}),
+			);
+		}
+		continuationToken = listed.NextContinuationToken;
+	} while (continuationToken);
 }
 
 function isMinioConfigured() {
@@ -280,13 +349,28 @@ function normalizeWeights(value) {
 	return Array.from(new Set(weights)).sort((a, b) => a - b);
 }
 
+function normalizeFontInfoWeights(body) {
+	const weights = normalizeWeights(body.weights);
+	const replacementWeight = Number(body.replacementWeight);
+	if (
+		body.fileBase64 &&
+		Number.isInteger(replacementWeight) &&
+		replacementWeight >= 1 &&
+		replacementWeight <= 1000 &&
+		!weights.includes(replacementWeight)
+	) {
+		weights.push(replacementWeight);
+	}
+	return Array.from(new Set(weights)).sort((a, b) => a - b);
+}
+
 function assertFontInfoPayload(body) {
 	if (!body || typeof body !== "object")
 		throw new Error("Missing request body");
 	if (!body.name) throw new Error("Font name is required");
 	if (!allowedCategories.has(body.category))
 		throw new Error("Invalid category");
-	const weights = normalizeWeights(body.weights);
+	const weights = normalizeFontInfoWeights(body);
 	if (weights.length === 0) throw new Error("At least one weight is required");
 	const format = String(body.format || "").toLowerCase();
 	if (!["ttf", "otf"].includes(format)) throw new Error("Invalid font format");
@@ -303,10 +387,6 @@ function normalizeReplacementFont(body) {
 	const extension = normalizeFontExtension(body.extension);
 	if (!fontExtensions.includes(extension)) {
 		throw new Error("Only ttf and otf fonts are supported");
-	}
-	const weights = normalizeWeights(body.weights);
-	if (!weights.includes(weight)) {
-		throw new Error("Replacement weight must be included in weights");
 	}
 	return { weight, extension, fileBase64: body.fileBase64 };
 }
@@ -427,7 +507,7 @@ async function updateFontRecord(id, body) {
 			body.name.trim(),
 			body.nameZh?.trim() || null,
 			body.nameEn?.trim() || null,
-			normalizeWeights(body.weights),
+			normalizeFontInfoWeights(body),
 			body.license?.trim() || null,
 			body.version?.trim() || null,
 			body.description?.trim() || null,
@@ -445,6 +525,69 @@ async function updateFontRecord(id, body) {
 		font: await getFontRecord(id),
 		replacementFont,
 	};
+}
+
+async function removeGeneratedFontPackages(fontId) {
+	await mkdir(generatedFontsDir, { recursive: true });
+	const pattern = new RegExp(`^\\d+-${escapeRegExp(fontId)}-\\d+$`);
+	const entries = await readdir(generatedFontsDir, { withFileTypes: true });
+	await Promise.all(
+		entries
+			.filter(entry => entry.isDirectory() && pattern.test(entry.name))
+			.map(entry =>
+				rm(path.join(generatedFontsDir, entry.name), {
+					recursive: true,
+					force: true,
+				}),
+			),
+	);
+}
+
+async function deleteFontRecord(id) {
+	await db.query("BEGIN");
+	try {
+		await db.query(`DELETE FROM usage_log WHERE family_id = $1`, [id]);
+		await db.query(`DELETE FROM dynamic_fonts WHERE family_id = $1`, [id]);
+		await db.query(
+			`
+			UPDATE static_fonts
+			SET families = array_remove(families, $1)
+			WHERE $1 = ANY(families)
+			`,
+			[id],
+		);
+		const deleted = await db.query(
+			`
+			DELETE FROM font_family
+			WHERE id = $1
+			RETURNING id
+			`,
+			[id],
+		);
+		if (deleted.rowCount === 0) throw new Error("Font not found");
+		await db.query("COMMIT");
+	} catch (error) {
+		await db.query("ROLLBACK");
+		throw error;
+	}
+
+	const cleanupResults = await Promise.allSettled([
+		rm(path.join(originalFontsDir, id), { recursive: true, force: true }),
+		removeGeneratedFontPackages(id),
+		deleteMinioPrefix(`original-fonts/${id}/`),
+		deleteMinioPrefix(`css/${id}/`),
+		deleteMinioObjectsMatching("_generated/", key =>
+			new RegExp(`^_generated/\\d+-${escapeRegExp(id)}-\\d+/`).test(key),
+		),
+	]);
+	for (const result of cleanupResults) {
+		if (result.status === "rejected") {
+			logger.warn(
+				`Font cleanup skipped after delete: ${result.reason.message}`,
+			);
+		}
+	}
+	await redis.del(`fontinfo:${id}`);
 }
 
 async function listDemoSentences() {
@@ -670,6 +813,38 @@ export default async function registerAdmin(app, state) {
 				fontId: font.id,
 				fontUrl: fontInfoUrl(state, font.id),
 				jobId,
+			});
+		} catch (error) {
+			res.status(400).send({ status: "failed", message: error.message });
+		}
+	});
+
+	app.delete("/api/admin/fonts/:fontId", async (req, res) => {
+		const userId = requireAdminApi(req, res);
+		if (!userId) return;
+		try {
+			const font = await getFontRecord(req.params.fontId);
+			if (!font) {
+				return res
+					.status(404)
+					.send({ status: "failed", message: "Font not found" });
+			}
+			if (req.body?.confirmId !== req.params.fontId) {
+				return res.status(400).send({
+					status: "failed",
+					message: "Font ID confirmation does not match",
+				});
+			}
+			if (!(await verifyAdminUserPassword(userId, req.body?.password))) {
+				return res
+					.status(403)
+					.send({ status: "failed", message: "Invalid password" });
+			}
+			await deleteFontRecord(req.params.fontId);
+			res.send({
+				status: "success",
+				message: "Font deleted",
+				fontId: req.params.fontId,
 			});
 		} catch (error) {
 			res.status(400).send({ status: "failed", message: error.message });

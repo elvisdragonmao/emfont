@@ -128,6 +128,19 @@ h1 {
 	overflow: auto;
 }
 
+.panel-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
+.panel-heading strong {
+	color: var(--text);
+	font-size: 1rem;
+}
+
 .admin-font-list {
 	display: grid;
 	gap: 12px;
@@ -235,6 +248,15 @@ button.link-button {
 	background: transparent;
 	color: var(--accent);
 	padding: 0;
+}
+
+button.danger-button {
+	background: #3b1720;
+	color: #ffd6df;
+}
+
+button.danger-button:not(:disabled):hover {
+	background: #5a1f2d;
 }
 
 #upload-status {

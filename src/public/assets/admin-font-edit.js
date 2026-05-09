@@ -8,6 +8,7 @@ const previewLink = document.getElementById("font-preview-link");
 const demoSentenceSelect = document.getElementById("demo-sentence-select");
 const sentenceCreateForm = document.getElementById("sentence-create-form");
 const logoutButton = document.getElementById("admin-logout");
+const deleteButton = document.getElementById("font-delete-button");
 
 let fontList = [];
 let demoSentences = [];
@@ -109,6 +110,7 @@ function fillForm(font) {
 	renderDemoSentences(font.demoContentId || 1);
 	previewLink.href = font.fontUrl;
 	editForm.hidden = false;
+	deleteButton.disabled = false;
 	renderFontList();
 }
 
@@ -173,6 +175,15 @@ async function loadFontList() {
 	fontList.sort((a, b) => a.id.localeCompare(b.id));
 	renderCategoryFilter();
 	renderFontList();
+}
+
+async function refreshAfterDelete(fontId) {
+	selectedFontId = "";
+	editForm.hidden = true;
+	deleteButton.disabled = true;
+	previewLink.href = "#";
+	await loadFontList();
+	setStatus(`已刪除 ${fontId}`, "completed");
 }
 
 async function loadDemoSentences(selectedId = 1) {
@@ -258,6 +269,38 @@ editForm.addEventListener("submit", async event => {
 		setStatus(error.message, "failed");
 	} finally {
 		submit.disabled = false;
+	}
+});
+
+deleteButton.addEventListener("click", async () => {
+	if (!selectedFontId) return;
+	const fontId = selectedFontId;
+	const confirmId = window.prompt(
+		`這是不可逆操作，會刪除 ${fontId} 的資料庫紀錄、原始字型檔和已產生的靜態字型。\n\n請輸入字型 ID 確認刪除：`,
+	);
+	if (confirmId === null) return;
+	if (confirmId !== fontId) {
+		setStatus("字型 ID 不一致，已取消刪除", "failed");
+		return;
+	}
+	const password = window.prompt("請重新輸入管理員密碼確認刪除：");
+	if (password === null) return;
+
+	deleteButton.disabled = true;
+	setStatus("正在刪除字型");
+	try {
+		const res = await fetch(`/api/admin/fonts/${encodeURIComponent(fontId)}`, {
+			method: "DELETE",
+			headers: headers(),
+			body: JSON.stringify({ confirmId, password }),
+		});
+		if (redirectIfUnauthorized(res)) return;
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.message || "Delete failed");
+		await refreshAfterDelete(fontId);
+	} catch (error) {
+		setStatus(error.message, "failed");
+		deleteButton.disabled = false;
 	}
 });
 
