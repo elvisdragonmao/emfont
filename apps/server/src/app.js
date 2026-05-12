@@ -6,11 +6,11 @@ import dotenv from "dotenv";
 import Fastify from "fastify";
 import { initCheck } from "./bootstrap/init.js";
 import { loggerStorage, setBaseLogger } from "./utils/logger.js"; // font
+import { metricsPlugin } from "./utils/metrics.js";
 
 // routes
 import registerAdmin from "./website/admin.js";
 import { registerApi } from "./website/api.js";
-import registerPages from "./website/pages.js";
 import registerStatic, { generateEmfontJS } from "./website/static.js";
 
 dotenv.config();
@@ -76,7 +76,7 @@ app.register(cors, {
 });
 app.register(cookie);
 
-await registerPages(app);
+await app.register(metricsPlugin);
 await registerApi(app, state);
 await registerAdmin(app, state);
 await registerStatic(app);

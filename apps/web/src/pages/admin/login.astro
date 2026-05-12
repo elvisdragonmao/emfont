@@ -1,0 +1,25 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="管理登入 - emfont" heading="登入" shellClass="login-shell" active="login">
+  <section class="workspace" aria-label="管理者登入">
+    <form id="admin-login-form" class="login-form">
+      <label>
+        <span>使用者 ID</span>
+        <input name="userId" autocomplete="username" required />
+      </label>
+      <label>
+        <span>密碼</span>
+        <input name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <div class="actions">
+        <button type="submit">登入</button>
+        <p id="login-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+  </section>
+  <script>
+    import "../../scripts/admin-login.ts";
+  </script>
+</AdminLayout>

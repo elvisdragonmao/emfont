@@ -1,0 +1,67 @@
+---
+import { PlayCircle } from "@lucide/astro";
+
+const apiBase = (import.meta.env.PUBLIC_EMFONT_API_BASE ?? "").replace(/\/$/, "");
+---
+
+<!doctype html>
+<html lang="zh-Hant" data-api-base={apiBase}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>emfont 功能測試</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f172a;
+        --panel: #182235;
+        --line: #344155;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #58c7ad;
+      }
+      * { box-sizing: border-box; }
+      body { min-height: 100dvh; margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Noto Sans TC", sans-serif; }
+      main { width: min(860px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0; }
+      h1 { margin: 0 0 8px; font-size: clamp(2rem, 6vw, 4rem); }
+      p { color: var(--muted); line-height: 1.7; }
+      button { display: inline-flex; align-items: center; gap: 0.5rem; border: 0; border-radius: 999px; background: var(--accent); color: #04251e; font: inherit; font-weight: 800; padding: 12px 18px; cursor: pointer; }
+      button svg { width: 1.1rem; height: 1.1rem; }
+      .tests { display: grid; gap: 14px; margin-top: 28px; }
+      .test { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 18px; }
+      .class { color: var(--muted); margin-bottom: 8px; }
+      .preview { font-size: clamp(1.6rem, 5vw, 3rem); min-height: 1.4em; }
+      .result { margin-top: 10px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>emfont 功能測試</h1>
+      <p>快速檢查 `emfont.js`、CSS 字體載入與極致壓縮是否可用。結果僅供參考，請以實際字形變化與開發者工具為準。</p>
+      <button id="run-tests" type="button"><PlayCircle aria-hidden="true" />測試所有項目</button>
+      <div class="tests">
+        <div class="test" data-class="emfont-Cubic11"><div class="class">emfont-Cubic11</div><div class="preview emfont-Cubic11">一般文字</div><div class="result">尚未測試</div></div>
+        <div class="test" data-class="emfont-MaokenAssortedSansTC-min"><div class="class">emfont-MaokenAssortedSansTC-min</div><div class="preview emfont-MaokenAssortedSansTC-min">極致壓縮</div><div class="result">尚未測試</div></div>
+        <div class="test" data-class="emfont-Tiejili-400-min"><div class="class">emfont-Tiejili-400-min</div><div class="preview emfont-Tiejili-400-min">極致壓縮＋指定字重</div><div class="result">尚未測試</div></div>
+      </div>
+    </main>
+    <script src={`${apiBase}/emfont.js`}></script>
+    <script is:inline>
+      const apiBase = document.documentElement.dataset.apiBase?.replace(/\/$/, "") || "";
+      const run = async () => {
+        for (const test of document.querySelectorAll(".test")) {
+          const result = test.querySelector(".result");
+          result.textContent = "測試中";
+          try {
+            const [fontResult] = await window.emfont.init({ root: test, cache: false, tofu: true });
+            result.textContent = fontResult?.status === "fulfilled" ? "通過" : "請檢查字型是否存在";
+          } catch (error) {
+            result.textContent = error.message || "測試失敗";
+          }
+        }
+      };
+      document.getElementById("run-tests").addEventListener("click", run);
+    </script>
+  </body>
+</html>

@@ -65,13 +65,6 @@ function clearAdminSession(res) {
 	res.clearCookie(adminSessionCookie, { path: "/" });
 }
 
-function requireAdminPage(req, res) {
-	const userId = readSessionUser(req);
-	if (userId) return userId;
-	res.redirect("/admin/login");
-	return null;
-}
-
 function requireAdminApi(req, res) {
 	const userId = readSessionUser(req);
 	if (userId) return userId;
@@ -703,10 +696,6 @@ function queueStaticGenerationJob({ state, font, queuedMessage }) {
 export default async function registerAdmin(app, state) {
 	await initBootstrapAdminUser();
 
-	app.get("/admin/login", async (_req, res) => {
-		return res.sendFile("admin-login.html");
-	});
-
 	app.post("/api/admin/login", async (req, res) => {
 		const userId = req.body?.userId?.trim();
 		const password = req.body?.password || "";
@@ -723,16 +712,6 @@ export default async function registerAdmin(app, state) {
 	app.post("/api/admin/logout", async (_req, res) => {
 		clearAdminSession(res);
 		res.send({ status: "success", message: "Logged out" });
-	});
-
-	app.get("/admin/fonts", async (req, res) => {
-		if (!requireAdminPage(req, res)) return;
-		return res.sendFile("admin-font-upload.html");
-	});
-
-	app.get("/admin/fonts/edit", async (req, res) => {
-		if (!requireAdminPage(req, res)) return;
-		return res.sendFile("admin-font-edit.html");
 	});
 
 	app.get("/api/admin/config", async (req, res) => {

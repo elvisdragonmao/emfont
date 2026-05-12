@@ -16,3 +16,5 @@ apps/*/.env
 apps/docs/.next
 apps/docs/out
 apps/mcp/build
+apps/web/.astro
+apps/web/dist

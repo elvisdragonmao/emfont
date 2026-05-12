@@ -1,0 +1,8 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+
+export const prerender = false;
+const font = Astro.params.font ?? "";
+---
+
+<SiteLayout page="font" title={`${font || "字體"} - emfont`} />

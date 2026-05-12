@@ -1,7 +1,7 @@
 <div align=center>
 
-<img src=apps/server/src/public/assets/img/logo/emfont-logo-light.svg#gh-dark-mode-only height=48px>
-<img src=apps/server/src/public/assets/img/logo/emfont-logo-dark.svg#gh-light-mode-only height=48px>
+<img src=apps/web/public/assets/img/logo/emfont-logo-light.svg#gh-dark-mode-only height=48px>
+<img src=apps/web/public/assets/img/logo/emfont-logo-dark.svg#gh-light-mode-only height=48px>
 
 <div style=height:1.5rem></div>
 
@@ -70,7 +70,7 @@ git clone https://github.com/emfont/emfont.git
 pnpm install
 ```
 
-這個 repo 使用 pnpm workspace：伺服器在 `apps/server`，文件站在 `apps/docs`，MCP 服務在 `apps/mcp`。
+這個 repo 使用 pnpm workspace：網站前端在 `apps/web`，API 伺服器在 `apps/server`，文件站在 `apps/docs`，MCP 服務在 `apps/mcp`。
 
 可以考慮安裝 [minIO](https://min.io/) ([S3](https://aws.amazon.com/tw/pm/serv-s3/), [R2](https://www.cloudflare.com/zh-tw/developer-platform/products/r2/)) 並設定環境變數來提升性能。
 
@@ -79,5 +79,6 @@ pnpm install
 **環境變數：** 複製 `apps/server/.env.example` 並命名為 `apps/server/.env`，然後根據需要修改其中的變數。最後啟動即可。必填的環境變數只有 PostgreSQL 的連線資訊。
 
 ```bash
+pnpm dev:web
 pnpm start:server
 ```

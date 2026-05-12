@@ -1,18 +1,33 @@
 import fastifyStatic from "@fastify/static";
-import { readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { minify } from "terser";
 
-export default async app => {
-	app.register(fastifyStatic, {
-		root: join(import.meta.dirname, "../public"),
-		prefix: "/"
-	});
+const publicRoot = join(import.meta.dirname, "../public");
 
+export default async app => {
 	app.register(fastifyStatic, {
 		root: join(import.meta.dirname, "../_data/_generated"),
 		prefix: "/_generated/",
 		decorateReply: false
+	});
+
+	app.get("/emfont.js", async (_req, res) => {
+		try {
+			const content = await readFile(join(publicRoot, "emfont.js"), "utf-8");
+			return res.type("application/javascript").send(content);
+		} catch {
+			return res.status(503).send("// emfont.js is not ready yet");
+		}
+	});
+
+	app.get("/sitemap.xml", async (_req, res) => {
+		try {
+			const content = await readFile(join(publicRoot, "sitemap.xml"), "utf-8");
+			return res.type("application/xml").send(content);
+		} catch {
+			return res.status(404).send("Sitemap not generated");
+		}
 	});
 
 	app.get("/emfont.min.js", async (req, res) => {
@@ -37,5 +52,6 @@ export async function generateEmfontJS(state) {
 		mangle: true
 	});
 
-	await writeFile(join(import.meta.dirname, "../public/emfont.js"), content.code);
+	await mkdir(publicRoot, { recursive: true });
+	await writeFile(join(publicRoot, "emfont.js"), content.code);
 }

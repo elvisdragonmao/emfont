@@ -1,0 +1,21 @@
+{
+  "name": "@emfont/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "astro build",
+    "check": "tsc --noEmit --skipLibCheck",
+    "dev": "astro dev",
+    "preview": "astro preview",
+    "start": "node ./dist/server/entry.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.5.0",
+    "@lucide/astro": "^1.14.0",
+    "astro": "^5.16.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

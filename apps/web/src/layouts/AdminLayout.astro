@@ -1,0 +1,48 @@
+---
+import { LogOut, Pencil, Upload } from "@lucide/astro";
+import "../styles/admin.css";
+
+interface Props {
+  title: string;
+  heading: string;
+  shellClass?: string;
+  active?: "upload" | "edit" | "login";
+}
+
+const { title, heading, shellClass = "", active = "login" } = Astro.props;
+const apiBase = (import.meta.env.PUBLIC_EMFONT_API_BASE ?? "").replace(/\/$/, "");
+---
+
+<!doctype html>
+<html lang="zh-Hant" data-api-base={apiBase}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
+  </head>
+  <body>
+    <main class:list={["admin-shell", shellClass]}>
+      <header>
+        <a href="/" aria-label="回到首頁">
+          <img src="/assets/img/logo/emfont-logo-light.svg" alt="emfont" />
+        </a>
+        <div>
+          <p>管理者工具</p>
+          <h1>{heading}</h1>
+        </div>
+        {active !== "login" && (
+          <nav class="admin-nav" aria-label="管理頁面">
+            {active === "upload" ? (
+              <a href="/admin/fonts/edit"><Pencil aria-hidden="true" />編輯字型資訊</a>
+            ) : (
+              <a href="/admin/fonts"><Upload aria-hidden="true" />新增字型</a>
+            )}
+            <button id="admin-logout" class="link-button" type="button"><LogOut aria-hidden="true" />登出</button>
+          </nav>
+        )}
+      </header>
+      <slot />
+    </main>
+  </body>
+</html>

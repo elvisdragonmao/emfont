@@ -1,4 +1,4 @@
-import { writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import { Redis } from "ioredis";
 import { join } from "path";
 import { db } from "../utils/database.js";
@@ -11,6 +11,7 @@ const generateSitemap = async state => {
 	const content = rows.map(row => `<url><loc>${state.baseURL}/fonts/${row.id}/</loc></url>`).join("\n");
 	let pageList = ["", "/about", "/fonts", "/login", "/about", "/dashboard"];
 	const pages = pageList.map(row => `<url><loc>${state.baseURL}${row}/</loc></url>`).join("\n");
+	await mkdir(join(import.meta.dirname, "../public"), { recursive: true });
 	await writeFile(
 		join(import.meta.dirname, "../public/sitemap.xml"),
 		`<?xml version="1.0" encoding="UTF-8"?>
