@@ -1,0 +1,18 @@
+node_modules
+**/node_modules
+*.log
+.git
+*.pyc
+__pycache__/
+
+# Server runtime data should be mounted or downloaded at runtime.
+apps/server/src/_data/_generated/*
+apps/server/src/_data/css
+apps/server/src/_data/docker
+apps/server/src/_data/original-fonts
+
+.env
+apps/*/.env
+apps/docs/.next
+apps/docs/out
+apps/mcp/build

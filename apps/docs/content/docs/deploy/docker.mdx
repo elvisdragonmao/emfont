@@ -5,18 +5,18 @@ icon: container
 ---
 ## Docker compose
 
-使用根目錄底下的 docker-compose.dev.yml 一次啟動周邊服務。下圖是 emfont 大致上的架構簡圖。
+使用 `apps/server/docker-compose.dev.yml` 一次啟動周邊服務。下圖是 emfont 大致上的架構簡圖。
 
 ![emfont 架構](../../../public/docs/docker/docker-compose.png)
 
 ## build Docker image
 目前 emfont 並沒有公開 release image ，所以需要自行 clone 專案後在根目錄 build image ，才能使用 docker compose 啟動服務。
 ```bash
-docker build -t emfont:latest .  
+docker build -f apps/server/Dockerfile -t emfont:latest .
 ```
 接著執行 compose 指令，此時服務應該正常啟動啟動。
 ```bash
-docker compose -f docker-compose.dev.yml up
+docker compose -f apps/server/docker-compose.dev.yml up
 ```
 
 ## 測試檔案

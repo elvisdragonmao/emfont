@@ -49,7 +49,7 @@
 
 ```bash
 pnpm install
-pnpm build
+pnpm build:mcp
 ```
 
 接著你可以選擇以下兩種方式來運行 MCP：
@@ -61,7 +61,7 @@ pnpm build
 ### 本地伺服器
 
 ```bash
-pnpm start
+pnpm start:mcp
 ```
 
 並設定 MCP 檔案路徑為 `http://localhost:3000/mcp`。

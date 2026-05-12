@@ -1,8 +1,8 @@
 # DataGrip
 .idea
 
-src/public/emfont.js
-src/public/sitemap.xml
+apps/server/src/public/emfont.js
+apps/server/src/public/sitemap.xml
 
 # Logs
 logs
@@ -140,8 +140,9 @@ __pycache__/
 **.pkl
 
 # emfont static file(you have to download by yourself)
-src/_data/original-fonts/**
-!src/_data/original-fonts/.gitkeep
 .prettierrc
-src/_data/**
-!src/_data/sql/
+apps/server/src/_data/**
+!apps/server/src/_data/sql/
+!apps/server/src/_data/original-fonts/
+apps/server/src/_data/original-fonts/**
+!apps/server/src/_data/original-fonts/.gitkeep

@@ -1,14 +1,15 @@
-# This file wil open a node 22 slim container and run emfont application. 
-# 1. Copy porject files to /app (we assum this script run at zeabur so it directly copy all code from GitHub repo.
-# If you run it locally, make sure workdir has clean code without other big unuse files. I recommend to check .dockerignore file.)
-# 2. run entrypoint.sh to download fonts from minio server.
-# 3. Run emfont using "pnpm start" command.
-# insatll dependencies in a separate layer
+# Build from the repository root:
+# docker build -f apps/server/Dockerfile -t emfont:latest .
 FROM node:22-slim AS deps
-WORKDIR /app
+WORKDIR /repo
 RUN corepack enable
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/server/package.json ./apps/server/package.json
+RUN pnpm install --frozen-lockfile --filter ./apps/server --prod
+
+FROM deps AS deploy
+COPY apps/server ./apps/server
+RUN pnpm --filter ./apps/server deploy --legacy --prod /prod/server
 
 # RUN application
 FROM node:22-slim AS runner
@@ -24,13 +25,8 @@ RUN set -eux; \
     mc --version
 RUN corepack enable
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deploy /prod/server /app
 
-COPY src /app/src
-COPY scripts/ /app/scripts
-COPY entrypoint.sh /app/entrypoint.sh
-COPY package.json pnpm-lock.yaml ./
-COPY migrates/ /app/migrates/
 RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
 
