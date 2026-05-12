@@ -1,0 +1,35 @@
+---
+title: WordPress
+description: 如何在 WordPress 或傳統網站中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+在頁面 HTML 完成後一次初始化。
+
+```html
+<script src="https://font.emtech.cc/emfont.js" defer></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        emfont.init();
+    });
+</script>
+```
+
+然後在文章或小工具內使用 class="emfont-xxxx" 即可。
+
+## 動態追蹤
+內文手動更新後，針對該元素重新 init。
+
+```html
+<p id="my-paragraph" class="emfont-jfopenhuninn">原本內容</p>
+<button onclick="updateParagraph()">更新內文</button>
+
+<script>
+function updateParagraph() {
+    const el = document.getElementById('my-paragraph');
+    el.innerHTML = '新的內文';
+    emfont.init({ root: el });
+}
+</script>
+```

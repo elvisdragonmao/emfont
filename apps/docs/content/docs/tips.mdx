@@ -1,0 +1,55 @@
+---
+title: 開發用技巧
+description: 開發 emfont 需要用上的小技巧與筆記
+icon: sparkle
+--- 
+## 處理 minio 檔案
+`mc` 是 minio 的純文字指令工具，可以用來同步本地端與 minio 伺服器的資料。
+
+```bash
+# 安裝 mc 範例
+curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc; \
+chmod +x /usr/local/bin/mc; \
+mc --version; \
+```
+
+> 參考 minio 官方說明文件 [mc AIStor Client](https://docs.min.io/enterprise/aistor-object-store/reference/cli/) 了解更多
+### alias
+給 minio 伺服器一個別名方便操作，除非特別提及，此文件 mc 指令中 `emfont` 都是指這個 alias。
+```bash
+mc alias set emfont http://emfont.foo.bar <ACCESSKEY> <SECRETKEY>
+```
+> 參考 [mc alias set 說明文件](https://docs.min.io/enterprise/aistor-object-store/reference/cli/mc-alias/mc-alias-set/?tab=example-syntax-syntax)
+
+### 複製檔案
+```bash
+mc cp --recursive emfont/<bucket-name>/original-fonts/975HazyGo ./
+```
+從 minio 伺服器複製 /original-fonts/975HazyGo 資料夾所有內容到目前目錄。
+
+### 同步資料夾
+#### 上傳
+- 將本地 ./ 內容同步到 MinIO
+- MinIO 端「不存在於本地」的檔案會被刪除（本地為主）
+```bash
+mc mirror \
+  --overwrite \
+  --remove \
+  ./ emfont/<bucket-name>/_generated/
+
+```
+- `--overwrite`：同名檔案一律覆蓋
+
+- `--remove`：MinIO 上多餘檔案會被刪掉（⚠️不可逆）
+
+- 通常這道指令拿來上傳在本地處理好的靜態字型
+### 下載
+- 從 MinIO 同步到本地
+- 本地端「不在遠端」的檔案會被刪除（）
+```bash
+mc mirror \
+  --overwrite \
+  --remove \
+  emfont/<bucket-name>/_generated/ ./
+```
+> 參考 [mc mirror 說明文件](https://docs.min.io/enterprise/aistor-object-store/reference/cli/mc-mirror/)

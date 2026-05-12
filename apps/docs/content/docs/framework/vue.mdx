@@ -1,0 +1,40 @@
+---
+title: Vue 3 / Nuxt 3
+description: 如何在 Vue 3 或 Nuxt 3 中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+元件掛載時執行一次 `emfont.init()`。
+
+```vue
+<script setup>
+import { onMounted } from 'vue'
+
+onMounted(async () => {
+    const mod = await import('https://font.emtech.cc/emfont.js')
+    mod.emfont.init()
+})
+</script>
+```
+
+## 動態追蹤
+資料改變時，指定元素重新 `init`。
+
+```vue
+<script setup>
+import { ref, watch } from 'vue'
+
+const content = ref('Hello')
+const textRef = ref(null)
+
+watch(content, async () => {
+    const mod = await import('https://font.emtech.cc/emfont.js')
+    if (textRef.value) mod.emfont.init({ root: textRef.value })
+})
+</script>
+
+<template>
+  <p class="emfont-jfopenhuninn" ref="textRef">{{ content }}</p>
+</template>
+```

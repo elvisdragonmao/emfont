@@ -1,0 +1,61 @@
+---
+title: 如何設定字體載入完才顯示？
+description: 如何設定字體載入完才顯示？
+icon: FileType
+---
+
+熟悉 CSS 的朋友都知道，你可以使用 `font-display` 來設定字體載入的行為。
+
+-   `block`：字體載入前不顯示文字。
+-   `swap`, `fallback`：字體載入前先隨便找個字體用。
+-   `auto`, `optional`：隨便你瀏覽器，開心就好。
+
+比如說 Google Fonts 的字體載入 CSS 通常會這樣寫：
+
+```css
+@font-face {
+    font-family: "Noto Sans TC";
+    font-display: swap;
+    src: ...;
+}
+```
+
+但是如果你有發現的話 emfont 並沒有這個設定。
+
+## 為什麼 emfont 沒有這個設定？
+
+原因是系統還沒載入完字體時本來就會用預設字體了，所以如果你想設定的話一定是希望在載入完字體後才顯示文字。
+
+但問題是下載 emfont 那幾十 KB 的字體檔案其實是根本感覺不出來的，會耗時間 (那幾毫秒) 的是甚麼：
+
+-   資料庫查詢字體資料
+-   生成字體
+-   計算 hash
+
+那也許你會想說，這些都可以用 `font-display: block` 來解決啊！
+
+但問題是 `font-display: block` 是設定在 `@font-face` 的 CSS 中而不是元素中的，而如果 `@font-face` 沒有 src 的話這段 CSS 是沒有意義的瀏覽器就會忽略。而如果隨便邊塞一個 src 的話，那載入完那個假字體他就會 fallback 顯示系統字體了。
+
+## 那我們要怎麼辦？
+
+你可以使用 Js 來用 CSS 隱藏元素，再用 `emfont.init()` 回傳的時候再顯示出來 (像是官網的效果一樣)。
+
+```js
+// 單一字體的元素
+const el = document.querySelector(".emfont-class");
+el.style.visibility = "hidden";
+emfont.init(el).then(() => {
+    el.style.visibility = "visible";
+});
+
+// 全部應用了emfont字體class的元素  *小心使用*
+const els = document.querySelectorAll("[class*='emfont-'");
+els.forEach(el => {
+    el.style.visibility = "hidden";
+});
+emfont.init(el).then(() => {
+    els.forEach(el => {
+        el.style.visibility = "visible";
+    });
+});
+```

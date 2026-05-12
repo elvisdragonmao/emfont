@@ -1,0 +1,43 @@
+---
+title: Angular
+description: 如何在 Angular 中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+在元件初始化後執行一次。
+
+```ts
+import { AfterViewInit } from '@angular/core';
+
+export class AppComponent implements AfterViewInit {
+  ngAfterViewInit() {
+    import('https://font.emtech.cc/emfont.js').then((mod) => {
+      mod.emfont.init();
+    });
+  }
+}
+```
+
+## 動態追蹤
+使用 `@ViewChild` 搭配 `ngAfterViewChecked` 重新 init。
+
+```ts
+import { AfterViewChecked, ElementRef, ViewChild } from '@angular/core';
+
+export class AppComponent implements AfterViewChecked {
+  @ViewChild('textRef') textRef!: ElementRef;
+
+  ngAfterViewChecked() {
+    import('https://font.emtech.cc/emfont.js').then((mod) => {
+      if (this.textRef) {
+        mod.emfont.init({ root: this.textRef.nativeElement });
+      }
+    });
+  }
+}
+```
+
+```html
+<p #textRef class="emfont-jfopenhuninn">{{ content }}</p>
+```

@@ -1,0 +1,37 @@
+---
+title: zeabur
+description: 在 zeabur 部屬 emfont 服務
+icon: container
+---
+選定一台伺服器連接 zeabur 後，需要創建以下幾個 service 來讓 emfont 正常運作：
+- MinIO
+- PostgreSQL
+- caddy
+- Docker image （綁定 GitHub emfont 儲存庫跟目錄的 Dockerfile）
+
+以下按照服務說明需要注意的設定細節。
+## Docker imgae
+
+### 設定持久化
+這是 zeabur 提供的特殊功能，類似 docker 中 volumn 的功能，可以避免 container 重新部署後靜態資料消失，如果沒做設定，環境變數`SYNC_WITH_MINIO` 應該設為 `true`，每次重啟後都重新向 minio 拉字型檔案。
+
+有兩個資料夾要設定持久化，分別是：
+
+- `/app/src/_data/_generated`
+    - 存放生成後的字型，空間佔用太多可以隨時刪除，有再請求到該份檔案會重新生成
+- `/app/src/_data/original-fonts`
+    -  存放原始字型的地方，只要資料庫有該字型紀錄，這個資料夾內就要找的到對應 ID 的字型檔，否則程式會報錯
+
+<Callout type="info">`/app` 是專案根目錄，根據 dockerFile 中的設定，專案執行時會把需要的執行程式都放到 `/app`</Callout>
+
+### 環境變數
+參考 [環境變數](../build-your-own)
+## MinIO
+不用特別設定什麼
+## PostgreSQL
+不用特別設定什麼
+## caddy
+
+做兩件事：
+- 綁定網域
+- 寫反相代理設定檔

@@ -1,0 +1,38 @@
+---
+title: Svelte / SvelteKit
+description: 如何在 Svelte 或 SvelteKit 中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+元件初始化時 `init`。
+
+```svelte
+<script>
+  import { onMount } from 'svelte';
+
+  onMount(async () => {
+    const mod = await import('https://font.emtech.cc/emfont.js');
+    mod.emfont.init();
+  });
+</script>
+```
+
+## 動態追蹤
+當文字變動時重新對元素 `init`。
+
+```svelte
+<script>
+  import { onMount } from 'svelte';
+  let textRef;
+  export let content;
+
+  $: if (content) {
+    import('https://font.emtech.cc/emfont.js').then((mod) => {
+      if (textRef) mod.emfont.init({ root: textRef });
+    });
+  }
+</script>
+
+<p class="emfont-jfopenhuninn" bind:this={textRef}>{content}</p>
+```

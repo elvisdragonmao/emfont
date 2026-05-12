@@ -1,0 +1,41 @@
+---
+title: SolidJS
+description: 如何在 SolidJS 中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+元件載入時執行一次。
+
+```jsx
+import { onMount } from 'solid-js';
+
+export default function App() {
+  onMount(() => {
+    import('https://font.emtech.cc/emfont.js').then((mod) => {
+      mod.emfont.init();
+    });
+  });
+
+  return <p class="emfont-jfopenhuninn">Hello emfont</p>;
+}
+```
+
+## 動態追蹤
+綁定元素並監聽變數。
+
+```jsx
+import { createEffect } from 'solid-js';
+
+export default function App(props) {
+  let textRef;
+
+  createEffect(() => {
+    import('https://font.emtech.cc/emfont.js').then((mod) => {
+      if (textRef) mod.emfont.init({ root: textRef });
+    });
+  });
+
+  return <p class="emfont-jfopenhuninn" ref={(el) => textRef = el}>{props.content}</p>;
+}
+```

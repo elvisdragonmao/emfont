@@ -1,0 +1,23 @@
+---
+title: 瀏覽器支援度
+description: can i use emfont?
+icon: MonitorCheck
+---
+
+emfont 支援所有現代瀏覽器，包含 Chrome、Firefox、Safari、Edge、Opera、以及大部分的行動裝置瀏覽器。
+
+* Chrome 36+ (現已到 136+)
+* Firefox 39+ (現已到 138+)
+* Safari 10+ (現已到 18.4+)
+* Edge 79+ (現已到 133+)
+* Opera 23+ (現已到 114+)
+
+emfont 會在啟用前先檢查確認您的裝置瀏覽器支援度。**如果你的使用者使用的是這台壽命超過 11 年的手機**，emfont 會自動關閉並不會影響到網頁的正常運作。然後建議你可以建議他買一台新手機。
+
+emfont 會自動檢查以下功能是否支援：
+
+* FontFace API support
+* document.fonts support
+* ES6 功能 (Promise, classes, arrow functions, Object.entries, Array.includes)
+
+預設會使用 `woff2` 格式的字體，並會檢查瀏覽器是否支援 `woff2`，如果不支援則會使用 `woff` 格式的字體。

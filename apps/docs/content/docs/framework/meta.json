@@ -1,0 +1,5 @@
+{
+    "title": "JavaScript 框架整合",
+    "pages": ["angular", "astro", "next", "nuxt", "qwik", "react", "solid", "svelte", "vue", "wordpress"],
+    "icon": "CircleHelp"
+}

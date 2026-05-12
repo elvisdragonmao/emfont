@@ -1,0 +1,44 @@
+---
+title: Qwik
+description: 如何在 Qwik 中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+用 `useVisibleTask$` 加載 emfont。
+
+```tsx
+import { useVisibleTask$ } from '@builder.io/qwik';
+
+export default component$(() => {
+  useVisibleTask$(() => {
+    import('https://font.emtech.cc/emfont.js').then((mod) => {
+      mod.emfont.init();
+    });
+  });
+
+  return <p class="emfont-jfopenhuninn">Hello emfont</p>;
+});
+```
+
+## 動態追蹤
+監聽元素變動，局部 re-init。
+
+```tsx
+import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+
+export default component$(() => {
+  const textRef = useSignal<HTMLElement>();
+
+  useVisibleTask$(({ track }) => {
+    track(() => textRef.value);
+    if (textRef.value) {
+      import('https://font.emtech.cc/emfont.js').then((mod) => {
+        mod.emfont.init({ root: textRef.value });
+      });
+    }
+  });
+
+  return <p class="emfont-jfopenhuninn" ref={textRef}>Hello emfont</p>;
+});
+```

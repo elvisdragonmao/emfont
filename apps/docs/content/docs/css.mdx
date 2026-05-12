@@ -1,0 +1,70 @@
+---
+title: CSS 載入字體
+description: 使用 CSS 載入字體
+icon: FileJson2
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+你可以直接以 CSS 載入整個字體。用法和 Google Fonts類似，你懂的。
+
+**GET** `https://font.emtech.cc/css/:font:`
+
+<Callout type="info">
+- 如果已經使用 `emfont.js` 理論上你不需要管這個頁面手動引入 CSS！因為 `emfont.js` 會自動幫你載入字體。同樣的，你都用 CSS 了要 `emfont.js` 幹嘛？
+- :font: 應替換為你選定的字型 ID 。在此份說明文件中會常常使用`:<variable>:`方式表示你可以替換為任意可用的字型或字重等變數
+</Callout>
+
+## 完整字體
+
+沒有指定字重會載入全部的。不過瀏覽器很聰明，只會載入有用到的。
+
+```html
+<link href="https://font.emtech.cc/css/:font:" rel="stylesheet" />
+```
+
+## 指定字重
+
+```html
+<link href="https://font.emtech.cc/css/:font/:weight" rel="stylesheet" />
+```
+
+範例：
+
+```html
+<link href="https://font.emtech.cc/css/jfOpenHuninn/400" rel="stylesheet" />
+```
+
+<Callout type="info">`/400.css` 或是 `/400` 皆可。</Callout>
+
+## 選擇文字
+
+你可以透過參數自訂字體粗細以及包含的文字。
+
+```html
+<link href="https://font.emtech.cc/css/:font?weight=:weight&words=:words" rel="stylesheet" />
+```
+
+範例：
+
+```html
+<link href="https://font.emtech.cc/css/jfOpenHuninn?weight=400&words=神乎其技，原其事理。" rel="stylesheet" />
+```
+
+### 極致壓縮
+
+為你專屬切一份字體，詳見[極致壓縮](/docs/advanced#極致壓縮)。只需在後面加入參數 `?min=true`。適合用在 Logo 字體等會大量重複使用但用到的字很少的。
+
+範例：
+
+```html
+<link href="https://font.emtech.cc/css/jfOpenHuninn?weight=400&words=神乎其技，原其事理。&min=true" rel="stylesheet" />
+```
+
+## 使用 `@import`
+
+當然，你也可以使用 `@import` 來載入字體。
+
+```css
+@import url("https://font.emtech.cc/css/:font?weight=:weight&words=:words");
+```

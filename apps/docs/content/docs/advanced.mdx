@@ -1,0 +1,100 @@
+---
+title: JavaScript 設定
+description: 完整的設定列表
+icon: Settings
+---
+
+## HTML class
+
+給要設定字體的 HTML 元素加上字體專屬的 class 即可。可包多層元素，與其他 class 混合使用。
+
+比如說你想要在這段文字使用 jf-openhuninn-2.0 字體，可以這樣寫：
+
+```html
+<p class="emfont-jfOpenHuninn">這個段落使用了 jf-openhuninn-2.0 字型。</p>
+```
+
+再比如說你想整個網頁預設使用某個字體，可以在 `<body>` 標籤上加上 class：
+
+```html
+<body class="emfont-975HazyGoSC"></body>
+```
+
+想使用其他 class，或是使用多種字體？完全沒問題！
+
+```html
+<body class="emfont-975HazyGoSC">
+    <h1>這裡的文字使用 975 朦胧黑体</h1>
+    <p class="px-6 text-center emfont-jfOpenHuninn">這個段落使用了 jf-openhuninn-2.0 字型。</p>
+</body>
+```
+
+## 極致壓縮
+
+emfont 可以為你的網站生成專屬的字體檔，不會多收錄一個字，因此檔案大小會極小。不過啟用極致壓縮第一次載入時會需要等伺服器幾百毫秒來完成生成，且如果網頁多收錄一個字就會需要重新生成，使用者也會需要重複下載字體。**因此建議只使用於網站大標題**。
+
+使用方式是在 HTML 的 class 當中加入一個 min
+
+```html
+<h1 class="emfont-jfOpenHuninn-min">極致壓縮標題</h1>
+```
+
+## 字重設定
+
+emfont 預設會自己去看看你在 CSS 設定的字重，並尋找最接近的字體。如果你想要自己設定，或是讓 emfont 可以輕鬆一點的話你可以自己設置。
+
+```html
+<h1 class="emfont-jfOpenHuninn-900">非常粗的標題！</h1>
+```
+
+## JavaScript
+
+### 初始化
+
+以下為所有可用的初始化選項，顯示的為預設值：
+
+```js
+emfont.init({
+    caseSensitive: false, // 目前都是 false
+    weight: null,
+    format: "woff2", // 目前都是使用 woff2
+    autoApply: true,
+    cache: true,
+    applyAt: document.head,
+    forceMin: false,
+    colorTest: false,
+    root: document.documentElement,
+    log: false,
+    hideAd: false,
+    tofu: false,
+    important: false,
+    fontDisplay: null
+});
+```
+
+-   `caseSensitive`：是否檢查 CSS `text-transform` 設定來區分大小寫。
+-   `weight`：預設字重。（實際使用字重為 class 設定 > CSS 設定 > 預設設定）如果沒設定會找最接近 400 的字型。
+-   `format`：字體格式。目前都是使用 woff，無法更改。
+-   `autoApply`：是否自動套用字體。(幫你寫好 CSS)
+-   `cache`：是否記錄載入過的文字，重複呼叫 `emfont.init()` 時不會重新載入。
+-   `applyAt`：字體載入時 CSS 插入的位置。如 `document.getElementById()`。預設放在 `<head>` 最後面。
+-   `forceMin`：是否強制使用極致壓縮。
+-   `colorTest`：開啟時不會真的請求載入字型，只會把顏色改成紅色。適合本地無網路或是測試時使用。
+-   `root`：要從哪裡開始找 class。預設是 `document.documentElement`，也就從整份文件裡找。
+-   `log`：是否要透過 `console.log` 顯示載入的字體資訊。
+-   `hideAd`：是否隱藏 emfont 啟動時的提示訊息。
+-   `tofu`：是否要把沒有對應字型的文字使用貓爪符號代替。
+-   `important`：是否要在自動產生的 CSS 加上 `!important`。
+-   `fontDisplay`：對應 CSS 的 `font-display` 設定。可選值為 `auto`、`block`、`swap`、`fallback`、`optional`。預設不設定。
+
+你初始化時進行的設定會被儲存，下次使用 `emfont.init()` 時會自動使用上次的設定。如果要更改直接蓋過去就好了。
+
+### callback
+
+emfont 提供 callback 讓你可以更靈活的控制字體的載入。
+
+```js
+emfont.init().then(() => {
+    console.log("所有字體載入完成!");
+});
+```

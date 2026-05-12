@@ -1,0 +1,5 @@
+{
+    "title": "emfont 文件",
+    "pages": ["---使用教學---", "setup", "css", "javascript", "advanced", "emoji", "framework", "story", "mcp", "---資訊---", "browser-support", "credits", "---開發者---", "api", "how","deploy","add-font-data","tips"],
+    "root": true
+}

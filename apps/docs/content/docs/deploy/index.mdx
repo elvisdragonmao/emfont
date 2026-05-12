@@ -1,0 +1,76 @@
+---
+title: 在自己的機器上跑 emfont
+description: 架設自己的 emfont 實例，用於開發或實際提供服務
+icon: blocks
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+<Callout type="info">
+相關功能開發中，內容僅供參考。
+</Callout>
+emfont 使用 docker 打包程式，讓專案可以更容易在不同的環境中順利執行。如果是需要在本地修改原始碼測試執行的貢獻者，請參考下一節的 docker 篇；如果你想在伺服器長時間運作提供服務，
+我們推薦使用 zeabur 來部署，可以省去一些繁瑣的更換 image 操作和享受即時的狀態更新，不過你依然可以使用 docker 提供服務，但至少我們是用 zeabur。
+
+# 環境變數
+對於本地開發者，直接複製 `.env.example` 命名為 .env 後，就可以啟用 docker compose 啟用服務。以下根據功能分述每個環境變數的功能。
+
+> 除非特別有註記，在變數補充欄位為 true/false 的二元控制開關，true 都是啟動它的功能，false 為關閉
+
+## 直接控制 emfont 行為的變數
+| 變數名稱 | 功能 | 補充說明|
+|:---|:---|:---|
+| BULLETIN | 啟動官網時顯示的公告，可以留空 ||
+| PORT | emfont Web 服務監聽的埠號 |
+| BASE_URL | 官網對外的存取網址 | 在本地時填入 `http://localhost:${PORT}`|
+| THREADS | 生成靜態字型時的工作執行緒數量 |`number`|
+| FORCE_MIN | 強制開啟極致壓縮 |`ture` or `false` |
+| REGEN_STATIC | 是否在啟動時重新產生靜態字型 |`ture` or `false` |
+| REGEN_CSS | 是否在啟動時重新產生 CSS |`ture` or `false` |
+| FONT_CHECK | 是否啟用字型檢查 | `ture` or `false` ，開啟後會在啟動時讀所有原始字型檔，統計字元語言存入資料庫|
+| SYNC_WITH_MINIO | 是否與 MinIO 進行同步 |
+| NODE—ENV |執行環境，主要決定 log 列印的層級|可用選項：`production`、`development`、`test`、`zeabur`|
+
+## Docker 相關
+| 變數名稱 | 功能 | 補充說明|
+|:---|:---|:---|
+| EMFONT_ORIGINAL_FONTS | Docker bind mount：原始字型存放路徑 |
+| EMFONT_GENERATED_FONTS | Docker bind mount：產生後字型存放路徑 |
+| NEED_EXAMPLE_FONTS | `ture` or `false` ，是否在 container 啟動時下載範例字型 |
+
+## 相依服務
+### 資料庫
+| 變數名稱 | 功能 | 補充說明|
+|:---|:---|:---|
+| POSTGRES_HOST | PostgreSQL 主機名稱 |
+| POSTGRES_DB | PostgreSQL 資料庫名稱 |
+| POSTGRES_PORT | PostgreSQL 連接埠 |
+| POSTGRES_USER | PostgreSQL 使用者名稱 |
+| POSTGRES_PASSWORD | PostgreSQL 使用者密碼 |
+| DATABASE_URL | PostgreSQL 連線字串 |
+| REDIS_HOST | Redis 主機名稱 |
+| REDIS_PORT | Redis 連接埠 |
+| REDIS_URL | Redis 連線字串 |
+### S3-MinIO
+| 變數名稱 | 功能 | 補充說明|
+|:---|:---|:---|
+| MINIO_BUCKET | MinIO 使用的 Bucket 名稱 |
+| MINIO_CONSOLE_PORT | MinIO Console 管理介面埠號 |
+| MINIO_PORT | MinIO API 服務埠號 |
+| MINIO_HOST | MinIO 主機名稱 |
+| MINIO_ENDPOINT | MinIO API Endpoint |
+| MINIO_USERNAME | MinIO 使用者名稱 |
+| MINIO_PASSWORD | MinIO 使用者密碼 |
+| MINIO_ROOT_USER | MinIO Server root 使用者 |
+| MINIO_ROOT_PASSWORD | MinIO Server root 密碼 |
+| MINIO_redirect | 是否啟用 MinIO 重新導向設定，只有在伺服器上需要（詳細原因待補充） |
+### S3-CloudFlare
+部屬環境中並未使用這幾個變數，仍在測試階段，不推薦現在使用，只是告知程式有這個變數能夠控制程式的行為。
+
+| 變數名稱 | 功能 | 補充說明|
+|:---|:---|:---|
+|R2_ENDPOINT |||
+|R2_ACCESS_KEY_ID |||
+|R2_SECRET_ACCESS_KEY |||
+|R2_BUCKET_NAME |||
+|R2_PUB_URL_BASE |||

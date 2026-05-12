@@ -1,0 +1,37 @@
+---
+title: React / Next.js
+description: 如何在 React 或 Next.js 中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+元件掛載時只執行一次 `emfont.init()`。
+
+```jsx
+useEffect(() => {
+    import('https://font.emtech.cc/emfont.js').then((mod) => {
+        mod.emfont.init();
+    });
+}, []);
+```
+
+## 動態追蹤
+內文改變時，針對該元素重新 `init`。
+
+```jsx
+import { useEffect, useRef } from 'react';
+
+export default function App({ content }) {
+    const textRef = useRef(null);
+
+    useEffect(() => {
+        import('https://font.emtech.cc/emfont.js').then((mod) => {
+            if (textRef.current) {
+                mod.emfont.init({ root: textRef.current });
+            }
+        });
+    }, [content]);
+
+    return <p className="emfont-jfopenhuninn" ref={textRef}>{content}</p>;
+}
+```
