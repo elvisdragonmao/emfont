@@ -19,13 +19,11 @@ async function main() {
 			? { connectionString: process.env.DATABASE_URL }
 			: {
 					host: process.env.POSTGRES_HOST,
-					port: process.env.POSTGRES_PORT
-						? Number(process.env.POSTGRES_PORT)
-						: undefined,
+					port: process.env.POSTGRES_PORT ? Number(process.env.POSTGRES_PORT) : undefined,
 					database: process.env.POSTGRES_DB,
 					user: process.env.POSTGRES_USER,
-					password: process.env.POSTGRES_PASSWORD,
-				},
+					password: process.env.POSTGRES_PASSWORD
+				}
 	);
 
 	await client.connect();
@@ -39,13 +37,13 @@ async function main() {
 			execQuery: async query => {
 				const res = await client.query(query);
 				return { rows: res.rows };
-			},
+			}
 		});
 
 		const applied = await postgrator.migrate();
 		console.log(
 			"Migrations applied:",
-			applied.map(m => m.filename),
+			applied.map(m => m.filename)
 		);
 		console.log("Migration completed!");
 	} finally {

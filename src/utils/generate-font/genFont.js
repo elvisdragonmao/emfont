@@ -1,10 +1,7 @@
 import { createHash } from "crypto";
-import { find_dynamic_font } from "./fontMin.js"; // 極致壓縮字型
-import {
-	find_static_font,
-	give_static_font,
-} from "../../bootstrap/fontNoMin.js"; // 靜態字型
+import { find_static_font, give_static_font } from "../../bootstrap/fontNoMin.js"; // 靜態字型
 import { db } from "../database.js";
+import { find_dynamic_font } from "./fontMin.js"; // 極致壓縮字型
 
 // Simple in-memory cache for font metadata to avoid repeated DB hits per process.
 const fontMetaCache = new Map(); // fontId -> { meta, ts }
@@ -37,7 +34,7 @@ export async function getFontFamilyMeta(fontId) {
 		`SELECT id, weights, family, name
      FROM font_family
      WHERE id = $1`,
-		[fontId],
+		[fontId]
 	);
 	const meta = rows[0] || null;
 	fontMetaCache.set(fontId, { meta, ts: now });
@@ -52,7 +49,7 @@ export const genFont = async (req, res, state) => {
 			return {
 				code: 400,
 				status: "failed",
-				message: "Missing words parameter",
+				message: "Missing words parameter"
 			};
 		}
 		//req_word_set,min_flag,font_weight 有可能是 undefined
@@ -69,7 +66,7 @@ export const genFont = async (req, res, state) => {
 			return {
 				code: 404,
 				status: "failed",
-				message: `${font_family_name} doesn't exist`,
+				message: `${font_family_name} doesn't exist`
 			};
 		}
 		//請求字重
@@ -78,7 +75,7 @@ export const genFont = async (req, res, state) => {
 			return {
 				code: 503,
 				status: "failed",
-				message: "Font missing, temporary can't be use.",
+				message: "Font missing, temporary can't be use."
 			};
 		//如果請求的字重不存在，則選擇最接近的字重
 		if (!allWeights.includes(font_weight)) {
@@ -98,7 +95,7 @@ export const genFont = async (req, res, state) => {
 				// This object is used for hashing after JSON.stringify. Do NOT change the property name and its order.
 				fontFamily: font_family_name,
 				fontWeight: font_weight,
-				wordSet: normalizedWordSet,
+				wordSet: normalizedWordSet
 			};
 			const hash = hashString(JSON.stringify(summery));
 			const file_path = await find_dynamic_font({
@@ -107,19 +104,19 @@ export const genFont = async (req, res, state) => {
 				font_family: font_family_name,
 				font_weight: font_weight,
 				original_word_set: normalizedWordSet,
-				state: state,
+				state: state
 			});
 			if (file_path.status === "failed")
 				return {
 					code: 400,
-					...file_path,
+					...file_path
 				};
 			return {
 				code: 200,
 				status: "success",
 				message: "",
 				location: [file_path.location],
-				name: font_family_name,
+				name: font_family_name
 			};
 		} else {
 			//請求靜態字型
@@ -129,22 +126,19 @@ export const genFont = async (req, res, state) => {
 			//靜態字型的 hash 不需要跟動態一樣把字體檔案參數放進去，因為 pack number 每種字都一樣，只會有試著請求不支援的字型拿到 404 的問題。這是可以接受的錯誤，故忽略
 			const normalizedWordSet = normalizeWordSet(req_word_set);
 			const hash = hashString(normalizedWordSet);
-			const font_pack_you_need = await find_static_font(
-				normalizedWordSet,
-				hash,
-			);
+			const font_pack_you_need = await find_static_font(normalizedWordSet, hash);
 			const R2font_url = give_static_font({
 				font_family: font_family_name,
 				font_weight: font_weight,
 				packs: font_pack_you_need,
-				state: state,
+				state: state
 			});
 			return {
 				code: 200,
 				status: "success",
 				message: "",
 				location: R2font_url,
-				name: font_family_name,
+				name: font_family_name
 			};
 		}
 
@@ -154,7 +148,7 @@ export const genFont = async (req, res, state) => {
 		return {
 			code: 500,
 			status: "failed",
-			message: `error generating font: ${err.message}`,
+			message: `error generating font: ${err.message}`
 		};
 	}
 };

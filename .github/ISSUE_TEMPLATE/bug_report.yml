@@ -3,33 +3,33 @@ description: 你有問題？Do you have a problem?
 title: "[Bug]: "
 labels: ["bug"]
 body:
-    - type: markdown
-      attributes:
-          value: |
-              感謝你花時間填寫這個問題回報！
-              Thanks for taking the time to fill out this bug report!
-    - type: textarea
-      id: what-happened
-      attributes:
-          label: 發生了甚麼？ What happened?
-          description: 也告訴我們你預期中應該怎麼做？ Also tell us, what did you expect to happen?
-          placeholder:
-      validations:
-          required: true
-    - type: dropdown
-      id: browsers
-      attributes:
-          label: 使用的瀏覽器 Browsers you are using
-          multiple: true
-          options:
-              - Chrome
-              - Microsoft Edge
-              - Firefox
-              - Safari
-              - Other
-    - type: checkboxes
-      id: pullrequest
-      attributes:
-          label: 你願意提交 PR 來解決這個問題嗎？ Do you want to submit a PR to fix this issue?
-          options:
-              - label: "Yes"
+  - type: markdown
+    attributes:
+      value: |
+        感謝你花時間填寫這個問題回報！
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 發生了甚麼？ What happened?
+      description: 也告訴我們你預期中應該怎麼做？ Also tell us, what did you expect to happen?
+      placeholder:
+    validations:
+      required: true
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: 使用的瀏覽器 Browsers you are using
+      multiple: true
+      options:
+        - Chrome
+        - Microsoft Edge
+        - Firefox
+        - Safari
+        - Other
+  - type: checkboxes
+    id: pullrequest
+    attributes:
+      label: 你願意提交 PR 來解決這個問題嗎？ Do you want to submit a PR to fix this issue?
+      options:
+        - label: "Yes"

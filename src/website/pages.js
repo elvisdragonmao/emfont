@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { db } from "../utils/database.js";
-import { metricsPlugin } from "../utils/metrics.js";
 import { logger } from "../utils/logger.js";
+import { metricsPlugin } from "../utils/metrics.js";
 //prometheus
 // Read the HTML file in the same directory
 
@@ -11,7 +11,7 @@ export default async app => {
 	const metaMap = {
 		title: "emfont - 免費中文字體 Webfont 服務",
 		description: "免費中文字體 Webfont 服務",
-		page: "home",
+		page: "home"
 	};
 
 	const renderSite = (res, data, status = 200) => {
@@ -43,31 +43,25 @@ export default async app => {
                 FROM font_family
                 WHERE id = $1
             `,
-				[req.params.font],
+				[req.params.font]
 			);
 			if (rows.length === 0) {
 				//user try to access a font that is not in database, log a warning and render notFound page
 				logger.warn(
 					`${req.params.font} is not available record in database. 
-					It might be user try to access a font that is not in database, or the font record is not inserted into database successfully. Check if the font record is inserted into database successfully and check if user try to access a font that is not in database.`,
+					It might be user try to access a font that is not in database, or the font record is not inserted into database successfully. Check if the font record is inserted into database successfully and check if user try to access a font that is not in database.`
 				);
-				return renderSite(
-					res,
-					{ page: "notFound", title: "找不到字體 - emfont" },
-					404,
-				);
+				return renderSite(res, { page: "notFound", title: "找不到字體 - emfont" }, 404);
 			}
 			const font = rows[0];
 			logger.debug(`Font ${font.name} accessed, id: ${font.id}`);
 			return renderSite(res, {
 				page: "font",
 				title: font.name + " - emfont",
-				description: font.description,
+				description: font.description
 			});
 		} catch (err) {
-			logger.error(
-				`Database query failed when accessing font ${req.params.font}: ${err.message}`,
-			);
+			logger.error(`Database query failed when accessing font ${req.params.font}: ${err.message}`);
 			res.status(500).send("Database query failed");
 		}
 	});
@@ -94,11 +88,7 @@ export default async app => {
 	});
 
 	app.setNotFoundHandler((req, res) => {
-		return renderSite(
-			res,
-			{ page: "notFound", title: "找不到頁面 - emfont" },
-			404,
-		);
+		return renderSite(res, { page: "notFound", title: "找不到頁面 - emfont" }, 404);
 	});
 
 	app.get("/logout", (req, res) => {

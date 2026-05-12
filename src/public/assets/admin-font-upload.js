@@ -46,9 +46,9 @@ form.addEventListener("submit", async event => {
 		const res = await fetch("/api/admin/fonts", {
 			method: "POST",
 			headers: {
-				"content-type": "application/json",
+				"content-type": "application/json"
 			},
-			body: JSON.stringify(payload),
+			body: JSON.stringify(payload)
 		});
 		if (res.status === 401) window.location.href = "/admin/login";
 		const data = await res.json();

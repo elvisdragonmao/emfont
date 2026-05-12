@@ -1,20 +1,14 @@
-import { mkdir, readFile, readdir, rm, writeFile } from "fs/promises";
-import path from "path";
-import { Redis } from "ioredis";
-import {
-	DeleteObjectsCommand,
-	DeleteObjectCommand,
-	ListObjectsV2Command,
-	PutObjectCommand,
-	S3Client,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import crypto from "crypto";
+import { mkdir, readFile, readdir, rm, writeFile } from "fs/promises";
+import { Redis } from "ioredis";
+import path from "path";
 import { promisify } from "util";
+import { regenerateAllStaticFont } from "../bootstrap/fontNoMin.js";
+import { get_bullet, get_generated_static_floders } from "../bootstrap/init.js";
 import { db } from "../utils/database.js";
 import { logger } from "../utils/logger.js";
 import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
-import { get_bullet, get_generated_static_floders } from "../bootstrap/init.js";
-import { regenerateAllStaticFont } from "../bootstrap/fontNoMin.js";
 
 const redis = new Redis(process.env.REDIS_URL);
 const uploadJobs = new Map();
@@ -25,31 +19,18 @@ const adminSessionMaxAgeSeconds = 60 * 60 * 24 * 3;
 const originalFontsDir = path.resolve("src/_data/original-fonts");
 const generatedFontsDir = path.resolve("src/_data/_generated");
 const fontExtensions = ["ttf", "otf"];
-const allowedCategories = new Set([
-	"serif",
-	"sans-serif",
-	"monospace",
-	"cursive",
-	"fantasy",
-]);
+const allowedCategories = new Set(["serif", "sans-serif", "monospace", "cursive", "fantasy"]);
 
 function fontInfoUrl(state, fontId) {
 	return `${state.baseURL.replace(/\/$/, "")}/fonts/${encodeURIComponent(fontId)}`;
 }
 
 function getSessionSecret() {
-	return (
-		process.env.ADMIN_SESSION_SECRET ||
-		process.env.PASSWORD ||
-		"emfont-development-admin-session-secret"
-	);
+	return process.env.ADMIN_SESSION_SECRET || process.env.PASSWORD || "emfont-development-admin-session-secret";
 }
 
 function signSessionPayload(payload) {
-	return crypto
-		.createHmac("sha256", getSessionSecret())
-		.update(payload)
-		.digest("base64url");
+	return crypto.createHmac("sha256", getSessionSecret()).update(payload).digest("base64url");
 }
 
 function createSessionCookie(userId) {
@@ -76,7 +57,7 @@ function setAdminSession(res, userId) {
 		httpOnly: true,
 		sameSite: "lax",
 		secure: process.env.NODE_ENV === "production",
-		maxAge: adminSessionMaxAgeSeconds,
+		maxAge: adminSessionMaxAgeSeconds
 	});
 }
 
@@ -109,10 +90,7 @@ async function verifyPassword(password, passwordHash) {
 	if (scheme !== "scrypt" || !salt || !hash) return false;
 	const derived = await scrypt(password, salt, 64);
 	const expected = Buffer.from(hash, "base64url");
-	return (
-		expected.length === derived.length &&
-		crypto.timingSafeEqual(expected, derived)
-	);
+	return expected.length === derived.length && crypto.timingSafeEqual(expected, derived);
 }
 
 async function initBootstrapAdminUser() {
@@ -128,7 +106,7 @@ async function initBootstrapAdminUser() {
 		ON CONFLICT (user_id)
 		DO NOTHING
 		`,
-		[userId, passwordHash],
+		[userId, passwordHash]
 	);
 }
 
@@ -139,7 +117,7 @@ async function loginAdminUser(userId, password) {
 		FROM admin_users
 		WHERE user_id = $1
 		`,
-		[userId],
+		[userId]
 	);
 	if (rows.length === 0) return false;
 	if (!(await verifyPassword(password, rows[0].password_hash))) return false;
@@ -149,7 +127,7 @@ async function loginAdminUser(userId, password) {
 		SET last_login = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
 		WHERE user_id = $1
 		`,
-		[userId],
+		[userId]
 	);
 	return true;
 }
@@ -162,7 +140,7 @@ async function verifyAdminUserPassword(userId, password) {
 		FROM admin_users
 		WHERE user_id = $1
 		`,
-		[userId],
+		[userId]
 	);
 	if (rows.length === 0) return false;
 	return verifyPassword(password, rows[0].password_hash);
@@ -181,8 +159,8 @@ async function syncOriginalFontToMinio({ id, weight, extension, buffer }) {
 			Bucket: process.env.MINIO_BUCKET,
 			Key: key,
 			Body: buffer,
-			ContentType: extension === "otf" ? "font/otf" : "font/ttf",
-		}),
+			ContentType: extension === "otf" ? "font/otf" : "font/ttf"
+		})
 	);
 	logger.info(`Synced original font to MinIO: ${key}`);
 }
@@ -194,8 +172,8 @@ async function deleteOriginalFontFromMinio({ id, weight, extension }) {
 	await minioClient.send(
 		new DeleteObjectCommand({
 			Bucket: process.env.MINIO_BUCKET,
-			Key: key,
-		}),
+			Key: key
+		})
 	);
 	logger.info(`Deleted stale original font from MinIO: ${key}`);
 }
@@ -209,16 +187,16 @@ async function deleteMinioPrefix(prefix) {
 			new ListObjectsV2Command({
 				Bucket: process.env.MINIO_BUCKET,
 				Prefix: prefix,
-				ContinuationToken: continuationToken,
-			}),
+				ContinuationToken: continuationToken
+			})
 		);
 		const objects = (listed.Contents || []).map(item => ({ Key: item.Key }));
 		if (objects.length > 0) {
 			await minioClient.send(
 				new DeleteObjectsCommand({
 					Bucket: process.env.MINIO_BUCKET,
-					Delete: { Objects: objects },
-				}),
+					Delete: { Objects: objects }
+				})
 			);
 		}
 		continuationToken = listed.NextContinuationToken;
@@ -234,9 +212,9 @@ async function deleteMinioKeys(minioClient, keys) {
 			new DeleteObjectsCommand({
 				Bucket: process.env.MINIO_BUCKET,
 				Delete: {
-					Objects: chunk.map(Key => ({ Key })),
-				},
-			}),
+					Objects: chunk.map(Key => ({ Key }))
+				}
+			})
 		);
 	}
 }
@@ -250,24 +228,17 @@ async function deleteMinioObjectsMatching(prefix, matchesKey) {
 			new ListObjectsV2Command({
 				Bucket: process.env.MINIO_BUCKET,
 				Prefix: prefix,
-				ContinuationToken: continuationToken,
-			}),
+				ContinuationToken: continuationToken
+			})
 		);
-		const objects = (listed.Contents || [])
-			.filter(item => matchesKey(item.Key))
-			.map(item => item.Key);
+		const objects = (listed.Contents || []).filter(item => matchesKey(item.Key)).map(item => item.Key);
 		await deleteMinioKeys(minioClient, objects);
 		continuationToken = listed.NextContinuationToken;
 	} while (continuationToken);
 }
 
 function isMinioConfigured() {
-	return (
-		process.env.MINIO_ENDPOINT &&
-		process.env.MINIO_USERNAME &&
-		process.env.MINIO_PASSWORD &&
-		process.env.MINIO_BUCKET
-	);
+	return process.env.MINIO_ENDPOINT && process.env.MINIO_USERNAME && process.env.MINIO_PASSWORD && process.env.MINIO_BUCKET;
 }
 
 function createMinioClient() {
@@ -277,8 +248,8 @@ function createMinioClient() {
 		forcePathStyle: true,
 		credentials: {
 			accessKeyId: process.env.MINIO_USERNAME,
-			secretAccessKey: process.env.MINIO_PASSWORD,
-		},
+			secretAccessKey: process.env.MINIO_PASSWORD
+		}
 	});
 	return minioClient;
 }
@@ -292,18 +263,12 @@ async function syncGeneratedStaticFontToMinio({ id, weight, version }) {
 	const minioClient = createMinioClient();
 	const generatedDirName = `${version}-${id}-${weight}`;
 	const generatedDir = path.join(generatedFontsDir, generatedDirName);
-	const files = (await readdir(generatedDir)).filter(file =>
-		/^\d+\.woff2$/i.test(file),
-	);
+	const files = (await readdir(generatedDir)).filter(file => /^\d+\.woff2$/i.test(file));
 	if (files.length === 0) {
-		throw new Error(
-			`No generated static font files found: ${generatedDirName}`,
-		);
+		throw new Error(`No generated static font files found: ${generatedDirName}`);
 	}
 
-	const localKeys = new Set(
-		files.map(file => `_generated/${generatedDirName}/${file}`),
-	);
+	const localKeys = new Set(files.map(file => `_generated/${generatedDirName}/${file}`));
 	await Promise.all(
 		files.map(async file => {
 			const key = `_generated/${generatedDirName}/${file}`;
@@ -313,10 +278,10 @@ async function syncGeneratedStaticFontToMinio({ id, weight, version }) {
 					Bucket: process.env.MINIO_BUCKET,
 					Key: key,
 					Body: body,
-					ContentType: "font/woff2",
-				}),
+					ContentType: "font/woff2"
+				})
 			);
-		}),
+		})
 	);
 
 	const staleKeys = [];
@@ -326,8 +291,8 @@ async function syncGeneratedStaticFontToMinio({ id, weight, version }) {
 			new ListObjectsV2Command({
 				Bucket: process.env.MINIO_BUCKET,
 				Prefix: `_generated/${generatedDirName}/`,
-				ContinuationToken: continuationToken,
-			}),
+				ContinuationToken: continuationToken
+			})
 		);
 		for (const item of listed.Contents || []) {
 			if (!localKeys.has(item.Key)) staleKeys.push(item.Key);
@@ -336,9 +301,7 @@ async function syncGeneratedStaticFontToMinio({ id, weight, version }) {
 	} while (continuationToken);
 
 	await deleteMinioKeys(minioClient, staleKeys);
-	logger.info(
-		`Synced generated static fonts to MinIO: _generated/${generatedDirName}/ (${files.length} files)`,
-	);
+	logger.info(`Synced generated static fonts to MinIO: _generated/${generatedDirName}/ (${files.length} files)`);
 }
 
 async function saveOriginalFontFile({ id, weight, extension, fileBase64 }) {
@@ -355,7 +318,7 @@ async function saveOriginalFontFile({ id, weight, extension, fileBase64 }) {
 	for (const oldExtension of fontExtensions) {
 		if (oldExtension === extension) continue;
 		await rm(path.join(fontDir, `${weight}.${oldExtension}`), {
-			force: true,
+			force: true
 		});
 		await deleteOriginalFontFromMinio({ id, weight, extension: oldExtension });
 	}
@@ -375,9 +338,7 @@ function assertUploadPayload(body) {
 		throw new Error("Missing request body");
 	}
 	if (!/^[A-Za-z0-9_-]+$/.test(body.id || "")) {
-		throw new Error(
-			"Font ID can only contain letters, numbers, hyphens, and underscores",
-		);
+		throw new Error("Font ID can only contain letters, numbers, hyphens, and underscores");
 	}
 	if (!body.name) throw new Error("Font name is required");
 	const weight = Number(body.weight);
@@ -409,33 +370,23 @@ function escapeRegExp(value) {
 function normalizeWeights(value) {
 	const weights = normalizeTextArray(value)
 		.map(Number)
-		.filter(
-			weight => Number.isInteger(weight) && weight >= 1 && weight <= 1000,
-		);
+		.filter(weight => Number.isInteger(weight) && weight >= 1 && weight <= 1000);
 	return Array.from(new Set(weights)).sort((a, b) => a - b);
 }
 
 function normalizeFontInfoWeights(body) {
 	const weights = normalizeWeights(body.weights);
 	const replacementWeight = Number(body.replacementWeight);
-	if (
-		body.fileBase64 &&
-		Number.isInteger(replacementWeight) &&
-		replacementWeight >= 1 &&
-		replacementWeight <= 1000 &&
-		!weights.includes(replacementWeight)
-	) {
+	if (body.fileBase64 && Number.isInteger(replacementWeight) && replacementWeight >= 1 && replacementWeight <= 1000 && !weights.includes(replacementWeight)) {
 		weights.push(replacementWeight);
 	}
 	return Array.from(new Set(weights)).sort((a, b) => a - b);
 }
 
 function assertFontInfoPayload(body) {
-	if (!body || typeof body !== "object")
-		throw new Error("Missing request body");
+	if (!body || typeof body !== "object") throw new Error("Missing request body");
 	if (!body.name) throw new Error("Font name is required");
-	if (!allowedCategories.has(body.category))
-		throw new Error("Invalid category");
+	if (!allowedCategories.has(body.category)) throw new Error("Invalid category");
 	const weights = normalizeFontInfoWeights(body);
 	if (weights.length === 0) throw new Error("At least one weight is required");
 	const format = String(body.format || "").toLowerCase();
@@ -443,8 +394,7 @@ function assertFontInfoPayload(body) {
 }
 
 function normalizeReplacementFont(body) {
-	if (!body.fileBase64 && !body.replacementWeight && !body.extension)
-		return null;
+	if (!body.fileBase64 && !body.replacementWeight && !body.extension) return null;
 	if (!body.fileBase64) throw new Error("Font file is required");
 	const weight = Number(body.replacementWeight);
 	if (!Number.isInteger(weight) || weight < 1 || weight > 1000) {
@@ -458,8 +408,7 @@ function normalizeReplacementFont(body) {
 }
 
 function assertDemoSentencePayload(body) {
-	if (!body || typeof body !== "object")
-		throw new Error("Missing request body");
+	if (!body || typeof body !== "object") throw new Error("Missing request body");
 	if (!body.content?.trim()) throw new Error("Sentence content is required");
 }
 
@@ -471,7 +420,7 @@ async function saveFontRecord(body) {
 		id,
 		weight,
 		extension,
-		fileBase64: body.fileBase64,
+		fileBase64: body.fileBase64
 	});
 
 	await db.query(
@@ -518,8 +467,8 @@ async function saveFontRecord(body) {
 			body.repoUrl?.trim() || null,
 			normalizeTextArray(body.authors),
 			Number(body.demoContentId || 1),
-			extension,
-		],
+			extension
+		]
 	);
 
 	return { id, weight, extension };
@@ -533,7 +482,7 @@ async function getFontRecord(id) {
 		FROM font_family
 		WHERE id = $1
 		`,
-		[id],
+		[id]
 	);
 	return rows[0] || null;
 }
@@ -543,7 +492,7 @@ async function updateFontRecord(id, body) {
 	if (replacementFont) {
 		await saveOriginalFontFile({
 			id,
-			...replacementFont,
+			...replacementFont
 		});
 		body.format = replacementFont.extension;
 	}
@@ -583,13 +532,13 @@ async function updateFontRecord(id, body) {
 			body.repoUrl?.trim() || null,
 			normalizeTextArray(body.authors),
 			Number(body.demoContentId || 1),
-			String(body.format).toLowerCase(),
-		],
+			String(body.format).toLowerCase()
+		]
 	);
 	await redis.del(`fontinfo:${id}`);
 	return {
 		font: await getFontRecord(id),
-		replacementFont,
+		replacementFont
 	};
 }
 
@@ -603,9 +552,9 @@ async function removeGeneratedFontPackages(fontId) {
 			.map(entry =>
 				rm(path.join(generatedFontsDir, entry.name), {
 					recursive: true,
-					force: true,
-				}),
-			),
+					force: true
+				})
+			)
 	);
 }
 
@@ -620,7 +569,7 @@ async function deleteFontRecord(id) {
 			SET families = array_remove(families, $1)
 			WHERE $1 = ANY(families)
 			`,
-			[id],
+			[id]
 		);
 		const deleted = await db.query(
 			`
@@ -628,7 +577,7 @@ async function deleteFontRecord(id) {
 			WHERE id = $1
 			RETURNING id
 			`,
-			[id],
+			[id]
 		);
 		if (deleted.rowCount === 0) throw new Error("Font not found");
 		await db.query("COMMIT");
@@ -642,15 +591,11 @@ async function deleteFontRecord(id) {
 		removeGeneratedFontPackages(id),
 		deleteMinioPrefix(`original-fonts/${id}/`),
 		deleteMinioPrefix(`css/${id}/`),
-		deleteMinioObjectsMatching("_generated/", key =>
-			new RegExp(`^_generated/\\d+-${escapeRegExp(id)}-\\d+/`).test(key),
-		),
+		deleteMinioObjectsMatching("_generated/", key => new RegExp(`^_generated/\\d+-${escapeRegExp(id)}-\\d+/`).test(key))
 	]);
 	for (const result of cleanupResults) {
 		if (result.status === "rejected") {
-			logger.warn(
-				`Font cleanup skipped after delete: ${result.reason.message}`,
-			);
+			logger.warn(`Font cleanup skipped after delete: ${result.reason.message}`);
 		}
 	}
 	await redis.del(`fontinfo:${id}`);
@@ -662,12 +607,12 @@ async function listDemoSentences() {
 		SELECT sid, content, language
 		FROM demo_sentence
 		ORDER BY sid
-		`,
+		`
 	);
 	return rows.map(row => ({
 		id: row.sid,
 		content: row.content,
-		language: row.language,
+		language: row.language
 	}));
 }
 
@@ -678,12 +623,12 @@ async function createDemoSentence(body) {
 		VALUES ($1, $2)
 		RETURNING sid, content, language
 		`,
-		[body.content.trim(), body.language?.trim() || null],
+		[body.content.trim(), body.language?.trim() || null]
 	);
 	return {
 		id: rows[0].sid,
 		content: rows[0].content,
-		language: rows[0].language,
+		language: rows[0].language
 	};
 }
 
@@ -693,17 +638,13 @@ async function generateStaticForUploadedFont(job, font) {
 	await analyseFontsInBatches([
 		{
 			fontName: font.id,
-			weights: String(font.weight),
-		},
+			weights: String(font.weight)
+		}
 	]);
 
 	job.message = "正在切割靜態字型包";
 	await removeStaticFontPackages(font.id, font.weight);
-	const ok = await regenerateAllStaticFont(
-		job.state,
-		await get_generated_static_floders(),
-		[font.id],
-	);
+	const ok = await regenerateAllStaticFont(job.state, await get_generated_static_floders(), [font.id]);
 	if (!ok) throw new Error("Static font generation failed");
 
 	const staticFontVersion = await get_bullet();
@@ -712,7 +653,7 @@ async function generateStaticForUploadedFont(job, font) {
 	await syncGeneratedStaticFontToMinio({
 		id: font.id,
 		weight: font.weight,
-		version: staticFontVersion,
+		version: staticFontVersion
 	});
 	await redis.del(`fontinfo:${font.id}`);
 	job.status = "completed";
@@ -721,9 +662,7 @@ async function generateStaticForUploadedFont(job, font) {
 }
 
 async function removeStaticFontPackages(fontId, weight) {
-	const pattern = new RegExp(
-		`^\\d+-${escapeRegExp(fontId)}-${escapeRegExp(weight)}$`,
-	);
+	const pattern = new RegExp(`^\\d+-${escapeRegExp(fontId)}-${escapeRegExp(weight)}$`);
 	await mkdir(generatedFontsDir, { recursive: true });
 	const entries = await readdir(generatedFontsDir, { withFileTypes: true });
 	await Promise.all(
@@ -732,9 +671,9 @@ async function removeStaticFontPackages(fontId, weight) {
 			.map(entry =>
 				rm(path.join(generatedFontsDir, entry.name), {
 					recursive: true,
-					force: true,
-				}),
-			),
+					force: true
+				})
+			)
 	);
 }
 
@@ -746,7 +685,7 @@ function queueStaticGenerationJob({ state, font, queuedMessage }) {
 		status: "queued",
 		message: queuedMessage,
 		state,
-		createdAt: new Date().toISOString(),
+		createdAt: new Date().toISOString()
 	};
 	uploadJobs.set(jobId, job);
 
@@ -772,14 +711,10 @@ export default async function registerAdmin(app, state) {
 		const userId = req.body?.userId?.trim();
 		const password = req.body?.password || "";
 		if (!userId || !password) {
-			return res
-				.status(400)
-				.send({ status: "failed", message: "Missing credentials" });
+			return res.status(400).send({ status: "failed", message: "Missing credentials" });
 		}
 		if (!(await loginAdminUser(userId, password))) {
-			return res
-				.status(401)
-				.send({ status: "failed", message: "Invalid credentials" });
+			return res.status(401).send({ status: "failed", message: "Invalid credentials" });
 		}
 		setAdminSession(res, userId);
 		res.send({ status: "success", message: "Logged in" });
@@ -818,7 +753,7 @@ export default async function registerAdmin(app, state) {
 			res.status(201).send({
 				status: "success",
 				message: "Demo sentence created",
-				sentence,
+				sentence
 			});
 		} catch (error) {
 			res.status(400).send({ status: "failed", message: error.message });
@@ -829,9 +764,7 @@ export default async function registerAdmin(app, state) {
 		if (!requireAdminApi(req, res)) return;
 		const font = await getFontRecord(req.params.fontId);
 		if (!font) {
-			return res
-				.status(404)
-				.send({ status: "failed", message: "Font not found" });
+			return res.status(404).send({ status: "failed", message: "Font not found" });
 		}
 		res.send({
 			id: font.id,
@@ -849,7 +782,7 @@ export default async function registerAdmin(app, state) {
 			authors: font.authors || [],
 			demoContentId: font.demo_content_id,
 			format: font.format,
-			fontUrl: fontInfoUrl(state, font.id),
+			fontUrl: fontInfoUrl(state, font.id)
 		});
 	});
 
@@ -858,34 +791,27 @@ export default async function registerAdmin(app, state) {
 		try {
 			const exists = await getFontRecord(req.params.fontId);
 			if (!exists) {
-				return res
-					.status(404)
-					.send({ status: "failed", message: "Font not found" });
+				return res.status(404).send({ status: "failed", message: "Font not found" });
 			}
 			assertFontInfoPayload(req.body);
-			const { font, replacementFont } = await updateFontRecord(
-				req.params.fontId,
-				req.body,
-			);
+			const { font, replacementFont } = await updateFontRecord(req.params.fontId, req.body);
 			const jobId = replacementFont
 				? queueStaticGenerationJob({
 						state,
 						font: {
 							id: font.id,
 							weight: replacementFont.weight,
-							extension: replacementFont.extension,
+							extension: replacementFont.extension
 						},
-						queuedMessage: "已更新原始字型，等待重新切割靜態字型",
+						queuedMessage: "已更新原始字型，等待重新切割靜態字型"
 					})
 				: null;
 			res.send({
 				status: "success",
-				message: replacementFont
-					? "Font file updated. Static generation started."
-					: "Font info updated",
+				message: replacementFont ? "Font file updated. Static generation started." : "Font info updated",
 				fontId: font.id,
 				fontUrl: fontInfoUrl(state, font.id),
-				jobId,
+				jobId
 			});
 		} catch (error) {
 			res.status(400).send({ status: "failed", message: error.message });
@@ -898,26 +824,22 @@ export default async function registerAdmin(app, state) {
 		try {
 			const font = await getFontRecord(req.params.fontId);
 			if (!font) {
-				return res
-					.status(404)
-					.send({ status: "failed", message: "Font not found" });
+				return res.status(404).send({ status: "failed", message: "Font not found" });
 			}
 			if (req.body?.confirmId !== req.params.fontId) {
 				return res.status(400).send({
 					status: "failed",
-					message: "Font ID confirmation does not match",
+					message: "Font ID confirmation does not match"
 				});
 			}
 			if (!(await verifyAdminUserPassword(userId, req.body?.password))) {
-				return res
-					.status(403)
-					.send({ status: "failed", message: "Invalid password" });
+				return res.status(403).send({ status: "failed", message: "Invalid password" });
 			}
 			await deleteFontRecord(req.params.fontId);
 			res.send({
 				status: "success",
 				message: "Font deleted",
-				fontId: req.params.fontId,
+				fontId: req.params.fontId
 			});
 		} catch (error) {
 			res.status(400).send({ status: "failed", message: error.message });
@@ -928,9 +850,7 @@ export default async function registerAdmin(app, state) {
 		if (!requireAdminApi(req, res)) return;
 		const job = uploadJobs.get(req.params.jobId);
 		if (!job) {
-			return res
-				.status(404)
-				.send({ status: "failed", message: "Job not found" });
+			return res.status(404).send({ status: "failed", message: "Job not found" });
 		}
 		res.send({
 			id: job.id,
@@ -940,7 +860,7 @@ export default async function registerAdmin(app, state) {
 			error: job.error,
 			createdAt: job.createdAt,
 			completedAt: job.completedAt,
-			fontUrl: fontInfoUrl(state, job.fontId),
+			fontUrl: fontInfoUrl(state, job.fontId)
 		});
 	});
 
@@ -952,14 +872,14 @@ export default async function registerAdmin(app, state) {
 			const jobId = queueStaticGenerationJob({
 				state,
 				font,
-				queuedMessage: "已儲存原始字型，等待切割靜態字型",
+				queuedMessage: "已儲存原始字型，等待切割靜態字型"
 			});
 
 			res.status(202).send({
 				status: "accepted",
 				message: "Font uploaded. Static generation started.",
 				jobId,
-				fontUrl: fontInfoUrl(state, font.id),
+				fontUrl: fontInfoUrl(state, font.id)
 			});
 		} catch (error) {
 			res.status(400).send({ status: "failed", message: error.message });

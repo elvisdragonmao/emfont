@@ -1,6 +1,5 @@
 // font-reader.mjs
 import * as fontkit from "fontkit";
-import { writeFile } from "fs/promises";
 
 const fontPath = "src/_data/original-fonts/GenKiGothicTW/200.otf";
 

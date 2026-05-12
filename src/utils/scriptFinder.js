@@ -1,6 +1,6 @@
 import fs from "fs";
-import path from "path";
 import https from "https";
+import path from "path";
 import { fileURLToPath } from "url";
 // credit: https://robvanderg.github.io/scripts/scripts/
 
@@ -12,15 +12,15 @@ const __dirname = path.dirname(__filename);
  * Downloads and parses Scripts.txt, then caches as JSON for fast lookup.
  */
 export class ScriptFinder {
-  /**
-   * Class that loads Unicode script definitions.
-   * It automatically downloads the Unicode Scripts.txt file (if missing),
-   * parses it, and saves a JSON cache.
-   * 
-   * The data structure maps ranges of valid Unicode code points to their
-   * corresponding script names (e.g., Latin, Han, Cyrillic).
-   * 
-   */
+	/**
+	 * Class that loads Unicode script definitions.
+	 * It automatically downloads the Unicode Scripts.txt file (if missing),
+	 * parses it, and saves a JSON cache.
+	 *
+	 * The data structure maps ranges of valid Unicode code points to their
+	 * corresponding script names (e.g., Latin, Han, Cyrillic).
+	 *
+	 */
 	constructor() {
 		this.ranges = [];
 		this.starts = [];
@@ -34,39 +34,26 @@ export class ScriptFinder {
 		}
 
 		if (fs.existsSync(cachePath)) {
-			const { ranges, starts } = JSON.parse(
-				fs.readFileSync(cachePath, "utf-8")
-			);
+			const { ranges, starts } = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
 			this.ranges = ranges;
 			this.starts = starts;
 		} else {
 			if (!fs.existsSync(textPath)) {
-				const url =
-					"https://www.unicode.org/Public/16.0.0/ucd/Scripts.txt";
+				const url = "https://www.unicode.org/Public/16.0.0/ucd/Scripts.txt";
 				const file = fs.createWriteStream(textPath);
 				const downloadDone = new Promise((resolve, reject) => {
 					https
-						.get(url, (res) => {
-							if (res.statusCode !== 200)
-								return reject(
-									new Error(
-										`Failed to get '${url}' (${res.statusCode})`
-									)
-								);
+						.get(url, res => {
+							if (res.statusCode !== 200) return reject(new Error(`Failed to get '${url}' (${res.statusCode})`));
 							res.pipe(file);
 							file.on("finish", () => file.close(resolve));
 						})
 						.on("error", reject);
 				});
 
-				this._loadAfterDownload = downloadDone.then(() =>
-					this._loadFromText(textPath, cachePath)
-				);
+				this._loadAfterDownload = downloadDone.then(() => this._loadFromText(textPath, cachePath));
 			} else {
-				this._loadAfterDownload = this._loadFromText(
-					textPath,
-					cachePath
-				);
+				this._loadAfterDownload = this._loadFromText(textPath, cachePath);
 			}
 		}
 	}
@@ -83,8 +70,7 @@ export class ScriptFinder {
 			const rangeParts = rangeStr.trim().split("..");
 
 			const start = parseInt(rangeParts[0], 16);
-			const end =
-				rangeParts.length === 2 ? parseInt(rangeParts[1], 16) : start;
+			const end = rangeParts.length === 2 ? parseInt(rangeParts[1], 16) : start;
 
 			this.ranges.push([start, end, scriptName]);
 		}
@@ -92,14 +78,7 @@ export class ScriptFinder {
 		this.ranges.sort((a, b) => a[0] - b[0]);
 		this.starts = this.ranges.map(([start]) => start);
 
-		fs.writeFileSync(
-			cachePath,
-			JSON.stringify(
-				{ ranges: this.ranges, starts: this.starts },
-				null,
-				2
-			)
-		);
+		fs.writeFileSync(cachePath, JSON.stringify({ ranges: this.ranges, starts: this.starts }, null, 2));
 	}
 
 	async _ensureLoaded() {
@@ -113,7 +92,7 @@ export class ScriptFinder {
 		await this._ensureLoaded();
 		let left = 0;
 		let right = this.starts.length;
-    // 二分搜
+		// 二分搜
 		while (left < right) {
 			const mid = Math.floor((left + right) / 2);
 			if (codepoint < this.starts[mid]) {

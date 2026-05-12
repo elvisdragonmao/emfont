@@ -31,29 +31,38 @@
 @import url("https://font.emtech.cc/css/jfOpenHuninn");
 
 body {
-    font-family: "jfOpenHuninn", sans-serif;
+	font-family: "jfOpenHuninn", sans-serif;
 }
 ```
 
 就是那麼簡單。完整使用說明請參考 [emfont 說明文件](https://font.emtech.cc/docs)
 
 ## 開發與部屬
+
 ### Docker
+
 1. clone project
+
 ```bash
 git clone https://github.com/emfont/emfont.git
 cd emfont
 ```
+
 2. 設定環境變數 .env
+
 ```bash
 cp .env.example .env
 ```
+
 3. 啟動 docke
+
 ```bash
-docker build -t emfont:latest .  
+docker build -t emfont:latest .
 docker compose -f docker-compose.dev.yml up
 ```
+
 ### 從頭開始
+
 請先安裝 [pnpm](https://pnpm.io/zh-TW/)、[Node.js](https://nodejs.org)、[Git](https://git-scm.com/)，並架設 [PostgreSQL](https://www.postgresql.org/) 資料庫。
 
 ```bash

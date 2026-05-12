@@ -1,5 +1,5 @@
 emfont.init({
-	tofu: true,
+	tofu: true
 	// colorTest: true
 });
 
@@ -9,11 +9,7 @@ const marqueeSet = () => {
 		const inner = marquee.querySelector("span");
 		const marqueeWidth = inner.getBoundingClientRect().width;
 		marquee.style.setProperty("--innerWidth", `${-marqueeWidth}px`);
-		marquee.innerHTML =
-			"<span>" +
-			inner.innerText +
-			"</span>" +
-			inner.innerText.repeat(Math.ceil(window.outerWidth / marqueeWidth));
+		marquee.innerHTML = "<span>" + inner.innerText + "</span>" + inner.innerText.repeat(Math.ceil(window.outerWidth / marqueeWidth));
 	}
 };
 
@@ -21,15 +17,7 @@ window.addEventListener("resize", () => {
 	if (document.querySelector("main").classList.contains("home")) marqueeSet();
 });
 
-const pages = [
-	"home",
-	"about",
-	"font",
-	"fonts",
-	"login",
-	"logout",
-	"dashboard",
-];
+const pages = ["home", "about", "font", "fonts", "login", "logout", "dashboard"];
 const mobileToggle = document.getElementById("mobileToggle");
 
 document.body.addEventListener("click", event => {
@@ -72,7 +60,7 @@ const weightChart = {
 	700: ["B", "Bold"],
 	800: ["EB", "Extra Bold"],
 	900: ["H", "Heavy"],
-	950: ["XH", "Extra Heavy"],
+	950: ["XH", "Extra Heavy"]
 };
 
 let fontList;
@@ -107,25 +95,15 @@ const updateFontDisplay = async (e, animationOff = false) => {
 
 	if (!animationOff) window.scrollTo(0, 0);
 
-	const tags = [...document.querySelectorAll(".tags input:checked")].map(i =>
-		i.classList[0].replace("tag-", ""),
-	);
-	const categories = [
-		...document.querySelectorAll(".category input:checked"),
-	].map(i => i.classList[0].replace("cat-", ""));
+	const tags = [...document.querySelectorAll(".tags input:checked")].map(i => i.classList[0].replace("tag-", ""));
+	const categories = [...document.querySelectorAll(".category input:checked")].map(i => i.classList[0].replace("cat-", ""));
 	const family = document.getElementById("family").value;
 	const searchFont = document.getElementById("search-input").value;
 	const filtered = fontList.filter(font => {
-		const matchName =
-			!searchFont ||
-			(font.id + font.name_zh + font.name_en + font.name)
-				.toLowerCase()
-				.includes(searchFont.toLowerCase());
+		const matchName = !searchFont || (font.id + font.name_zh + font.name_en + font.name).toLowerCase().includes(searchFont.toLowerCase());
 		const matchFamily = family === "all" || font.family === family;
-		const matchCategory =
-			categories.length === 0 || categories.includes(font.category);
-		const matchTags =
-			tags.length === 0 || tags.every(tag => font.tags.includes(tag));
+		const matchCategory = categories.length === 0 || categories.includes(font.category);
+		const matchTags = tags.length === 0 || tags.every(tag => font.tags.includes(tag));
 		return matchName && matchFamily && matchCategory && matchTags;
 	});
 	const min = searchText.value ? "" : "-min";
@@ -140,15 +118,12 @@ const updateFontDisplay = async (e, animationOff = false) => {
 		for (let weight in font.weight) {
 			weight = font.weight[weight];
 			if (weightChart[weight]) {
-				parts.push(
-					`<span class="${weightChart[weight][0]}">${weightChart[weight][0]}</span>`,
-				);
+				parts.push(`<span class="${weightChart[weight][0]}">${weightChart[weight][0]}</span>`);
 			} else parts.push(`<span>${weight}</span>`);
 		}
 		let weightStr = parts.join(" ⋅ ");
 		if (!weightStr) weightStr = "暫時無法使用";
-		const default_text =
-			demo_content[font.sid] || "我個人認為義大利麵就應該拌 42 號混泥土";
+		const default_text = demo_content[font.sid] || "我個人認為義大利麵就應該拌 42 號混泥土";
 		const previewText = searchText.value || default_text;
 		containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
@@ -228,11 +203,9 @@ const initSearch = async () => {
 
 	paramFromUrl();
 	await updateFontDisplay(); // Wait for demo content to be loaded before calling updateFontDisplay
-	document
-		.querySelectorAll(".search-container input, .search-container select")
-		.forEach(input => {
-			input.addEventListener("change", () => updateFontDisplay()); // 要用箭頭不然 e 會進去壞掉
-		});
+	document.querySelectorAll(".search-container input, .search-container select").forEach(input => {
+		input.addEventListener("change", () => updateFontDisplay()); // 要用箭頭不然 e 會進去壞掉
+	});
 
 	let debounceTimer;
 	searchText.addEventListener("input", () => {
@@ -255,16 +228,13 @@ function addClassToVisibleElements() {
 	var aosElements = document.querySelectorAll(".font-preview");
 	aosElements.forEach(function (aosElement) {
 		const className = aosElement.getAttribute("data-class");
-		if (
-			!isElementInViewport(aosElement) &&
-			!aosElement.classList.contains(className)
-		) {
+		if (!isElementInViewport(aosElement) && !aosElement.classList.contains(className)) {
 			aosElement.classList.add(className);
 			aosElement.style.color = "transparent";
 			emfont
 				.init({
 					root: aosElement,
-					cache: false,
+					cache: false
 				})
 				.then(results => {
 					results.forEach(result => {
@@ -285,9 +255,7 @@ addClassToVisibleElements();
 const loadFontInfo = async fontId => {
 	await demoContentPromise; // Wait for demo content to be loaded
 
-	const container = document.querySelector(
-		".info-container.fontPage-container",
-	);
+	const container = document.querySelector(".info-container.fontPage-container");
 	const weightContainer = document.querySelector(".font-weights");
 	weightContainer.innerHTML = `<div class="font-item loading">
             <div class="font-title"><div class="weight">Regular 400</div></div>
@@ -308,12 +276,8 @@ const loadFontInfo = async fontId => {
 		return;
 	}
 	document.title = `${font.name.original} - emfont`;
-	const sourceUrl = font.source.endsWith("/")
-		? font.source.slice(0, -1)
-		: font.source;
-	font.download =
-		sourceUrl +
-		(sourceUrl.startsWith("https://github.com/") ? "/releases/latest" : "");
+	const sourceUrl = font.source.endsWith("/") ? font.source.slice(0, -1) : font.source;
+	font.download = sourceUrl + (sourceUrl.startsWith("https://github.com/") ? "/releases/latest" : "");
 	container.innerHTML = `<a class="navigation" href="/fonts"> <img src="/assets/img/larr.svg" alt="">字型 </a>
     <h1>${font.name.original}</h1>
     <p>${font.name.zh}</p>
@@ -373,7 +337,7 @@ const loadFontInfo = async fontId => {
 		emfont
 			.init({
 				root: weightDiv,
-				cache: false,
+				cache: false
 			})
 			.then(result => {
 				if (result.length == 0) return;
@@ -391,18 +355,13 @@ const loadFontInfo = async fontId => {
 				});
 			});
 	});
-	if (!weightContainer.innerHTML)
-		weightContainer.innerHTML = `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
+	if (!weightContainer.innerHTML) weightContainer.innerHTML = `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
 
 	container.querySelector(".font-class").onclick = e => {
 		navigator.clipboard.writeText(e.currentTarget.innerText).then(() => {
-			container
-				.querySelector(".font-class")
-				.style.setProperty("--background", "rgb(59, 88, 49)");
+			container.querySelector(".font-class").style.setProperty("--background", "rgb(59, 88, 49)");
 			setTimeout(() => {
-				container
-					.querySelector(".font-class")
-					.style.setProperty("--background", " var(--slate-700)");
+				container.querySelector(".font-class").style.setProperty("--background", " var(--slate-700)");
 			}, 2000);
 		});
 	};

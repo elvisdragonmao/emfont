@@ -1,15 +1,15 @@
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
-import dotenv from "dotenv";
 
 import { db, initDb } from "../utils/database.js";
-import { regenerateAllStaticFont } from "./fontNoMin.js";
-import { initR2, listFontsRecursive } from "../utils/r2.js";
-import { generateSitemap } from "../website/api.js";
-import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
-import { generateCSSMap } from "../website/generateCSSMap.js";
 import { logger } from "../utils/logger.js";
+import { initR2, listFontsRecursive } from "../utils/r2.js";
+import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
+import { generateSitemap } from "../website/api.js";
+import { generateCSSMap } from "../website/generateCSSMap.js";
+import { regenerateAllStaticFont } from "./fontNoMin.js";
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -43,9 +43,9 @@ async function executeSQLFile(filePath) {
 				detail: err.detail,
 				where: err.where,
 				position: err.position,
-				context,
+				context
 			},
-			"SQL failed",
+			"SQL failed"
 		);
 
 		throw err;
@@ -55,10 +55,8 @@ async function executeSQLFile(filePath) {
 //check database
 async function insertFontTypes() {
 	try {
-		if (!fs.existsSync(sotrge_original_fontsDir))
-			fs.mkdirSync(sotrge_original_fontsDir, { recursive: true });
-		if (!fs.existsSync(sotrge_generated_fontsDir))
-			fs.mkdirSync(sotrge_generated_fontsDir, { recursive: true });
+		if (!fs.existsSync(sotrge_original_fontsDir)) fs.mkdirSync(sotrge_original_fontsDir, { recursive: true });
+		if (!fs.existsSync(sotrge_generated_fontsDir)) fs.mkdirSync(sotrge_generated_fontsDir, { recursive: true });
 		// 取得 `sotrge_original_fontsDir` 下的所有子項目
 		const ALL_FONTS_dir = await readdir(sotrge_original_fontsDir);
 		let fontData = []; // include arbitrarily font weight in specis font family folder. each font family can exist one record in this array
@@ -87,7 +85,7 @@ async function insertFontTypes() {
 					fontData.push({
 						fontName: one_font_family, // font id (folder name)
 						sample_file: `${itemPath}/${fontFile}`, //absolute font file path
-						weights: weight, //number , is sample font weitght
+						weights: weight //number , is sample font weitght
 					});
 				}
 				fontWeightsMap.get(one_font_family).add(parseInt(weight));
@@ -101,10 +99,7 @@ async function insertFontTypes() {
 
 		// 把所有 fontName 一次查詢（避免每次都查一次 DB）
 		const fontNames = Array.from(fontWeightsMap.keys());
-		const result = await db.query(
-			`SELECT id FROM font_family WHERE id = ANY($1)`,
-			[fontNames],
-		);
+		const result = await db.query(`SELECT id FROM font_family WHERE id = ANY($1)`, [fontNames]);
 
 		const validFontIds = new Set(result.rows.map(row => row.id));
 
@@ -117,10 +112,7 @@ async function insertFontTypes() {
 
 			// 把支援字重的 set 轉成 array，並寫入資料庫
 			const weights = Array.from(weightsSet);
-			await db.query(`UPDATE font_family SET weights = $1 WHERE id = $2`, [
-				weights,
-				fontName,
-			]);
+			await db.query(`UPDATE font_family SET weights = $1 WHERE id = $2`, [weights, fontName]);
 		}
 		await analyseFontsInBatches(fontData);
 		logger.info("✅ 字體資料已更新");
@@ -155,7 +147,7 @@ async function get_generated_static_floders() {
 				version: match[1],
 				fontName: match[2], // 字型名稱（資料夾名稱）
 				weight: match[3], // 字型的 weight（檔案名稱中的數字）
-				files,
+				files
 			});
 		}
 	}
@@ -169,11 +161,7 @@ async function sync_r2_and_db(state, fontRecords) {
       INSERT INTO r2_files (prefix, file_name,update_time)
       VALUES ${fontRecords.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2},$${i * 3 + 3})`).join(", ")};
     `;
-		const values = fontRecords.flatMap(record => [
-			record.prefix,
-			record.fileName,
-			record.lastModified,
-		]);
+		const values = fontRecords.flatMap(record => [record.prefix, record.fileName, record.lastModified]);
 		await db.query(query, values);
 		logger.info("✅ R2 、資料庫同步成功");
 	} catch (err) {
@@ -183,9 +171,7 @@ async function sync_r2_and_db(state, fontRecords) {
 }
 async function get_bullet() {
 	try {
-		let version_num = (
-			await db.query(`SELECT bullet from version order BY start DESC limit 1;`)
-		).rows; //[0].bullet
+		let version_num = (await db.query(`SELECT bullet from version order BY start DESC limit 1;`)).rows; //[0].bullet
 		version_num = version_num.length == 0 ? 100 : version_num[0].bullet;
 		return version_num;
 	} catch (err) {
@@ -195,13 +181,10 @@ async function get_bullet() {
 }
 async function gen_css(state) {
 	const rows = await db.query(`select id, weights from font_family ;`);
-	if (!rows || rows.rowCount === 0)
-		return logger.warn("⚠️  無字型資料，無法生成 CSS 映射表");
+	if (!rows || rows.rowCount === 0) return logger.warn("⚠️  無字型資料，無法生成 CSS 映射表");
 	for (const row of rows.rows) {
 		if (!row.weights || row.weights.length === 0) {
-			logger.warn(
-				`⚠️  字型 ${row.id} 無支援字重，需檢查資料庫資料是否完整。跳過 CSS 映射表生成`,
-			);
+			logger.warn(`⚠️  字型 ${row.id} 無支援字重，需檢查資料庫資料是否完整。跳過 CSS 映射表生成`);
 			continue;
 		}
 		for (const w of row.weights) {
@@ -221,10 +204,7 @@ async function initCheck(state, log) {
 		else logger.info("⚠️  跳過字體檢查");
 		if (state.REGEN_STATIC) {
 			state.bulletin = "📠 正在生成靜態字型，請稍後...";
-			await regenerateAllStaticFont(
-				state,
-				await get_generated_static_floders(),
-			);
+			await regenerateAllStaticFont(state, await get_generated_static_floders());
 		} else logger.info("⚠️  跳過靜態字體生成");
 		if (state.REGEN_CSS) {
 			logger.info("🔄  重新生成靜態字型 CSS 映射表");

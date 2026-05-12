@@ -40,7 +40,7 @@ async function writeToDatabase(values, placeHolder) {
         ON CONFLICT (id)
         DO UPDATE SET languages = EXCLUDED.languages;
         `,
-		values,
+		values
 	);
 }
 async function analyseFontsInBatches(fontData) {
@@ -67,14 +67,9 @@ async function analyseFontsInBatches(fontData) {
 			values.push(fontId);
 			values.push(fontId);
 			values.push(languageJson);
-			placeHolder.push(
-				`($${loop_counter * 3 + 1},$${loop_counter * 3 + 2},$${loop_counter * 3 + 3})`,
-			);
+			placeHolder.push(`($${loop_counter * 3 + 1},$${loop_counter * 3 + 2},$${loop_counter * 3 + 3})`);
 		} catch (err) {
-			throw new Error(
-				`\n❌ 分析字型失敗 (${fontMeta.fontName} ${fontMeta.weights}):`,
-				err,
-			);
+			throw new Error(`\n❌ 分析字型失敗 (${fontMeta.fontName} ${fontMeta.weights}):`, err);
 		}
 		loop_counter += 1;
 	}

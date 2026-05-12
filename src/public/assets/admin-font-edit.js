@@ -70,8 +70,8 @@ function escapeHtml(value) {
 				"<": "&lt;",
 				">": "&gt;",
 				'"': "&quot;",
-				"'": "&#39;",
-			})[char],
+				"'": "&#39;"
+			})[char]
 	);
 }
 
@@ -82,10 +82,7 @@ function optionText(sentence) {
 
 function renderDemoSentences(selectedId = 1) {
 	demoSentenceSelect.innerHTML = demoSentences
-		.map(
-			sentence =>
-				`<option value="${sentence.id}" ${Number(sentence.id) === Number(selectedId) ? "selected" : ""}>${escapeHtml(optionText(sentence))}</option>`,
-		)
+		.map(sentence => `<option value="${sentence.id}" ${Number(sentence.id) === Number(selectedId) ? "selected" : ""}>${escapeHtml(optionText(sentence))}</option>`)
 		.join("");
 }
 
@@ -115,31 +112,12 @@ function fillForm(font) {
 }
 
 function renderCategoryFilter() {
-	const categories = Array.from(
-		new Set(fontList.map(font => font.category).filter(Boolean)),
-	).sort();
-	categoryFilter.innerHTML = [
-		`<option value="all">所有分類</option>`,
-		...categories.map(
-			category =>
-				`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`,
-		),
-	].join("");
+	const categories = Array.from(new Set(fontList.map(font => font.category).filter(Boolean))).sort();
+	categoryFilter.innerHTML = [`<option value="all">所有分類</option>`, ...categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)].join("");
 }
 
 function fontMatchesQuery(font, query) {
-	const searchTarget = [
-		font.id,
-		font.name,
-		font.name_zh,
-		font.name_en,
-		font.author,
-		font.family,
-		...(font.tags || []),
-	]
-		.filter(Boolean)
-		.join(" ")
-		.toLowerCase();
+	const searchTarget = [font.id, font.name, font.name_zh, font.name_en, font.author, font.family, ...(font.tags || [])].filter(Boolean).join(" ").toLowerCase();
 	return searchTarget.includes(query);
 }
 
@@ -188,7 +166,7 @@ async function refreshAfterDelete(fontId) {
 
 async function loadDemoSentences(selectedId = 1) {
 	const res = await fetch("/api/admin/demo-sentences", {
-		headers: headers(),
+		headers: headers()
 	});
 	if (redirectIfUnauthorized(res)) return [];
 	const data = await res.json();
@@ -203,7 +181,7 @@ async function loadFont(fontId) {
 	try {
 		if (demoSentences.length === 0) await loadDemoSentences();
 		const res = await fetch(`/api/admin/fonts/${encodeURIComponent(fontId)}`, {
-			headers: headers(),
+			headers: headers()
 		});
 		if (redirectIfUnauthorized(res)) return;
 		const data = await res.json();
@@ -249,7 +227,7 @@ editForm.addEventListener("submit", async event => {
 		const res = await fetch(`/api/admin/fonts/${encodeURIComponent(fontId)}`, {
 			method: "PUT",
 			headers: headers(),
-			body: JSON.stringify(payload),
+			body: JSON.stringify(payload)
 		});
 		if (redirectIfUnauthorized(res)) return;
 		const data = await res.json();
@@ -257,8 +235,7 @@ editForm.addEventListener("submit", async event => {
 		if (data.jobId) {
 			setStatus("已儲存，正在重新切割靜態字型");
 			const job = await pollJob(data.jobId);
-			if (job?.status === "failed")
-				throw new Error(job.error || "Static generation failed");
+			if (job?.status === "failed") throw new Error(job.error || "Static generation failed");
 			setStatus("字型檔已更新，靜態字型也切好了", "completed");
 			editForm.elements.fontFile.value = "";
 		} else {
@@ -275,9 +252,7 @@ editForm.addEventListener("submit", async event => {
 deleteButton.addEventListener("click", async () => {
 	if (!selectedFontId) return;
 	const fontId = selectedFontId;
-	const confirmId = window.prompt(
-		`這是不可逆操作，會刪除 ${fontId} 的資料庫紀錄、原始字型檔和已產生的靜態字型。\n\n請輸入字型 ID 確認刪除：`,
-	);
+	const confirmId = window.prompt(`這是不可逆操作，會刪除 ${fontId} 的資料庫紀錄、原始字型檔和已產生的靜態字型。\n\n請輸入字型 ID 確認刪除：`);
 	if (confirmId === null) return;
 	if (confirmId !== fontId) {
 		setStatus("字型 ID 不一致，已取消刪除", "failed");
@@ -292,7 +267,7 @@ deleteButton.addEventListener("click", async () => {
 		const res = await fetch(`/api/admin/fonts/${encodeURIComponent(fontId)}`, {
 			method: "DELETE",
 			headers: headers(),
-			body: JSON.stringify({ confirmId, password }),
+			body: JSON.stringify({ confirmId, password })
 		});
 		if (redirectIfUnauthorized(res)) return;
 		const data = await res.json();
@@ -310,20 +285,17 @@ sentenceCreateForm.addEventListener("submit", async event => {
 	submit.disabled = true;
 	setSentenceStatus("正在新增");
 	try {
-		const payload = Object.fromEntries(
-			new FormData(sentenceCreateForm).entries(),
-		);
+		const payload = Object.fromEntries(new FormData(sentenceCreateForm).entries());
 		const res = await fetch("/api/admin/demo-sentences", {
 			method: "POST",
 			headers: headers(),
-			body: JSON.stringify(payload),
+			body: JSON.stringify(payload)
 		});
 		if (redirectIfUnauthorized(res)) return;
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Create failed");
 		await loadDemoSentences(data.sentence.id);
-		if (!editForm.hidden)
-			editForm.elements.demoContentId.value = data.sentence.id;
+		if (!editForm.hidden) editForm.elements.demoContentId.value = data.sentence.id;
 		sentenceCreateForm.reset();
 		setSentenceStatus("已新增", "completed");
 	} catch (error) {

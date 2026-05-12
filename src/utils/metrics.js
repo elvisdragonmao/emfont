@@ -7,7 +7,7 @@ export async function metricsPlugin(app) {
 		name: "http_server_request_duration_seconds",
 		help: "HTTP request duration in seconds",
 		labelNames: ["method", "route", "status_code"],
-		buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+		buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
 	});
 
 	// 記起始時間
@@ -24,14 +24,10 @@ export async function metricsPlugin(app) {
 		const seconds = Number(diffNs) / 1e9;
 
 		const route = request.routeOptions?.url ?? "unknown_route"; // Fastify route pattern :contentReference[oaicite:2]{index=2}
-		httpRequestDuration
-			.labels(request.method, route, String(reply.statusCode))
-			.observe(seconds);
+		httpRequestDuration.labels(request.method, route, String(reply.statusCode)).observe(seconds);
 	});
 
 	app.get("/metrics", async (_req, reply) => {
-		reply
-			.header("Content-Type", client.register.contentType)
-			.send(await client.register.metrics());
+		reply.header("Content-Type", client.register.contentType).send(await client.register.metrics());
 	});
 }

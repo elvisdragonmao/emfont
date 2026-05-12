@@ -16,7 +16,7 @@ form.addEventListener("submit", async event => {
 		const res = await fetch("/api/admin/login", {
 			method: "POST",
 			headers: { "content-type": "application/json" },
-			body: JSON.stringify(payload),
+			body: JSON.stringify(payload)
 		});
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Login failed");

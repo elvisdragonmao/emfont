@@ -1,8 +1,8 @@
-import path from "path";
 import fs from "fs";
+import path from "path";
 import subsetFont from "subset-font";
-import { readFontBuffer } from "../read-font-file/readFontBuffer.js";
 import { logger } from "../logger.js";
+import { readFontBuffer } from "../read-font-file/readFontBuffer.js";
 const __dirname = import.meta.dirname;
 // generateFont: geneerate subset font and save to disk.
 async function generateFont(
@@ -11,22 +11,19 @@ async function generateFont(
 	words,
 	output_name,
 	put_folder = "../../_data/_generated", //default
-	fontfile = null,
+	fontfile = null
 ) {
 	try {
 		// 如果沒提供 buffer，就讀取字型檔
 		let type, success;
 		if (!fontfile) {
-			({ fontfile, type, success } = await readFontBuffer(
-				originalFontFamily,
-				font_weight,
-			));
+			({ fontfile, type, success } = await readFontBuffer(originalFontFamily, font_weight));
 		}
 		if (!success) {
 			return {
 				status: "failed",
 				message: "emfont can't read original font, please try again later.",
-				location: "null",
+				location: "null"
 			};
 		}
 		// // 確保資料夾存在
@@ -41,25 +38,23 @@ async function generateFont(
 
 		const outputPath = path.join(destFolder, `${output_name}`);
 		const resultBuffer = await subsetFont(fontfile, words, {
-			targetFormat: "woff2",
+			targetFormat: "woff2"
 
 			// output: path.join(destFolder, output_name), // Set custom output file path
 		});
 		await fs.promises.writeFile(outputPath, resultBuffer);
 
-		logger.debug(
-			`sub font generate successfuly: ${output_name} (${words.length} glyphs)`,
-		);
+		logger.debug(`sub font generate successfuly: ${output_name} (${words.length} glyphs)`);
 		return {
 			status: "success",
-			location: `${output_name}`,
+			location: `${output_name}`
 		};
 	} catch (err) {
 		logger.error(`sub font generate failed: ${output_name} (${err.message})`);
 		return {
 			status: "failed",
 			message: "emfont can't read original font, please try again later.",
-			location: "null",
+			location: "null"
 		};
 	}
 }

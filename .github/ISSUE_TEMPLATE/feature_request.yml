@@ -3,24 +3,24 @@ description: 無限進步 Infinite improvement
 title: "[Feature]: "
 labels: ["enhancement"]
 body:
-    - type: markdown
-      attributes:
-          value: |
-              感謝你花時間填寫這個功能請求！
-              Thanks for taking the time to fill out this bug report!
-    - type: textarea
-      id: content
-      attributes:
-          label: 請描述你想要的功能或改進。 Please describe the feature or improvement you want.
-          description: >
-              你可以描述這個功能的目的、使用情境、預期行為等。
-              You can describe the purpose of this feature, usage scenarios, expected behavior, etc.
-          placeholder:
-      validations:
-          required: true
-    - type: checkboxes
-      id: pullrequest
-      attributes:
-          label: 你願意提交 PR 來製作這個功能嗎？ Do you want to submit a PR to implement this feature?
-          options:
-              - label: "Yes"
+  - type: markdown
+    attributes:
+      value: |
+        感謝你花時間填寫這個功能請求！
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: content
+    attributes:
+      label: 請描述你想要的功能或改進。 Please describe the feature or improvement you want.
+      description: >
+        你可以描述這個功能的目的、使用情境、預期行為等。 You can describe the purpose of this feature, usage scenarios, expected behavior, etc.
+
+      placeholder:
+    validations:
+      required: true
+  - type: checkboxes
+    id: pullrequest
+    attributes:
+      label: 你願意提交 PR 來製作這個功能嗎？ Do you want to submit a PR to implement this feature?
+      options:
+        - label: "Yes"

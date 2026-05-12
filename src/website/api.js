@@ -1,38 +1,30 @@
-import { genFont, getFontFamilyMeta } from "../utils/generate-font/genFont.js";
-import { db } from "../utils/database.js";
 import { writeFile } from "fs/promises";
-import { join } from "path";
 import { Redis } from "ioredis";
+import { join } from "path";
+import { db } from "../utils/database.js";
+import { genFont, getFontFamilyMeta } from "../utils/generate-font/genFont.js";
 import { logger } from "../utils/logger.js";
 
 const redis = new Redis(process.env.REDIS_URL);
 const generateSitemap = async state => {
 	const { rows } = await db.query(`SELECT id FROM font_family`);
-	const content = rows
-		.map(row => `<url><loc>${state.baseURL}/fonts/${row.id}/</loc></url>`)
-		.join("\n");
+	const content = rows.map(row => `<url><loc>${state.baseURL}/fonts/${row.id}/</loc></url>`).join("\n");
 	let pageList = ["", "/about", "/fonts", "/login", "/about", "/dashboard"];
-	const pages = pageList
-		.map(row => `<url><loc>${state.baseURL}${row}/</loc></url>`)
-		.join("\n");
+	const pages = pageList.map(row => `<url><loc>${state.baseURL}${row}/</loc></url>`).join("\n");
 	await writeFile(
 		join(import.meta.dirname, "../public/sitemap.xml"),
 		`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${content}
 ${pages}
-</urlset>`,
+</urlset>`
 	);
 };
 
 const registerApi = async (app, state) => {
 	app.get("/robots.txt", (req, res) => {
 		if (state.baseURL === "https://font.emtech.cc") {
-			res
-				.type("text/plain")
-				.send(
-					"User-agent: *\nAllow: /\nSitemap: https://font.emtech.cc/sitemap.xml",
-				);
+			res.type("text/plain").send("User-agent: *\nAllow: /\nSitemap: https://font.emtech.cc/sitemap.xml");
 		} else {
 			res.type("text/plain").send("User-agent: *\nDisallow: /");
 		}
@@ -41,13 +33,9 @@ const registerApi = async (app, state) => {
 	app.post("/g/:font", async (req, res) => {
 		try {
 			if (req.params.font === "") {
-				return res
-					.status(404)
-					.send({ status: "failed", message: "Font not found" });
+				return res.status(404).send({ status: "failed", message: "Font not found" });
 			}
-			logger.debug(
-				`/g/:font route 收到字型請求: ${req.params.font} with body: ${JSON.stringify(req.body)}`,
-			);
+			logger.debug(`/g/:font route 收到字型請求: ${req.params.font} with body: ${JSON.stringify(req.body)}`);
 			const response = await genFont(req, res, state);
 			res.status(response.code).send(response);
 		} catch (error) {
@@ -57,15 +45,11 @@ const registerApi = async (app, state) => {
 	});
 
 	app.get("/g/:font", async (req, res) => {
-		res
-			.status(405)
-			.send("You can only use POST method to request font in JSON format");
+		res.status(405).send("You can only use POST method to request font in JSON format");
 	});
 
 	app.get("/css/:font", async (req, res) => {
-		logger.debug(
-			`Received CSS request for font: ${req.params.font} with query: ${JSON.stringify(req.query)}`,
-		);
+		logger.debug(`Received CSS request for font: ${req.params.font} with query: ${JSON.stringify(req.query)}`);
 		try {
 			if (req.params.font === "") {
 				return res.status(404).send("/* Please enter font name */");
@@ -80,38 +64,27 @@ const registerApi = async (app, state) => {
 					return res.status(404).send({
 						code: 404,
 						status: "failed",
-						message: "Font not found",
+						message: "Font not found"
 					});
 				let allWeights = meta.weights || [];
 				if (allWeights.length === 0) {
 					return res.status(404).send({
 						code: 404,
 						status: "failed",
-						message: "No weights available for this font",
+						message: "No weights available for this font"
 					});
 				}
 				if (req.body.weight && allWeights.includes(req.body.weight)) {
 					allWeights = [req.body.weight];
 				}
-				return res
-					.type("text/css")
-					.send(
-						allWeights
-							.map(
-								weight =>
-									`@import url('${state.baseURL}/css/${font_id}/${weight}');`,
-							)
-							.join("\n"),
-					);
+				return res.type("text/css").send(allWeights.map(weight => `@import url('${state.baseURL}/css/${font_id}/${weight}');`).join("\n"));
 				//https://font.emtech.cc/file/original-fonts/GenSekiGothicTC/400.otf
 			} else {
 				req.body.min = req.query.min?.trim() ?? false;
 				req.body.format = req.query.format?.trim() ?? null;
 				const response = await genFont(req, res, state);
 				if (response.code == 200) {
-					const urls = response.location
-						.map(font => `url('${font}') format('woff2')`)
-						.join(",\n");
+					const urls = response.location.map(font => `url('${font}') format('woff2')`).join(",\n");
 					return res.type("text/css").send(`@font-face {
   font-family: '${response.name}';
   src: ${urls};
@@ -137,7 +110,7 @@ const registerApi = async (app, state) => {
 			return res.send({
 				status: "success",
 				message: "資料庫路由測試成功",
-				data: select.rows,
+				data: select.rows
 			});
 		} catch (err) {
 			console.error("資料庫路由測試失敗", err.stack);
@@ -148,20 +121,14 @@ const registerApi = async (app, state) => {
 	app.get("/bulletin", async (req, res) => {
 		res.send({
 			status: state.alive ? "up" : "down",
-			message: state.bulletin,
+			message: state.bulletin
 		});
 	});
 
 	app.post("/bulletin", async (req, res) => {
 		const { bulletin, token } = req.body;
-		if (token !== process.env.PASSWORD)
-			return res
-				.status(403)
-				.send({ status: "failed", message: "Invalid token" });
-		if (!bulletin)
-			return res
-				.status(400)
-				.send({ status: "failed", message: "No bulletin provided" });
+		if (token !== process.env.PASSWORD) return res.status(403).send({ status: "failed", message: "Invalid token" });
+		if (!bulletin) return res.status(400).send({ status: "failed", message: "No bulletin provided" });
 		state.bulletin = bulletin;
 		res.send({ status: "success", message: "Bulletin updated" });
 	});
@@ -191,7 +158,7 @@ const registerApi = async (app, state) => {
                 FROM font_family
                 ${whereClause} ORDER BY id
             `,
-				values,
+				values
 			);
 
 			const fonts = rows.map(row => ({
@@ -204,7 +171,7 @@ const registerApi = async (app, state) => {
 				category: row.category,
 				tags: row.tags || [],
 				family: row.family,
-				sid: row.demo_content_id,
+				sid: row.demo_content_id
 			}));
 
 			return res.send(fonts);
@@ -247,18 +214,15 @@ const registerApi = async (app, state) => {
                 FROM font_family
                 WHERE id = $1
             `,
-				[fontID],
+				[fontID]
 			);
-			if (rows.length === 0)
-				return res
-					.status(404)
-					.send({ status: "failed", message: "Font not found" });
+			if (rows.length === 0) return res.status(404).send({ status: "failed", message: "Font not found" });
 			const font = rows[0];
 			const response = {
 				name: {
 					original: font.name,
 					zh: font.name_zh,
-					en: font.name_en,
+					en: font.name_en
 				},
 				category: font.category,
 				weight: font.weights || [],
@@ -270,7 +234,7 @@ const registerApi = async (app, state) => {
 				author: font.authors?.[0] || null,
 				description: font.description,
 				format: font.format,
-				sid: font.demo_content_id,
+				sid: font.demo_content_id
 			};
 			await redis.set(redisKey, JSON.stringify(response), "EX", 3600);
 			res.send(response);
@@ -281,4 +245,4 @@ const registerApi = async (app, state) => {
 	});
 };
 
-export { registerApi, generateSitemap };
+export { generateSitemap, registerApi };

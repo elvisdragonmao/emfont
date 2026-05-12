@@ -47,8 +47,7 @@ body:has(#lightmode:checked) {
 	font-family: "Tofu";
 	font-weight: 400;
 	font-display: swap;
-	src: url("https://font.emtech.cc/file/original-fonts/Tofu/PawFont.woff2")
-		format("woff2");
+	src: url("https://font.emtech.cc/file/original-fonts/Tofu/PawFont.woff2") format("woff2");
 }
 
 * {
@@ -139,8 +138,7 @@ header {
 
 body:has(#lightmode:checked) #logo {
 	color: rgb(241, 245, 249);
-	filter: brightness(0) invert(31%) sepia(19%) saturate(935%) hue-rotate(184deg)
-		brightness(90%) contrast(83%);
+	filter: brightness(0) invert(31%) sepia(19%) saturate(935%) hue-rotate(184deg) brightness(90%) contrast(83%);
 }
 
 section {
@@ -581,12 +579,7 @@ body:has(.home) {
 	display: block;
 	height: 1rem;
 	width: 100%;
-	background: linear-gradient(
-		to top,
-		var(--slate-900) 0%,
-		var(--slate-900) 50%,
-		transparent 100%
-	);
+	background: linear-gradient(to top, var(--slate-900) 0%, var(--slate-900) 50%, transparent 100%);
 	position: absolute;
 	top: -2rem;
 	left: 0;
@@ -614,8 +607,7 @@ body:has(.home) {
 }
 
 .font .navigation img {
-	filter: brightness(0%) invert(55%) sepia(46%) saturate(3414%)
-		hue-rotate(194deg) brightness(100%) contrast(101%);
+	filter: brightness(0%) invert(55%) sepia(46%) saturate(3414%) hue-rotate(194deg) brightness(100%) contrast(101%);
 }
 
 .fonts .search-container > .navigation {
@@ -965,13 +957,7 @@ body:has(#lightmode:checked) .font-preview[style="color: rgb(112, 37, 37);"] {
 	border-radius: 0.5rem;
 	background-color: var(--slate-700);
 	margin-bottom: 1rem;
-	background: linear-gradient(
-		to right,
-		var(--slate-500) 0%,
-		var(--slate-500) var(--percent),
-		var(--slate-700) var(--percent),
-		var(--slate-700) 100%
-	);
+	background: linear-gradient(to right, var(--slate-500) 0%, var(--slate-500) var(--percent), var(--slate-700) var(--percent), var(--slate-700) 100%);
 }
 
 #section-font {

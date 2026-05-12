@@ -19,9 +19,7 @@
 				</div>
 				<nav class="admin-nav" aria-label="管理頁面">
 					<a href="/admin/fonts">新增字型</a>
-					<button id="admin-logout" class="link-button" type="button">
-						登出
-					</button>
+					<button id="admin-logout" class="link-button" type="button">登出</button>
 				</nav>
 			</header>
 
@@ -29,11 +27,7 @@
 				<div class="toolbar-grid">
 					<label>
 						<span>搜尋字型</span>
-						<input
-							id="font-search"
-							type="search"
-							placeholder="搜尋名稱、ID、作者"
-						/>
+						<input id="font-search" type="search" placeholder="搜尋名稱、ID、作者" />
 					</label>
 					<label>
 						<span>分類</span>
@@ -48,14 +42,7 @@
 				<section class="workspace font-browser" aria-label="字型清單">
 					<div class="panel-heading">
 						<strong>字型清單</strong>
-						<button
-							id="font-delete-button"
-							class="danger-button"
-							type="button"
-							disabled
-						>
-							刪除字型
-						</button>
+						<button id="font-delete-button" class="danger-button" type="button" disabled>刪除字型</button>
 					</div>
 					<div id="font-list" class="admin-font-list"></div>
 				</section>
@@ -122,21 +109,11 @@
 							</label>
 							<label>
 								<span>重新上傳字重</span>
-								<input
-									name="replacementWeight"
-									type="number"
-									min="1"
-									max="1000"
-									placeholder="400"
-								/>
+								<input name="replacementWeight" type="number" min="1" max="1000" placeholder="400" />
 							</label>
 							<label class="wide file-drop">
 								<span>重新上傳原始字型檔</span>
-								<input
-									name="fontFile"
-									type="file"
-									accept=".ttf,.otf,font/ttf,font/otf"
-								/>
+								<input name="fontFile" type="file" accept=".ttf,.otf,font/ttf,font/otf" />
 							</label>
 							<label class="wide">
 								<span>展示句</span>
@@ -154,19 +131,10 @@
 
 						<div class="actions">
 							<button type="submit">儲存修改</button>
-							<a
-								id="font-preview-link"
-								class="text-link"
-								href="#"
-								target="_blank"
-							>
-								開啟字型頁
-							</a>
+							<a id="font-preview-link" class="text-link" href="#" target="_blank">開啟字型頁</a>
 						</div>
 					</form>
-					<p id="edit-status" role="status" aria-live="polite">
-						請從左側選擇一個字型。
-					</p>
+					<p id="edit-status" role="status" aria-live="polite">請從左側選擇一個字型。</p>
 				</section>
 			</div>
 

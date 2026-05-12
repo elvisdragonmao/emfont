@@ -17,5 +17,5 @@ export const logger = {
 	info: (...args) => getLogger().info(...args),
 	warn: (...args) => getLogger().warn(...args),
 	error: (...args) => getLogger().error(...args),
-	debug: (...args) => getLogger().debug(...args),
+	debug: (...args) => getLogger().debug(...args)
 };

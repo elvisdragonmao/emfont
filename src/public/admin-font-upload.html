@@ -19,9 +19,7 @@
 				</div>
 				<nav class="admin-nav" aria-label="管理頁面">
 					<a href="/admin/fonts/edit">編輯字型資訊</a>
-					<button id="admin-logout" class="link-button" type="button">
-						登出
-					</button>
+					<button id="admin-logout" class="link-button" type="button">登出</button>
 				</nav>
 			</header>
 
@@ -30,23 +28,11 @@
 					<div class="form-grid">
 						<label>
 							<span>字型 ID</span>
-							<input
-								name="id"
-								required
-								pattern="[A-Za-z0-9_-]+"
-								placeholder="jfOpenHuninn"
-							/>
+							<input name="id" required pattern="[A-Za-z0-9_-]+" placeholder="jfOpenHuninn" />
 						</label>
 						<label>
 							<span>字重</span>
-							<input
-								name="weight"
-								required
-								type="number"
-								min="1"
-								max="1000"
-								value="400"
-							/>
+							<input name="weight" required type="number" min="1" max="1000" value="400" />
 						</label>
 						<label>
 							<span>分類</span>
@@ -92,11 +78,7 @@
 						</label>
 						<label class="wide">
 							<span>來源網址</span>
-							<input
-								name="repoUrl"
-								type="url"
-								placeholder="https://github.com/..."
-							/>
+							<input name="repoUrl" type="url" placeholder="https://github.com/..." />
 						</label>
 						<label class="wide">
 							<span>描述</span>
@@ -104,12 +86,7 @@
 						</label>
 						<label class="wide file-drop">
 							<span>原始字型檔</span>
-							<input
-								name="fontFile"
-								type="file"
-								accept=".ttf,.otf,font/ttf,font/otf"
-								required
-							/>
+							<input name="fontFile" type="file" accept=".ttf,.otf,font/ttf,font/otf" required />
 						</label>
 					</div>
 

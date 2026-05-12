@@ -1,6 +1,6 @@
-import { db } from "../utils/database.js";
-import path from "path";
 import { promises as fs } from "fs";
+import path from "path";
+import { db } from "../utils/database.js";
 import { logger } from "../utils/logger.js";
 async function writeCssFile(font_id, weight, cssBlocks) {
 	const __dirname = import.meta.dirname;
@@ -16,10 +16,7 @@ async function writeCssFile(font_id, weight, cssBlocks) {
 	}
 }
 async function generateCSSMap(font_id, weight, state) {
-	const { rows } = await db.query(
-		`select pack,string_agg("char" , '') AS chars  from static_fonts where $1 = any (families) group by pack`,
-		[font_id],
-	);
+	const { rows } = await db.query(`select pack,string_agg("char" , '') AS chars  from static_fonts where $1 = any (families) group by pack`, [font_id]);
 	// from char to unicode-range
 	const packs = rows.map(row => {
 		const codePoints = Array.from(row.chars).map(ch => ch.codePointAt(0));
@@ -42,13 +39,11 @@ async function generateCSSMap(font_id, weight, state) {
 		//手動加最後一段
 		ranges.push([start, prev]);
 		// 格式化成 CSS 的 unicode-range
-		const unicodeRanges = ranges.map(([a, b]) =>
-			a === b ? `U+${a.toString(16)}` : `U+${a.toString(16)}-${b.toString(16)}`,
-		);
+		const unicodeRanges = ranges.map(([a, b]) => (a === b ? `U+${a.toString(16)}` : `U+${a.toString(16)}-${b.toString(16)}`));
 
 		return {
 			pack: row.pack,
-			unicodeRanges: unicodeRanges.join(", "),
+			unicodeRanges: unicodeRanges.join(", ")
 		};
 	});
 	// 產生 CSS

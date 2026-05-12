@@ -108,10 +108,7 @@ h1 {
 
 .toolbar-grid {
 	display: grid;
-	grid-template-columns: minmax(180px, 0.8fr) minmax(240px, 1.4fr) minmax(
-			160px,
-			0.6fr
-		);
+	grid-template-columns: minmax(180px, 0.8fr) minmax(240px, 1.4fr) minmax(160px, 0.6fr);
 	gap: 18px;
 }
 
