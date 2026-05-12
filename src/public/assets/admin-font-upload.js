@@ -1,6 +1,8 @@
 const form = document.getElementById("font-upload-form");
 const statusEl = document.getElementById("upload-status");
 const logoutButton = document.getElementById("admin-logout");
+const i18n = (key, values) =>
+	typeof window.t === "function" ? window.t(key, values) : key;
 
 function setStatus(message, className = "") {
 	statusEl.textContent = message;
@@ -31,7 +33,7 @@ form.addEventListener("submit", async event => {
 	event.preventDefault();
 	const submit = form.querySelector("button[type=submit]");
 	submit.disabled = true;
-	setStatus("正在讀取字型檔");
+	setStatus(i18n("admin.js.readFontFile"));
 
 	try {
 		const formData = new FormData(form);
@@ -42,7 +44,7 @@ form.addEventListener("submit", async event => {
 		payload.extension = extension;
 		payload.fileBase64 = await fileToBase64(file);
 
-		setStatus("正在上傳");
+		setStatus(i18n("admin.generic.uploading"));
 		const res = await fetch("/api/admin/fonts", {
 			method: "POST",
 			headers: {
@@ -53,16 +55,22 @@ form.addEventListener("submit", async event => {
 		if (res.status === 401) window.location.href = "/admin/login";
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Upload failed");
-		setStatus("已上傳，正在排程切割");
+		setStatus(i18n("admin.js.uploadedQueue"));
 		const job = await pollJob(data.jobId);
 		if (job.status === "completed") {
-			alert(`字型上傳完成\n${job.fontUrl || data.fontUrl}`);
+			alert(
+				i18n("admin.js.uploadDone", { fontUrl: job.fontUrl || data.fontUrl }),
+			);
 		}
 	} catch (error) {
 		setStatus(error.message, "failed");
 	} finally {
 		submit.disabled = false;
 	}
+});
+
+window.i18nReady?.then(() => {
+	document.title = i18n("admin.uploadTitle");
 });
 
 logoutButton.addEventListener("click", async () => {

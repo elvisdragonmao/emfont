@@ -9,6 +9,8 @@ const demoSentenceSelect = document.getElementById("demo-sentence-select");
 const sentenceCreateForm = document.getElementById("sentence-create-form");
 const logoutButton = document.getElementById("admin-logout");
 const deleteButton = document.getElementById("font-delete-button");
+const i18n = (key, values) =>
+	typeof window.t === "function" ? window.t(key, values) : key;
 
 let fontList = [];
 let demoSentences = [];
@@ -132,7 +134,7 @@ function renderCategoryFilter() {
 		new Set(fontList.map(font => font.category).filter(Boolean)),
 	).sort();
 	categoryFilter.innerHTML = [
-		`<option value="all">所有分類</option>`,
+		`<option value="all">${escapeHtml(i18n("admin.allCategories"))}</option>`,
 		...categories.map(
 			category =>
 				`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`,
@@ -168,17 +170,17 @@ function renderFontList() {
 	fontListEl.innerHTML = filtered
 		.map(font => {
 			const weights = Array.isArray(font.weight) ? font.weight.join(" / ") : "";
-			const author = font.author || "未知作者";
+			const author = font.author || i18n("admin.js.unknownAuthor");
 			const selected = font.id === selectedFontId ? " selected" : "";
 			return `<button class="admin-font-item${selected}" type="button" data-font-id="${escapeHtml(font.id)}">
 				<span class="admin-font-name">${escapeHtml(font.name || font.id)}</span>
-				<span class="admin-font-meta">${escapeHtml(font.id)} | ${escapeHtml(weights || "無字重")} | ${escapeHtml(author)}</span>
+				<span class="admin-font-meta">${escapeHtml(font.id)} | ${escapeHtml(weights || i18n("admin.js.noWeights"))} | ${escapeHtml(author)}</span>
 			</button>`;
 		})
 		.join("");
 
 	if (!fontListEl.innerHTML) {
-		fontListEl.innerHTML = `<p class="empty-state">沒有符合條件的字型。</p>`;
+		fontListEl.innerHTML = `<p class="empty-state">${escapeHtml(i18n("admin.js.emptyFonts"))}</p>`;
 	}
 }
 
@@ -205,7 +207,7 @@ async function refreshAfterDelete(fontId) {
 	deleteButton.disabled = true;
 	previewLink.href = "#";
 	await loadFontList();
-	setStatus(`已刪除 ${fontId}`, "completed");
+	setStatus(i18n("admin.js.deleted", { fontId }), "completed");
 }
 
 async function loadDemoSentences(selectedId = 1) {
@@ -220,7 +222,7 @@ async function loadDemoSentences(selectedId = 1) {
 }
 
 async function loadFont(fontId) {
-	setStatus("正在載入");
+	setStatus(i18n("admin.generic.loading"));
 	editForm.hidden = true;
 	try {
 		if (demoSentences.length === 0) await loadDemoSentences();
@@ -231,7 +233,7 @@ async function loadFont(fontId) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Load failed");
 		fillForm(data);
-		setStatus("已載入", "completed");
+		setStatus(i18n("admin.generic.loaded"), "completed");
 	} catch (error) {
 		setStatus(error.message, "failed");
 	}
@@ -250,7 +252,7 @@ editForm.addEventListener("submit", async event => {
 	const submit = editForm.querySelector("button[type=submit]");
 	const fontId = editForm.elements.id.value;
 	submit.disabled = true;
-	setStatus("正在儲存");
+	setStatus(i18n("admin.generic.saving"));
 	try {
 		const formData = new FormData(editForm);
 		const file = formData.get("fontFile");
@@ -277,16 +279,20 @@ editForm.addEventListener("submit", async event => {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Update failed");
 		if (data.jobId) {
-			setStatus("已儲存，正在重新切割靜態字型");
+			setStatus(i18n("admin.js.savedRegenerate"));
 			const job = await pollJob(data.jobId);
 			if (job?.status === "failed")
 				throw new Error(job.error || "Static generation failed");
-			setStatus("字型檔已更新，靜態字型也切好了", "completed");
+			setStatus(i18n("admin.js.fontFileUpdated"), "completed");
 			editForm.elements.fontFile.value = "";
 		} else {
-			setStatus("已儲存", "completed");
+			setStatus(i18n("admin.generic.saved"), "completed");
 		}
-		alert(`字型資訊已更新\n${data.fontUrl || previewLink.href}`);
+		alert(
+			i18n("admin.js.fontUpdated", {
+				fontUrl: data.fontUrl || previewLink.href,
+			}),
+		);
 	} catch (error) {
 		setStatus(error.message, "failed");
 	} finally {
@@ -297,19 +303,17 @@ editForm.addEventListener("submit", async event => {
 deleteButton.addEventListener("click", async () => {
 	if (!selectedFontId) return;
 	const fontId = selectedFontId;
-	const confirmId = window.prompt(
-		`這是不可逆操作，會刪除 ${fontId} 的資料庫紀錄、原始字型檔和已產生的靜態字型。\n\n請輸入字型 ID 確認刪除：`,
-	);
+	const confirmId = window.prompt(i18n("admin.js.deleteConfirm", { fontId }));
 	if (confirmId === null) return;
 	if (confirmId !== fontId) {
-		setStatus("字型 ID 不一致，已取消刪除", "failed");
+		setStatus(i18n("admin.js.deleteMismatch"), "failed");
 		return;
 	}
-	const password = window.prompt("請重新輸入管理員密碼確認刪除：");
+	const password = window.prompt(i18n("admin.js.deletePassword"));
 	if (password === null) return;
 
 	deleteButton.disabled = true;
-	setStatus("正在刪除字型");
+	setStatus(i18n("admin.js.deleting"));
 	try {
 		const res = await fetch(`/api/admin/fonts/${encodeURIComponent(fontId)}`, {
 			method: "DELETE",
@@ -330,7 +334,7 @@ sentenceCreateForm.addEventListener("submit", async event => {
 	event.preventDefault();
 	const submit = sentenceCreateForm.querySelector("button[type=submit]");
 	submit.disabled = true;
-	setSentenceStatus("正在新增");
+	setSentenceStatus(i18n("admin.js.adding"));
 	try {
 		const payload = Object.fromEntries(
 			new FormData(sentenceCreateForm).entries(),
@@ -347,7 +351,7 @@ sentenceCreateForm.addEventListener("submit", async event => {
 		if (!editForm.hidden)
 			editForm.elements.demoContentId.value = data.sentence.id;
 		sentenceCreateForm.reset();
-		setSentenceStatus("已新增", "completed");
+		setSentenceStatus(i18n("admin.js.added"), "completed");
 	} catch (error) {
 		setSentenceStatus(error.message, "failed");
 	} finally {
@@ -355,11 +359,18 @@ sentenceCreateForm.addEventListener("submit", async event => {
 	}
 });
 
-Promise.all([loadAdminConfig(), loadFontList(), loadDemoSentences()]).catch(
-	error => {
+Promise.resolve(window.i18nReady)
+	.then(() => {
+		document.title = i18n("admin.editTitle");
+		return Promise.all([
+			loadAdminConfig(),
+			loadFontList(),
+			loadDemoSentences(),
+		]);
+	})
+	.catch(error => {
 		setStatus(error.message, "failed");
-	},
-);
+	});
 
 logoutButton.addEventListener("click", async () => {
 	await fetch("/api/admin/logout", { method: "POST" });

@@ -10,9 +10,9 @@ async function writeCssFile(font_id, weight, cssBlocks) {
 	const fileName = `${destFolder}/${weight}.css`;
 	try {
 		await fs.writeFile(fileName, cssBlocks, "utf8");
-		logger.info(`✅ 已產生 CSS 檔案: ${fileName}`);
+		logger.info(`✅ Generated CSS file: ${fileName}`);
 	} catch (err) {
-		logger.error("❌ CSS 寫檔失敗:", err);
+		logger.error("❌ Failed to write CSS file:", err);
 	}
 }
 async function generateCSSMap(font_id, weight, state) {
@@ -33,15 +33,15 @@ async function generateCSSMap(font_id, weight, state) {
 			if (cp === prev + 1) {
 				prev = cp;
 			} else {
-				//連續區段結束，換段
+				// End the current contiguous range and start a new one.
 				ranges.push([start, prev]);
 				start = cp;
 				prev = cp;
 			}
 		}
-		//手動加最後一段
+		// Add the final range.
 		ranges.push([start, prev]);
-		// 格式化成 CSS 的 unicode-range
+		// Format as CSS unicode-range values.
 		const unicodeRanges = ranges.map(([a, b]) =>
 			a === b ? `U+${a.toString(16)}` : `U+${a.toString(16)}-${b.toString(16)}`,
 		);
@@ -51,7 +51,7 @@ async function generateCSSMap(font_id, weight, state) {
 			unicodeRanges: unicodeRanges.join(", "),
 		};
 	});
-	// 產生 CSS
+	// Generate CSS.
 	// src: url.
 	const cssBlocks = packs.map(p => {
 		const paddedPack = String(p.pack).padStart(3, "0");

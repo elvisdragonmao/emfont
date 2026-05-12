@@ -3,34 +3,46 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>新增字型 - emfont 管理</title>
+		<title data-i18n="admin.uploadTitle">emfont</title>
 		<link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
 		<link rel="stylesheet" href="/assets/admin-font-upload.css" />
 	</head>
 	<body>
 		<main class="admin-shell">
 			<header>
-				<a href="/" aria-label="回到首頁">
+				<a
+					href="/"
+					aria-label="Home"
+					data-i18n-attrs="aria-label:admin.backHome"
+				>
 					<img src="/assets/img/logo/emfont-logo-light.svg" alt="emfont" />
 				</a>
 				<div>
-					<p>管理者工具</p>
-					<h1>新增字型</h1>
+					<p data-i18n="admin.tools"></p>
+					<h1 data-i18n="admin.addFont"></h1>
 				</div>
-				<nav class="admin-nav" aria-label="管理頁面">
-					<a href="/admin/fonts/edit">編輯字型資訊</a>
-					<a href="/admin/console">管理操控台</a>
+				<nav
+					class="admin-nav"
+					aria-label="Admin pages"
+					data-i18n-attrs="aria-label:admin.adminPages"
+				>
+					<a href="/admin/fonts/edit" data-i18n="admin.editFontInfo"></a>
+					<a href="/admin/console" data-i18n="admin.console"></a>
 					<button id="admin-logout" class="link-button" type="button">
-						登出
+						<span data-i18n="admin.logout"></span>
 					</button>
 				</nav>
 			</header>
 
-			<section class="workspace" aria-label="新增字型表單">
+			<section
+				class="workspace"
+				aria-label="Add font form"
+				data-i18n-attrs="aria-label:admin.fontForm"
+			>
 				<form id="font-upload-form">
 					<div class="form-grid">
 						<label>
-							<span>字型 ID</span>
+							<span data-i18n="admin.fontId"></span>
 							<input
 								name="id"
 								required
@@ -39,7 +51,7 @@
 							/>
 						</label>
 						<label>
-							<span>字重</span>
+							<span data-i18n="admin.weight"></span>
 							<input
 								name="weight"
 								required
@@ -50,7 +62,7 @@
 							/>
 						</label>
 						<label>
-							<span>分類</span>
+							<span data-i18n="admin.category"></span>
 							<select name="category" required>
 								<option value="sans-serif">sans-serif</option>
 								<option value="serif">serif</option>
@@ -60,39 +72,39 @@
 							</select>
 						</label>
 						<label>
-							<span>通用名稱</span>
-							<input name="name" required placeholder="open 粉圓" />
+							<span data-i18n="admin.commonName"></span>
+							<input name="name" required placeholder="jf open Huninn" />
 						</label>
 						<label>
-							<span>中文名稱</span>
-							<input name="nameZh" placeholder="open 粉圓" />
+							<span data-i18n="admin.nameZh"></span>
+							<input name="nameZh" placeholder="" />
 						</label>
 						<label>
-							<span>英文名稱</span>
+							<span data-i18n="admin.nameEn"></span>
 							<input name="nameEn" placeholder="jf open Huninn" />
 						</label>
 						<label>
-							<span>家族</span>
-							<input name="family" placeholder="圓體" />
+							<span data-i18n="admin.family"></span>
+							<input name="family" placeholder="" />
 						</label>
 						<label>
-							<span>標籤</span>
-							<input name="tags" placeholder="圓體, 可愛" />
+							<span data-i18n="admin.tags"></span>
+							<input name="tags" placeholder="" />
 						</label>
 						<label>
-							<span>作者</span>
+							<span data-i18n="admin.author"></span>
 							<input name="authors" placeholder="justfont" />
 						</label>
 						<label>
-							<span>授權</span>
+							<span data-i18n="admin.license"></span>
 							<input name="license" placeholder="SIL Open Font License 1.1" />
 						</label>
 						<label>
-							<span>版本</span>
+							<span data-i18n="admin.version"></span>
 							<input name="version" placeholder="v1.0" />
 						</label>
 						<label class="wide">
-							<span>來源網址</span>
+							<span data-i18n="admin.sourceUrl"></span>
 							<input
 								name="repoUrl"
 								type="url"
@@ -100,11 +112,11 @@
 							/>
 						</label>
 						<label class="wide">
-							<span>描述</span>
+							<span data-i18n="admin.description"></span>
 							<textarea name="description" rows="4"></textarea>
 						</label>
 						<label class="wide file-drop">
-							<span>原始字型檔</span>
+							<span data-i18n="admin.originalFontFile"></span>
 							<input
 								name="fontFile"
 								type="file"
@@ -115,12 +127,18 @@
 					</div>
 
 					<div class="actions">
-						<button type="submit">上傳並切割</button>
-						<p id="upload-status" role="status" aria-live="polite">尚未上傳</p>
+						<button type="submit" data-i18n="admin.uploadAndGenerate"></button>
+						<p
+							id="upload-status"
+							role="status"
+							aria-live="polite"
+							data-i18n="admin.notUploaded"
+						></p>
 					</div>
 				</form>
 			</section>
 		</main>
+		<script src="/assets/i18n.js"></script>
 		<script src="/assets/admin-font-upload.js"></script>
 	</body>
 </html>

@@ -3,30 +3,38 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>管理登入 - emfont</title>
+		<title data-i18n="admin.loginTitle">emfont</title>
 		<link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
 		<link rel="stylesheet" href="/assets/admin-font-upload.css" />
 	</head>
 	<body>
 		<main class="admin-shell login-shell">
 			<header>
-				<a href="/" aria-label="回到首頁">
+				<a
+					href="/"
+					aria-label="Home"
+					data-i18n-attrs="aria-label:admin.backHome"
+				>
 					<img src="/assets/img/logo/emfont-logo-light.svg" alt="emfont" />
 				</a>
 				<div>
-					<p>管理者工具</p>
-					<h1>登入</h1>
+					<p data-i18n="admin.tools"></p>
+					<h1 data-i18n="admin.login"></h1>
 				</div>
 			</header>
 
-			<section class="workspace" aria-label="管理者登入">
+			<section
+				class="workspace"
+				aria-label="Admin login"
+				data-i18n-attrs="aria-label:admin.adminLogin"
+			>
 				<form id="admin-login-form" class="login-form">
 					<label>
-						<span>使用者 ID</span>
+						<span data-i18n="admin.userId"></span>
 						<input name="userId" autocomplete="username" required />
 					</label>
 					<label>
-						<span>密碼</span>
+						<span data-i18n="admin.password"></span>
 						<input
 							name="password"
 							type="password"
@@ -35,12 +43,13 @@
 						/>
 					</label>
 					<div class="actions">
-						<button type="submit">登入</button>
+						<button type="submit" data-i18n="admin.login"></button>
 						<p id="login-status" role="status" aria-live="polite"></p>
 					</div>
 				</form>
 			</section>
 		</main>
+		<script src="/assets/i18n.js"></script>
 		<script src="/assets/admin-login.js"></script>
 	</body>
 </html>

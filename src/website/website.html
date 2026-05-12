@@ -1,249 +1,392 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{{title}}</title>
-        <meta property="og:title" content="{{title}}" />
-        <meta name="description" content="{{description}}" />
-        <meta property="og:description" content="{{description}}" />
-        <meta name="author" content="毛哥EM" />
-        <meta name="keywords" content="emfont, webfont, 中文字體, 開源" />
-        <meta property="og:type" content="website" />
-        <meta name="theme-color" content="#0f172a" />
-        <meta property="og:site_name" content="emfont" />
-        <meta property="og:locale" content="zh-TW" />
-        <meta property="og:image" content="/assets/img/og.webp" />
-        <meta property="og:image:alt" content="emfont - 免費中文字體 Webfont 服務" />
-        <link rel="icon" type="image/png" href="/assets/img/logo/favicon-96x96.png" sizes="96x96" />
-        <link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
-        <link rel="shortcut icon" href="/assets/img/logo/favicon.ico" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/logo/apple-touch-icon.png" />
-        <meta name="apple-mobile-web-app-title" content="emfont" />
-        <link rel="manifest" href="/assets/img/logo/site.webmanifest" />
-        <link rel="stylesheet" rel="preload" href="/assets/style.css" />
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-H69XEEC798"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-            gtag("js", new Date());
+<!doctype html>
+<html lang="{{locale}}">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{{title}}</title>
+		<meta property="og:title" content="{{title}}" />
+		<meta name="description" content="{{description}}" />
+		<meta property="og:description" content="{{description}}" />
+		<meta name="author" content="{{t:meta.author}}" />
+		<meta name="keywords" content="{{t:meta.keywords}}" />
+		<meta property="og:type" content="website" />
+		<meta name="theme-color" content="#0f172a" />
+		<meta property="og:site_name" content="emfont" />
+		<meta property="og:locale" content="{{t:meta.ogLocale}}" />
+		<meta property="og:image" content="/assets/img/og.webp" />
+		<meta property="og:image:alt" content="{{t:meta.ogImageAlt}}" />
+		<link
+			rel="icon"
+			type="image/png"
+			href="/assets/img/logo/favicon-96x96.png"
+			sizes="96x96"
+		/>
+		<link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
+		<link rel="shortcut icon" href="/assets/img/logo/favicon.ico" />
+		<link
+			rel="apple-touch-icon"
+			sizes="180x180"
+			href="/assets/img/logo/apple-touch-icon.png"
+		/>
+		<meta name="apple-mobile-web-app-title" content="emfont" />
+		<link rel="manifest" href="/assets/img/logo/site.webmanifest" />
+		<link rel="stylesheet" rel="preload" href="/assets/style.css" />
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script
+			async=""
+			src="https://www.googletagmanager.com/gtag/js?id=G-H69XEEC798"
+		></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag() {
+				dataLayer.push(arguments);
+			}
+			gtag("js", new Date());
 
-            gtag("config", "G-H69XEEC798");
-        </script>
-    </head>
-    <body>
-        <a href="#main-content" class="skip-link">跳到主要內容</a>
-        <main id="main-content" class="{{page}}" role="main">
-            <input type="checkbox" name="lightmode" id="lightmode" />
-            <input type="checkbox" id="mobileToggle" />
-            <section>
-                <div id="section-about">
-                    <p>emfont 是一款免費、簡單易用的 CJK webfont（網頁中文字體）服務， 讓你只需在網站內加上兩行 JavaScript，並在元素上套用 class，就能立即套用豐富的字型。不論是形象網站、作品集，還是部落格，都能大幅提升視覺質感。</p>
-                    <p>目前 emfont 提供超過 90 款開源中文字型。 輕巧，穩定，不必處理繁瑣的設定，也不需擔心版權問題，讓設計和開發專注於創意本身。</p>
-                    <p>
-                        本專案特別感謝
-                        <a href="https://zeabur.com/" target="_blank" rel="noopener">Zeabur</a>
-                        及
-                        <a href="https://sponsor.ncse.tw/" target="_blank" rel="noopener">國雲網路</a>
-                        提供台灣高速穩定的運算資源。 讓 emfont 能持續為大家提供優質服務。而最重要的，是每一位使用者的支持——我們的使命，就是讓設計師不再受限於中文字型，盡情綻放腦中的創意。
-                    </p>
-                    <p>
-                        如果你喜歡這個開源專案，歡迎在
-                        <a href="https://github.com/emfont/emfont">GitHub</a>
-                        留下一顆星星，或 <a href="https://buymeacoffee.com/elvismao">用實際行動</a> 來支援 emfont。而如果你有任何問題或有興趣協助開發，不要吝嗇在我們的
-                        <a href="https://dc.elvismao.com">Discord 伺服器</a>
-                        中提出。
-                    </p>
-                    <div class="credits">
-                        <div class="contributors">
-                            <h2>貢獻者</h2>
-                            <div>
-                                <a href="https://elvismao.com" class="contributor">
-                                    <img src="https://avatars.githubusercontent.com/u/61068739" alt="毛哥EM" loading="lazy" />
-                                    毛哥EM</a
-                                >
-                                <a href="https://github.com/iach526526" class="contributor">
-                                    <img src="https://avatars.githubusercontent.com/u/98824625" alt="Each Chan" loading="lazy" />
-                                    Each Chan</a
-                                >
-                                <a href="https://pan93.com" class="contributor">
-                                    <img src="https://avatars.githubusercontent.com/u/28441561" alt="Yi-Jyun Pan" loading="lazy" />
-                                    Yi-Jyun Pan
-                                </a>
-                            </div>
-                        </div>
-                        <div class="sponsors">
-                            <h2>贊助</h2>
-                            <div>
-                                <a href="https://zeabur.com/?referralCode=Edit-Mr" target="_blank" rel="noopener" aria-label="Zeabur">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="221" height="42" viewBox="0 0 221 42" fill="none" aria-hidden="true" focusable="false">
-                                        <g clip-path="url(#clip0_6_236)">
-                                            <path d="M19.7248 27.4207H50.7601V42.0001H-0.00140381V27.4207H14.2694L33.9188 16.8842H-0.00140381V2.30493H50.7601V16.8842L19.7248 27.4207Z" fill="currentColor" />
-                                            <path d="M33.7489 2.30493H-0.00012207V16.8842H33.7489V2.30493Z" fill="#6300FF" />
-                                            <path d="M50.7675 27.4208H19.8826V42.0001H50.7675V27.4208Z" fill="#FF4400" />
-                                            <path d="M66.0548 38.0177V32.339L76.3695 20.4883C78.0625 18.5521 79.3153 17.1775 80.1279 16.3644C79.2809 16.4165 78.1667 16.4515 76.7856 16.4692L67.0671 16.5209V10.4789H89.8227V15.6467L79.3 27.7839L75.5948 31.803C77.6164 31.6819 78.8692 31.6214 79.3532 31.6214H90.6269V38.0266L66.0548 38.0177Z" fill="currentColor" />
-                                            <path
-                                                d="M108.277 29.2516L115.534 30.4712C114.756 32.9221 113.206 35.0551 111.116 36.5516C108.873 38.0096 106.234 38.7388 103.561 38.6394C98.7748 38.6394 95.2334 37.0748 92.9363 33.9455C91.0372 31.1549 90.0834 27.828 90.2153 24.4544C89.9865 20.5531 91.2673 16.7134 93.7922 13.7318C94.9312 12.4713 96.3291 11.4721 97.8902 10.8029C99.4513 10.1336 101.139 9.81005 102.836 9.85439C104.652 9.7668 106.464 10.0858 108.141 10.7879C109.818 11.4901 111.317 12.5579 112.53 13.9134C114.897 16.6194 116.028 20.764 115.924 26.3473H97.676C97.6122 28.1899 98.2409 29.9895 99.4379 31.3911C99.9682 31.9745 100.617 32.4373 101.342 32.7483C102.066 33.0593 102.848 33.2113 103.636 33.194C104.675 33.2277 105.692 32.8977 106.514 32.2608C107.398 31.464 108.014 30.4128 108.277 29.2516ZM108.692 21.8867C108.767 20.1353 108.184 18.4191 107.058 17.0761C106.58 16.549 105.996 16.1296 105.343 15.8458C104.691 15.5619 103.986 15.4201 103.275 15.4298C102.53 15.4117 101.792 15.5581 101.111 15.8585C100.43 16.1589 99.8232 16.6059 99.3346 17.1677C98.2413 18.4898 97.6944 20.1801 97.8059 21.8926L108.692 21.8867Z"
-                                                fill="currentColor"
-                                            />
-                                            <path
-                                                d="M124.115 18.8789L117.507 17.6859C118.052 15.3272 119.411 13.236 121.344 11.7798C123.784 10.3378 126.603 9.66861 129.43 9.86024C131.904 9.72486 134.378 10.1185 136.687 11.0149C138.086 11.6149 139.26 12.6404 140.043 13.9458C140.845 16.0209 141.177 18.2485 141.015 20.4677L140.937 28.974C140.891 30.766 141.008 32.5585 141.287 34.3293C141.566 35.6099 142.006 36.8501 142.596 38.0207H135.39C135.2 37.5364 134.967 36.8188 134.691 35.8679C134.57 35.4368 134.483 35.1518 134.431 35.013C133.282 36.159 131.931 37.0821 130.447 37.7357C129.013 38.3444 127.47 38.6534 125.912 38.6438C123.463 38.7806 121.058 37.9521 119.213 36.336C118.413 35.5934 117.782 34.6889 117.359 33.6826C116.937 32.6764 116.734 31.5917 116.763 30.5007C116.738 29.0363 117.124 27.5943 117.877 26.3384C118.621 25.1165 119.707 24.1407 121.001 23.533C122.854 22.7287 124.8 22.1579 126.793 21.8335C129.202 21.456 131.57 20.857 133.869 20.0439V19.3174C133.924 18.773 133.86 18.2231 133.682 17.7058C133.503 17.1885 133.215 16.7161 132.836 16.3216C131.666 15.5982 130.29 15.2835 128.922 15.4268C127.857 15.3651 126.799 15.6321 125.89 16.1916C125.035 16.8821 124.414 17.821 124.115 18.8789ZM133.854 24.785C132.398 25.2305 130.92 25.6026 129.427 25.8998C128.047 26.1131 126.709 26.5415 125.462 27.1696C125.027 27.4423 124.668 27.8208 124.419 28.2698C124.17 28.7188 124.038 29.2237 124.037 29.7373C124.033 30.2332 124.132 30.7245 124.329 31.1798C124.525 31.6351 124.814 32.0445 125.177 32.3818C125.562 32.7528 126.017 33.0427 126.515 33.2342C127.014 33.4257 127.546 33.5149 128.08 33.4966C129.44 33.4815 130.758 33.0267 131.838 32.2002C132.67 31.6131 133.281 30.7643 133.575 29.789C133.817 28.6212 133.912 27.4279 133.86 26.2365L133.854 24.785Z"
-                                                fill="currentColor"
-                                            />
-                                            <path
-                                                d="M144.695 38.0178V0H151.978V13.6919C152.939 12.4985 154.155 11.5346 155.536 10.8705C156.917 10.2064 158.429 9.85877 159.961 9.85292C161.529 9.81483 163.087 10.1214 164.525 10.751C165.962 11.3806 167.244 12.318 168.28 13.497C170.475 15.9264 171.572 19.4144 171.572 23.9612C171.572 28.6644 170.454 32.2864 168.217 34.827C167.226 36.0284 165.981 36.9939 164.571 37.6534C163.161 38.3129 161.622 38.6497 160.065 38.6394C158.442 38.6264 156.846 38.2212 155.413 37.4582C153.835 36.6293 152.48 35.4332 151.461 33.9706V38.0163L144.695 38.0178ZM151.926 23.6511C151.772 25.8453 152.239 28.0386 153.273 29.9796C153.779 30.8661 154.511 31.6022 155.394 32.1125C156.277 32.6228 157.281 32.889 158.301 32.8839C159.099 32.8812 159.885 32.6932 160.598 32.3345C161.311 31.9757 161.931 31.4561 162.409 30.8167C163.695 28.9067 164.293 26.6155 164.106 24.32C164.312 21.9235 163.71 19.527 162.395 17.5132C161.878 16.8483 161.213 16.3134 160.452 15.951C159.692 15.5885 158.858 15.4086 158.016 15.4254C157.183 15.4119 156.358 15.5882 155.604 15.941C154.849 16.2938 154.185 16.8138 153.661 17.4615C152.37 19.2541 151.755 21.4465 151.926 23.6496V23.6511Z"
-                                                fill="currentColor"
-                                            />
-                                            <path
-                                                d="M192.359 38.0178V33.8953C191.355 35.3678 189.996 36.5632 188.408 37.3711C186.815 38.2081 185.042 38.6444 183.243 38.6423C181.507 38.6702 179.794 38.2501 178.267 37.4227C176.853 36.6694 175.73 35.4648 175.078 34.0002C174.339 32.0571 174.005 29.9835 174.094 27.9065V10.4834H181.376V23.1387C181.268 25.519 181.403 27.9041 181.778 30.2571C182.019 31.0934 182.535 31.8241 183.242 32.3317C184.035 32.8672 184.979 33.1351 185.936 33.0965C187.13 33.1119 188.299 32.7537 189.28 32.0718C190.207 31.4619 190.915 30.5716 191.301 29.5307C191.796 27.087 191.979 24.5905 191.846 22.1007V10.4834H199.128V38.0237L192.359 38.0178Z"
-                                                fill="currentColor"
-                                            />
-                                            <path d="M210.452 38.0178H203.17V10.4775H209.934V14.3932C210.712 12.9725 211.775 11.7278 213.057 10.7373C213.998 10.1429 215.092 9.83516 216.206 9.85144C217.899 9.86146 219.558 10.337 221 11.2261L218.745 17.5752C217.744 16.856 216.556 16.4417 215.325 16.3821C214.389 16.3546 213.474 16.6526 212.733 17.2252C211.876 18.0445 211.292 19.1088 211.062 20.2728C210.529 23.3193 210.325 26.4141 210.452 29.5041V38.0178Z" fill="currentColor" />
-                                        </g>
-                                        <defs>
-                                            <clipPath id="clip0_6_236">
-                                                <rect width="221" height="42" fill="white" />
-                                            </clipPath>
-                                        </defs>
-                                    </svg>
-                                </a>
-                            </div>
-                            <a href="https://sponsor.ncse.tw/" target="_blank" rel="noopener"><img src="/assets/img/NCSE.svg" class="ncse" alt="國雲網路 logo" /></a>
-                        </div>
-                        <a href="https://www.buymeacoffee.com/elvismao" class="buy-me-a-coffee" target="_blank" rel="noopener"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a Red Bull&emoji=&slug=elvismao&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" alt="支持 emfont" /></a>
-                    </div>
-                </div>
-                <div id="section-home">
-                    <div class="emfont-GenYoGothicTC-min">
-                        <span>不必微軟正黑可以源樣黑體</span>
-                    </div>
-                    <div class="emfont-GenYoMinTC-min">
-                        <span>不必新細明體可以源樣明體</span>
-                    </div>
-                    <div class="emfont-jfOpenHuninn-min">
-                        <span>不必思源黑體可以open粉圓</span>
-                    </div>
-                    <div class="emfont-MantouSans-min">
-                        <span>不必Roboto可以饅頭黑體</span>
-                    </div>
-                    <div class="emfont-ChenYuLuoYan-min">
-                        <span>不必蘋果儷中黑可以辰宇落雁體</span>
-                    </div>
-                    <div class="emfont-ChillBitmap16px-min">
-                        <span>不必標楷體可以寒蝉点阵体</span>
-                    </div>
-                </div>
-                <div id="section-404">
-                    <div>
-                        <h1>404</h1>
-                        <h2>找不到這個頁面</h2>
-                        <p>
-                            Hold on, if love is the answer, you're
-                            <a href="/">home</a>.<br />
-                            - Daft Punk, Touch<br /><a href="/">回到首頁</a>
-                        </p>
-                    </div>
-                </div>
-                <div id="section-login">
-                    <div>
-                        <h1>登入</h1>
-                        <p>查看你的網頁的統計資料</p>
-                        <a href="/login/github" class="btn"><img src="/assets/img/GitHub.svg" alt="" aria-hidden="true" />透過 GitHub 繼續</a>
-                    </div>
-                </div>
-                <div id="section-search"></div>
-                <div id="section-font">
-                    <div class="section-font-container">
-                        <div class="font-weights"></div>
-                    </div>
-                    <div>
-                        <div class="first-time">
-                            <h2>第一次使用 emfont？</h2>
-                            <p>emfont 是一個免費的網頁字體 (Webfont) 服務，會自動壓縮與最佳化字型檔案。你可以 <a href="/docs/setup">閱讀文檔來快速入門</a>。</p>
-                        </div>
-                        <footer role="contentinfo">
-                            <img src="/assets/img/logo/emfont-icon-gray.svg" alt="emfont 標誌" class="footer-logo" />
-                            <p>文字是網站的靈魂，是思想的表達，更是美感的載體。然而中文字體因為檔案龐大、需要耗費大量流量，很少有免費中文字體的 webfont 服務。emfont 的誕生正是為了填補這一空白，整理了許多開源免費的字體。為開發者和設計師們提供一個優秀的中文字體解決方案。</p>
-                            <a href="https://zeabur.com/?referralCode=Edit-Mr" class="footer-zeabur"><img src="/assets/img/Zeabur-deploy.svg" alt="Deployed on Zeabur" /></a>
-                        </footer>
-                    </div>
-                </div>
-            </section>
-            <header role="banner">
-                <label class="mobile-nav" for="mobileToggle"></label>
-                <a href="/"> <img src="/assets/img/logo/emfont-logo-light.svg" id="logo" height="44.8" width="250" alt="emfont 標誌" /></a>
-                <div class="header-container">
-                    <nav class="navigation" aria-label="主導覽">
-                        <ul>
-                            <li>
-                                <a href="/fonts" id="font-button">字型</a>
-                            </li>
-                            <li>
-                                <a href="/docs">文件</a>
-                            </li>
-                            <!-- <li>
-                                <a href="/login">登入</a>
+			gtag("config", "G-H69XEEC798");
+		</script>
+	</head>
+	<body>
+		<a href="#main-content" class="skip-link">{{t:site.skipMain}}</a>
+		<main id="main-content" class="{{page}}" role="main">
+			<input type="checkbox" name="lightmode" id="lightmode" />
+			<input type="checkbox" id="mobileToggle" />
+			<section>
+				<div id="section-about">
+					<p>{{t:site.aboutIntro1}}</p>
+					<p>{{t:site.aboutIntro2}}</p>
+					<p>
+						{{t:site.aboutThanksBefore}}
+						<a href="https://zeabur.com/" target="_blank" rel="noopener"
+							>Zeabur</a
+						>
+						{{t:site.aboutThanksMiddle}}
+						<a href="https://sponsor.ncse.tw/" target="_blank" rel="noopener"
+							>NCSE</a
+						>
+						{{t:site.aboutThanksAfter}}
+					</p>
+					<p>
+						{{t:site.aboutSupportBefore}}
+						<a href="https://github.com/emfont/emfont">GitHub</a>
+						{{t:site.aboutSupportStar}}
+						<a href="https://buymeacoffee.com/elvismao"
+							>{{t:site.aboutSupportAction}}</a
+						>
+						{{t:site.aboutSupportAfter}}
+						<a href="https://dc.elvismao.com">{{t:site.discordServer}}</a>
+						{{t:site.aboutSupportEnd}}
+					</p>
+					<div class="credits">
+						<div class="contributors">
+							<h2>{{t:site.contributors}}</h2>
+							<div>
+								<a href="https://elvismao.com" class="contributor">
+									<img
+										src="https://avatars.githubusercontent.com/u/61068739"
+										alt="Elvis Mao"
+										loading="lazy"
+									/>
+									Elvis Mao</a
+								>
+								<a href="https://github.com/iach526526" class="contributor">
+									<img
+										src="https://avatars.githubusercontent.com/u/98824625"
+										alt="Each Chan"
+										loading="lazy"
+									/>
+									Each Chan</a
+								>
+								<a href="https://pan93.com" class="contributor">
+									<img
+										src="https://avatars.githubusercontent.com/u/28441561"
+										alt="Yi-Jyun Pan"
+										loading="lazy"
+									/>
+									Yi-Jyun Pan
+								</a>
+							</div>
+						</div>
+						<div class="sponsors">
+							<h2>{{t:site.sponsors}}</h2>
+							<div>
+								<a
+									href="https://zeabur.com/?referralCode=Edit-Mr"
+									target="_blank"
+									rel="noopener"
+									aria-label="Zeabur"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="221"
+										height="42"
+										viewBox="0 0 221 42"
+										fill="none"
+										aria-hidden="true"
+										focusable="false"
+									>
+										<g clip-path="url(#clip0_6_236)">
+											<path
+												d="M19.7248 27.4207H50.7601V42.0001H-0.00140381V27.4207H14.2694L33.9188 16.8842H-0.00140381V2.30493H50.7601V16.8842L19.7248 27.4207Z"
+												fill="currentColor"
+											/>
+											<path
+												d="M33.7489 2.30493H-0.00012207V16.8842H33.7489V2.30493Z"
+												fill="#6300FF"
+											/>
+											<path
+												d="M50.7675 27.4208H19.8826V42.0001H50.7675V27.4208Z"
+												fill="#FF4400"
+											/>
+											<path
+												d="M66.0548 38.0177V32.339L76.3695 20.4883C78.0625 18.5521 79.3153 17.1775 80.1279 16.3644C79.2809 16.4165 78.1667 16.4515 76.7856 16.4692L67.0671 16.5209V10.4789H89.8227V15.6467L79.3 27.7839L75.5948 31.803C77.6164 31.6819 78.8692 31.6214 79.3532 31.6214H90.6269V38.0266L66.0548 38.0177Z"
+												fill="currentColor"
+											/>
+											<path
+												d="M108.277 29.2516L115.534 30.4712C114.756 32.9221 113.206 35.0551 111.116 36.5516C108.873 38.0096 106.234 38.7388 103.561 38.6394C98.7748 38.6394 95.2334 37.0748 92.9363 33.9455C91.0372 31.1549 90.0834 27.828 90.2153 24.4544C89.9865 20.5531 91.2673 16.7134 93.7922 13.7318C94.9312 12.4713 96.3291 11.4721 97.8902 10.8029C99.4513 10.1336 101.139 9.81005 102.836 9.85439C104.652 9.7668 106.464 10.0858 108.141 10.7879C109.818 11.4901 111.317 12.5579 112.53 13.9134C114.897 16.6194 116.028 20.764 115.924 26.3473H97.676C97.6122 28.1899 98.2409 29.9895 99.4379 31.3911C99.9682 31.9745 100.617 32.4373 101.342 32.7483C102.066 33.0593 102.848 33.2113 103.636 33.194C104.675 33.2277 105.692 32.8977 106.514 32.2608C107.398 31.464 108.014 30.4128 108.277 29.2516ZM108.692 21.8867C108.767 20.1353 108.184 18.4191 107.058 17.0761C106.58 16.549 105.996 16.1296 105.343 15.8458C104.691 15.5619 103.986 15.4201 103.275 15.4298C102.53 15.4117 101.792 15.5581 101.111 15.8585C100.43 16.1589 99.8232 16.6059 99.3346 17.1677C98.2413 18.4898 97.6944 20.1801 97.8059 21.8926L108.692 21.8867Z"
+												fill="currentColor"
+											/>
+											<path
+												d="M124.115 18.8789L117.507 17.6859C118.052 15.3272 119.411 13.236 121.344 11.7798C123.784 10.3378 126.603 9.66861 129.43 9.86024C131.904 9.72486 134.378 10.1185 136.687 11.0149C138.086 11.6149 139.26 12.6404 140.043 13.9458C140.845 16.0209 141.177 18.2485 141.015 20.4677L140.937 28.974C140.891 30.766 141.008 32.5585 141.287 34.3293C141.566 35.6099 142.006 36.8501 142.596 38.0207H135.39C135.2 37.5364 134.967 36.8188 134.691 35.8679C134.57 35.4368 134.483 35.1518 134.431 35.013C133.282 36.159 131.931 37.0821 130.447 37.7357C129.013 38.3444 127.47 38.6534 125.912 38.6438C123.463 38.7806 121.058 37.9521 119.213 36.336C118.413 35.5934 117.782 34.6889 117.359 33.6826C116.937 32.6764 116.734 31.5917 116.763 30.5007C116.738 29.0363 117.124 27.5943 117.877 26.3384C118.621 25.1165 119.707 24.1407 121.001 23.533C122.854 22.7287 124.8 22.1579 126.793 21.8335C129.202 21.456 131.57 20.857 133.869 20.0439V19.3174C133.924 18.773 133.86 18.2231 133.682 17.7058C133.503 17.1885 133.215 16.7161 132.836 16.3216C131.666 15.5982 130.29 15.2835 128.922 15.4268C127.857 15.3651 126.799 15.6321 125.89 16.1916C125.035 16.8821 124.414 17.821 124.115 18.8789ZM133.854 24.785C132.398 25.2305 130.92 25.6026 129.427 25.8998C128.047 26.1131 126.709 26.5415 125.462 27.1696C125.027 27.4423 124.668 27.8208 124.419 28.2698C124.17 28.7188 124.038 29.2237 124.037 29.7373C124.033 30.2332 124.132 30.7245 124.329 31.1798C124.525 31.6351 124.814 32.0445 125.177 32.3818C125.562 32.7528 126.017 33.0427 126.515 33.2342C127.014 33.4257 127.546 33.5149 128.08 33.4966C129.44 33.4815 130.758 33.0267 131.838 32.2002C132.67 31.6131 133.281 30.7643 133.575 29.789C133.817 28.6212 133.912 27.4279 133.86 26.2365L133.854 24.785Z"
+												fill="currentColor"
+											/>
+											<path
+												d="M144.695 38.0178V0H151.978V13.6919C152.939 12.4985 154.155 11.5346 155.536 10.8705C156.917 10.2064 158.429 9.85877 159.961 9.85292C161.529 9.81483 163.087 10.1214 164.525 10.751C165.962 11.3806 167.244 12.318 168.28 13.497C170.475 15.9264 171.572 19.4144 171.572 23.9612C171.572 28.6644 170.454 32.2864 168.217 34.827C167.226 36.0284 165.981 36.9939 164.571 37.6534C163.161 38.3129 161.622 38.6497 160.065 38.6394C158.442 38.6264 156.846 38.2212 155.413 37.4582C153.835 36.6293 152.48 35.4332 151.461 33.9706V38.0163L144.695 38.0178ZM151.926 23.6511C151.772 25.8453 152.239 28.0386 153.273 29.9796C153.779 30.8661 154.511 31.6022 155.394 32.1125C156.277 32.6228 157.281 32.889 158.301 32.8839C159.099 32.8812 159.885 32.6932 160.598 32.3345C161.311 31.9757 161.931 31.4561 162.409 30.8167C163.695 28.9067 164.293 26.6155 164.106 24.32C164.312 21.9235 163.71 19.527 162.395 17.5132C161.878 16.8483 161.213 16.3134 160.452 15.951C159.692 15.5885 158.858 15.4086 158.016 15.4254C157.183 15.4119 156.358 15.5882 155.604 15.941C154.849 16.2938 154.185 16.8138 153.661 17.4615C152.37 19.2541 151.755 21.4465 151.926 23.6496V23.6511Z"
+												fill="currentColor"
+											/>
+											<path
+												d="M192.359 38.0178V33.8953C191.355 35.3678 189.996 36.5632 188.408 37.3711C186.815 38.2081 185.042 38.6444 183.243 38.6423C181.507 38.6702 179.794 38.2501 178.267 37.4227C176.853 36.6694 175.73 35.4648 175.078 34.0002C174.339 32.0571 174.005 29.9835 174.094 27.9065V10.4834H181.376V23.1387C181.268 25.519 181.403 27.9041 181.778 30.2571C182.019 31.0934 182.535 31.8241 183.242 32.3317C184.035 32.8672 184.979 33.1351 185.936 33.0965C187.13 33.1119 188.299 32.7537 189.28 32.0718C190.207 31.4619 190.915 30.5716 191.301 29.5307C191.796 27.087 191.979 24.5905 191.846 22.1007V10.4834H199.128V38.0237L192.359 38.0178Z"
+												fill="currentColor"
+											/>
+											<path
+												d="M210.452 38.0178H203.17V10.4775H209.934V14.3932C210.712 12.9725 211.775 11.7278 213.057 10.7373C213.998 10.1429 215.092 9.83516 216.206 9.85144C217.899 9.86146 219.558 10.337 221 11.2261L218.745 17.5752C217.744 16.856 216.556 16.4417 215.325 16.3821C214.389 16.3546 213.474 16.6526 212.733 17.2252C211.876 18.0445 211.292 19.1088 211.062 20.2728C210.529 23.3193 210.325 26.4141 210.452 29.5041V38.0178Z"
+												fill="currentColor"
+											/>
+										</g>
+										<defs>
+											<clipPath id="clip0_6_236">
+												<rect width="221" height="42" fill="white" />
+											</clipPath>
+										</defs>
+									</svg>
+								</a>
+							</div>
+							<a href="https://sponsor.ncse.tw/" target="_blank" rel="noopener"
+								><img
+									src="/assets/img/NCSE.svg"
+									class="ncse"
+									alt="{{t:site.ncseLogoAlt}}"
+							/></a>
+						</div>
+						<a
+							href="https://www.buymeacoffee.com/elvismao"
+							class="buy-me-a-coffee"
+							target="_blank"
+							rel="noopener"
+							><img
+								src="https://img.buymeacoffee.com/button-api/?text=Buy me a Red Bull&emoji=&slug=elvismao&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff"
+								alt="{{t:site.supportEmfontAlt}}"
+						/></a>
+					</div>
+				</div>
+				<div id="section-home">
+					<div class="emfont-GenYoGothicTC-min">
+						<span>{{t:site.marquee1}}</span>
+					</div>
+					<div class="emfont-GenYoMinTC-min">
+						<span>{{t:site.marquee2}}</span>
+					</div>
+					<div class="emfont-jfOpenHuninn-min">
+						<span>{{t:site.marquee3}}</span>
+					</div>
+					<div class="emfont-MantouSans-min">
+						<span>{{t:site.marquee4}}</span>
+					</div>
+					<div class="emfont-ChenYuLuoYan-min">
+						<span>{{t:site.marquee5}}</span>
+					</div>
+					<div class="emfont-ChillBitmap16px-min">
+						<span>{{t:site.marquee6}}</span>
+					</div>
+				</div>
+				<div id="section-404">
+					<div>
+						<h1>404</h1>
+						<h2>{{t:site.notFoundHeading}}</h2>
+						<p>
+							Hold on, if love is the answer, you're
+							<a href="/">home</a>.<br />
+							- Daft Punk, Touch<br /><a href="/">{{t:site.homeLink}}</a>
+						</p>
+					</div>
+				</div>
+				<div id="section-login">
+					<div>
+						<h1>{{t:site.loginHeading}}</h1>
+						<p>{{t:site.loginDescription}}</p>
+						<a href="/login/github" class="btn"
+							><img
+								src="/assets/img/GitHub.svg"
+								alt=""
+								aria-hidden="true"
+							/>{{t:site.githubContinue}}</a
+						>
+					</div>
+				</div>
+				<div id="section-search"></div>
+				<div id="section-font">
+					<div class="section-font-container">
+						<div class="font-weights"></div>
+					</div>
+					<div>
+						<div class="first-time">
+							<h2>{{t:site.firstTimeHeading}}</h2>
+							<p>
+								{{t:site.firstTimeDescriptionBefore}}
+								<a href="/docs/setup">{{t:site.readDocs}}</a>。
+							</p>
+						</div>
+						<footer role="contentinfo">
+							<img
+								src="/assets/img/logo/emfont-icon-gray.svg"
+								alt="{{t:site.footerLogoAlt}}"
+								class="footer-logo"
+							/>
+							<p>{{t:site.footerDescription}}</p>
+							<a
+								href="https://zeabur.com/?referralCode=Edit-Mr"
+								class="footer-zeabur"
+								><img
+									src="/assets/img/Zeabur-deploy.svg"
+									alt="Deployed on Zeabur"
+							/></a>
+						</footer>
+					</div>
+				</div>
+			</section>
+			<header role="banner">
+				<label class="mobile-nav" for="mobileToggle"></label>
+				<a href="/">
+					<img
+						src="/assets/img/logo/emfont-logo-light.svg"
+						id="logo"
+						height="44.8"
+						width="250"
+						alt="{{t:site.footerLogoAlt}}"
+				/></a>
+				<div class="header-container">
+					<nav class="navigation" aria-label="{{t:site.mainNav}}">
+						<ul>
+							<li>
+								<a href="/fonts" id="font-button">{{t:site.navFonts}}</a>
+							</li>
+							<li>
+								<a href="/docs">{{t:site.navDocs}}</a>
+							</li>
+							<!-- <li>
+                                <a href="/login">{{t:site.navLogin}}</a>
                             </li> -->
-                            <li>
-                                <a href="/about">關於</a>
-                            </li>
-                        </ul>
-                    </nav>
-                    <h1>免費的中文 Webfont 服務</h1>
-                </div>
-                <div class="search-container fontPage-container" role="search" aria-label="字型搜尋">
-                    <a class="navigation" href="/"> <img src="/assets/img/larr.svg" alt="" />字型 </a>
-                    <label for="search-input" class="sr-only">搜尋字型</label>
-                    <input type="text" id="search-input" placeholder="搜尋字型" aria-label="搜尋字型" />
-                    <h2>即時測試</h2>
-                    <label for="search-test" class="sr-only">即時測試文字</label>
-                    <textarea id="search-test" rows="3" placeholder="我個人認為義大利麵就應該拌42號混泥土。" aria-label="即時測試文字"></textarea>
-                    <!--  <h2>支援語言</h2>
-                    <div class="language">
-                        <input type="checkbox" id="lang-sc" />
-                        <label for="lang-sc">簡</label>
-                        <input type="checkbox" id="lang-tc" />
-                        <label for="lang-tc">繁</label>
-                        <input type="checkbox" id="lang-jp" />
-                        <label for="lang-jp">日</label>
-                        <input type="checkbox" id="lang-ko" />
-                        <label for="lang-ko">韓</label>
-                        <input type="checkbox" id="lang-other" />
-                        <label for="lang-other">其他</label> 
-                    </div>-->
-                    <h2>分類</h2>
-                    <div class="category"></div>
-                    <h2>家族</h2>
-                    <label for="family" class="sr-only">選擇家族</label>
-                    <select id="family" aria-label="家族選單">
-                        <option value="all" selected>所有家族</option>
-                    </select>
-                    <h2>標籤</h2>
-                    <div class="tags"></div>
-                </div>
-                <div class="info-container fontPage-container"></div>
-                <div class="header-links header-links-social">
-                    <a href="https://dc.elvismao.com" target="_blank" rel="noopener"><img src="/assets/img/Discord.svg" alt="Discord" width="25.6" height="25.6" /></a>
-                    <a href="https://github.com/emfont/emfont" target="_blank" rel="noopener"><img src="/assets/img/GitHub.svg" alt="GitHub" width="25.6" height="25.6" /></a>
-                    <a href="https://t.me/emfont" target="_blank" rel="noopener"><img src="/assets/img/Telegram.svg" alt="Telegram" width="25.6" height="25.6" /></a>
-                    <label for="lightmode" class="lightmodeLabel"></label>
-                    <div class="header-links header-links-font">
-                        <a href="https://github.com/emfont/emfont/issues" target="_blank" rel="noopener"><img src="/assets/img/warning.svg" alt="意見回饋" /></a>
-                        <a href="https://github.com/emfont/emfont/" target="_blank" rel="noopener"><img src="/assets/img/GitHub.svg" alt="GitHub" /></a>
-                        <a href="/docs"><img src="/assets/img/question.svg" alt="說明文件" /></a>
-                        <label for="lightmode" class="lightmodeLabel"></label>
-                    </div>
-                </div>
-            </header>
-            <div id="bulletin" role="region" aria-live="polite" aria-atomic="true">
-                <button id="closeBulletin" aria-label="關閉公告"></button>
-                <p></p>
-            </div>
-        </main>
-        <script rel="preload" src="/emfont.js"></script>
-        <script src="/assets/script.js"></script>
-    </body>
+							<li>
+								<a href="/about">{{t:site.navAbout}}</a>
+							</li>
+						</ul>
+					</nav>
+					<h1>{{t:site.heroTitle}}</h1>
+				</div>
+				<div
+					class="search-container fontPage-container"
+					role="search"
+					aria-label="{{t:site.fontSearch}}"
+				>
+					<a class="navigation" href="/">
+						<img src="/assets/img/larr.svg" alt="" />{{t:site.navFonts}}
+					</a>
+					<label for="search-input" class="sr-only"
+						>{{t:site.searchFont}}</label
+					>
+					<input
+						type="text"
+						id="search-input"
+						placeholder="{{t:site.searchPlaceholder}}"
+						aria-label="{{t:site.searchFont}}"
+					/>
+					<h2>{{t:site.livePreview}}</h2>
+					<label for="search-test" class="sr-only"
+						>{{t:site.livePreviewText}}</label
+					>
+					<textarea
+						id="search-test"
+						rows="3"
+						placeholder="{{t:site.livePreviewPlaceholder}}"
+						aria-label="{{t:site.livePreviewText}}"
+					></textarea>
+					<h2>{{t:site.category}}</h2>
+					<div class="category"></div>
+					<h2>{{t:site.family}}</h2>
+					<label for="family" class="sr-only">{{t:site.selectFamily}}</label>
+					<select id="family" aria-label="{{t:site.selectFamily}}">
+						<option value="all" selected>{{t:site.allFamilies}}</option>
+					</select>
+					<h2>{{t:site.tags}}</h2>
+					<div class="tags"></div>
+				</div>
+				<div class="info-container fontPage-container"></div>
+				<div class="header-links header-links-social">
+					<a href="https://dc.elvismao.com" target="_blank" rel="noopener"
+						><img
+							src="/assets/img/Discord.svg"
+							alt="Discord"
+							width="25.6"
+							height="25.6"
+					/></a>
+					<a
+						href="https://github.com/emfont/emfont"
+						target="_blank"
+						rel="noopener"
+						><img
+							src="/assets/img/GitHub.svg"
+							alt="GitHub"
+							width="25.6"
+							height="25.6"
+					/></a>
+					<a href="https://t.me/emfont" target="_blank" rel="noopener"
+						><img
+							src="/assets/img/Telegram.svg"
+							alt="Telegram"
+							width="25.6"
+							height="25.6"
+					/></a>
+					<label for="lightmode" class="lightmodeLabel"></label>
+					<div class="header-links header-links-font">
+						<a
+							href="https://github.com/emfont/emfont/issues"
+							target="_blank"
+							rel="noopener"
+							><img src="/assets/img/warning.svg" alt="{{t:site.feedbackAlt}}"
+						/></a>
+						<a
+							href="https://github.com/emfont/emfont/"
+							target="_blank"
+							rel="noopener"
+							><img src="/assets/img/GitHub.svg" alt="GitHub"
+						/></a>
+						<a href="/docs"
+							><img src="/assets/img/question.svg" alt="{{t:site.docsAlt}}"
+						/></a>
+						<label for="lightmode" class="lightmodeLabel"></label>
+					</div>
+				</div>
+			</header>
+			<div id="bulletin" role="region" aria-live="polite" aria-atomic="true">
+				<button
+					id="closeBulletin"
+					aria-label="{{t:site.closeBulletin}}"
+				></button>
+				<p></p>
+			</div>
+		</main>
+		<script rel="preload" src="/emfont.js"></script>
+		<script src="/assets/i18n.js"></script>
+		<script src="/assets/script.js"></script>
+	</body>
 </html>

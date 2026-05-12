@@ -15,8 +15,10 @@ import { logger } from "../utils/logger.js";
 import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
 import { get_bullet, get_generated_static_floders } from "../bootstrap/init.js";
 import { regenerateAllStaticFont } from "../bootstrap/fontNoMin.js";
+import { createTranslator } from "../i18n/index.js";
 
 const redis = new Redis(process.env.REDIS_URL);
+const t = createTranslator();
 const uploadJobs = new Map();
 const scrypt = promisify(crypto.scrypt);
 const adminSessionCookie = "emfont_admin_session";
@@ -804,7 +806,7 @@ async function createDemoSentence(body) {
 
 async function generateStaticForUploadedFont(job, font) {
 	job.status = "running";
-	job.message = "正在分析字型支援的語言";
+	job.message = t("admin.server.analyzingLanguages");
 	await analyseFontsInBatches([
 		{
 			fontName: font.id,
@@ -812,7 +814,7 @@ async function generateStaticForUploadedFont(job, font) {
 		},
 	]);
 
-	job.message = "正在切割靜態字型包";
+	job.message = t("admin.server.generatingStatic");
 	await removeStaticFontPackages(font.id, font.weight);
 	const ok = await regenerateAllStaticFont(
 		job.state,
@@ -823,7 +825,7 @@ async function generateStaticForUploadedFont(job, font) {
 
 	const staticFontVersion = await get_bullet();
 	job.state.static_font_version = staticFontVersion;
-	job.message = "正在同步靜態字型到 MinIO";
+	job.message = t("admin.server.syncingMinio");
 	await syncGeneratedStaticFontToMinio({
 		id: font.id,
 		weight: font.weight,
@@ -831,7 +833,7 @@ async function generateStaticForUploadedFont(job, font) {
 	});
 	await redis.del(`fontinfo:${font.id}`);
 	job.status = "completed";
-	job.message = "字型已新增，靜態字型也切好了";
+	job.message = t("admin.server.fontCreated");
 	job.completedAt = new Date().toISOString();
 }
 
@@ -868,7 +870,7 @@ function queueStaticGenerationJob({ state, font, queuedMessage }) {
 	generateStaticForUploadedFont(job, font).catch(error => {
 		logger.error(`Admin font upload job failed: ${error.message}`);
 		job.status = "failed";
-		job.message = "靜態字型切割失敗";
+		job.message = t("admin.server.staticFailed");
 		job.error = error.message;
 		job.completedAt = new Date().toISOString();
 	});
@@ -1046,7 +1048,7 @@ export default async function registerAdmin(app, state) {
 							weight: replacementFont.weight,
 							extension: replacementFont.extension,
 						},
-						queuedMessage: "已更新原始字型，等待重新切割靜態字型",
+						queuedMessage: t("admin.server.updatedQueued"),
 					})
 				: null;
 			res.send({
@@ -1123,7 +1125,7 @@ export default async function registerAdmin(app, state) {
 			const jobId = queueStaticGenerationJob({
 				state,
 				font,
-				queuedMessage: "已儲存原始字型，等待切割靜態字型",
+				queuedMessage: t("admin.server.uploadedQueued"),
 			});
 
 			res.status(202).send({

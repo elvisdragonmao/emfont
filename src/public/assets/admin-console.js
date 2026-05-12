@@ -3,6 +3,8 @@ const createStatusEl = document.getElementById("admin-create-status");
 const listStatusEl = document.getElementById("admin-list-status");
 const userListEl = document.getElementById("admin-user-list");
 const logoutButton = document.getElementById("admin-logout");
+const i18n = (key, values) =>
+	typeof window.t === "function" ? window.t(key, values) : key;
 
 let adminUsers = [];
 
@@ -29,11 +31,11 @@ function redirectIfUnauthorized(res) {
 }
 
 function roleLabel(role) {
-	return role === "super_admin" ? "Super admin" : "一般管理員";
+	return role === "super_admin" ? "Super admin" : i18n("admin.js.roleRegular");
 }
 
 function formatDate(value) {
-	if (!value) return "尚未登入";
+	if (!value) return i18n("admin.js.neverLoggedIn");
 	return new Intl.DateTimeFormat("zh-Hant", {
 		dateStyle: "medium",
 		timeStyle: "short",
@@ -60,10 +62,10 @@ function renderAdminUsers() {
 			user => `<article class="admin-user-item">
 				<div>
 					<strong>${escapeHtml(user.userId)}</strong>
-					<span>${escapeHtml(roleLabel(user.role))} | 最後登入：${escapeHtml(formatDate(user.lastLogin))}</span>
+					<span>${escapeHtml(roleLabel(user.role))} | ${escapeHtml(i18n("admin.js.lastLogin"))}：${escapeHtml(formatDate(user.lastLogin))}</span>
 				</div>
-				<select data-user-id="${escapeHtml(user.userId)}" aria-label="調整 ${escapeHtml(user.userId)} 的角色">
-					<option value="admin" ${user.role === "admin" ? "selected" : ""}>一般管理員</option>
+				<select data-user-id="${escapeHtml(user.userId)}" aria-label="${escapeHtml(i18n("admin.js.adjustRole", { userId: user.userId }))}">
+					<option value="admin" ${user.role === "admin" ? "selected" : ""}>${escapeHtml(i18n("admin.js.roleRegular"))}</option>
 					<option value="super_admin" ${user.role === "super_admin" ? "selected" : ""}>Super admin</option>
 				</select>
 			</article>`,
@@ -71,26 +73,26 @@ function renderAdminUsers() {
 		.join("");
 
 	if (!userListEl.innerHTML) {
-		userListEl.innerHTML = `<p class="empty-state">尚未建立管理員。</p>`;
+		userListEl.innerHTML = `<p class="empty-state">${escapeHtml(i18n("admin.js.emptyAdminList"))}</p>`;
 	}
 }
 
 async function loadAdminUsers() {
-	setListStatus("正在載入");
+	setListStatus(i18n("admin.generic.loading"));
 	const res = await fetch("/api/admin/users", { headers: headers() });
 	if (redirectIfUnauthorized(res)) return;
 	const data = await res.json();
 	if (!res.ok) throw new Error(data.message || "Failed to load admins");
 	adminUsers = data;
 	renderAdminUsers();
-	setListStatus("已載入", "completed");
+	setListStatus(i18n("admin.generic.loaded"), "completed");
 }
 
 createForm.addEventListener("submit", async event => {
 	event.preventDefault();
 	const submit = createForm.querySelector("button[type=submit]");
 	submit.disabled = true;
-	setCreateStatus("正在建立");
+	setCreateStatus(i18n("admin.generic.creating"));
 	try {
 		const payload = Object.fromEntries(new FormData(createForm).entries());
 		const res = await fetch("/api/admin/users", {
@@ -102,7 +104,7 @@ createForm.addEventListener("submit", async event => {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Create failed");
 		createForm.reset();
-		setCreateStatus("已建立", "completed");
+		setCreateStatus(i18n("admin.generic.created"), "completed");
 		await loadAdminUsers();
 	} catch (error) {
 		setCreateStatus(error.message, "failed");
@@ -117,7 +119,7 @@ userListEl.addEventListener("change", async event => {
 	const userId = select.dataset.userId;
 	const role = select.value;
 	select.disabled = true;
-	setListStatus("正在更新角色");
+	setListStatus(i18n("admin.js.updatingRole"));
 	try {
 		const res = await fetch(
 			`/api/admin/users/${encodeURIComponent(userId)}/role`,
@@ -134,7 +136,7 @@ userListEl.addEventListener("change", async event => {
 			user.userId === data.user.userId ? data.user : user,
 		);
 		renderAdminUsers();
-		setListStatus("角色已更新", "completed");
+		setListStatus(i18n("admin.js.roleUpdated"), "completed");
 	} catch (error) {
 		setListStatus(error.message, "failed");
 		await loadAdminUsers();
@@ -148,6 +150,9 @@ logoutButton.addEventListener("click", async () => {
 	window.location.href = "/admin/login";
 });
 
-loadAdminUsers().catch(error => {
-	setListStatus(error.message, "failed");
+Promise.resolve(window.i18nReady).then(() => {
+	document.title = i18n("admin.consoleTitle");
+	loadAdminUsers().catch(error => {
+		setListStatus(error.message, "failed");
+	});
 });

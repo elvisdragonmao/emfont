@@ -4,8 +4,10 @@ import { writeFile } from "fs/promises";
 import { join } from "path";
 import { Redis } from "ioredis";
 import { logger } from "../utils/logger.js";
+import { createTranslator } from "../i18n/index.js";
 
 const redis = new Redis(process.env.REDIS_URL);
+const t = createTranslator();
 const generateSitemap = async state => {
 	const { rows } = await db.query(`SELECT id FROM font_family`);
 	const content = rows
@@ -46,12 +48,12 @@ const registerApi = async (app, state) => {
 					.send({ status: "failed", message: "Font not found" });
 			}
 			logger.debug(
-				`/g/:font route 收到字型請求: ${req.params.font} with body: ${JSON.stringify(req.body)}`,
+				`/g/:font received request for ${req.params.font} with body: ${JSON.stringify(req.body)}`,
 			);
 			const response = await genFont(req, res, state);
 			res.status(response.code).send(response);
 		} catch (error) {
-			logger.error(`字體請求錯誤: ${error.message}`);
+			logger.error(`Font request failed: ${error.message}`);
 			res.status(500).send({ status: "failed", message: error.message });
 		}
 	});
@@ -122,7 +124,7 @@ const registerApi = async (app, state) => {
 				} else res.status(response.code).send(response);
 			}
 		} catch (error) {
-			console.error("字體請求錯誤: ", error.stack);
+			console.error("Font request failed: ", error.stack);
 			res.status(500).send({ status: "failed", message: error.message });
 		}
 	});
@@ -136,11 +138,11 @@ const registerApi = async (app, state) => {
 			const select = await db.query("SELECT * FROM font_requests");
 			return res.send({
 				status: "success",
-				message: "資料庫路由測試成功",
+				message: t("api.databaseRouteOk"),
 				data: select.rows,
 			});
 		} catch (err) {
-			console.error("資料庫路由測試失敗", err.stack);
+			console.error("Database route test failed", err.stack);
 			res.status(500).send("Database query failed");
 		}
 	});
@@ -209,11 +211,10 @@ const registerApi = async (app, state) => {
 
 			return res.send(fonts);
 		} catch (err) {
-			console.error("讀取字體列表失敗", err.stack);
+			console.error("Failed to read font list", err.stack);
 			res.status(500).send("Database query failed");
 		}
 	});
-	//取得展示用句子和他的 ID
 	app.get("/lorem", async (req, res) => {
 		try {
 			const id_to_content_result = await db.query(`
@@ -275,7 +276,7 @@ const registerApi = async (app, state) => {
 			await redis.set(redisKey, JSON.stringify(response), "EX", 3600);
 			res.send(response);
 		} catch (err) {
-			console.error("讀取字體資訊失敗", err.stack);
+			console.error("Failed to read font info", err.stack);
 			res.status(500).send("Database query failed");
 		}
 	});

@@ -3,6 +3,9 @@ emfont.init({
 	// colorTest: true
 });
 
+const i18n = (key, values) =>
+	typeof window.t === "function" ? window.t(key, values) : key;
+
 const marqueeSet = () => {
 	const marquees = document.querySelectorAll("#section-home > div");
 	for (const marquee of marquees) {
@@ -130,7 +133,6 @@ const updateFontDisplay = async (e, animationOff = false) => {
 	});
 	const min = searchText.value ? "" : "-min";
 	let containerHTML = "";
-	// 打亂前端排序字型顯示排序
 	if (filtered.length == fontList.length) {
 		filtered.sort(() => Math.random() - 0.5);
 	}
@@ -146,9 +148,9 @@ const updateFontDisplay = async (e, animationOff = false) => {
 			} else parts.push(`<span>${weight}</span>`);
 		}
 		let weightStr = parts.join(" ⋅ ");
-		if (!weightStr) weightStr = "暫時無法使用";
+		if (!weightStr) weightStr = i18n("publicJs.unavailable");
 		const default_text =
-			demo_content[font.sid] || "我個人認為義大利麵就應該拌 42 號混泥土";
+			demo_content[font.sid] || i18n("publicJs.defaultPreview");
 		const previewText = searchText.value || default_text;
 		containerHTML += `<a class="font-item" href="/fonts/${encodeURIComponent(font.id)}" ${animationOff ? "style=animation:none" : ""}>
                     <div class="font-title">
@@ -164,7 +166,8 @@ const updateFontDisplay = async (e, animationOff = false) => {
 	container.innerHTML = containerHTML;
 	addClassToVisibleElements();
 	if (container.innerHTML == "") {
-		container.innerHTML = `<div class="no-result"><div class="╯°□°╯">(╯°□°)╯︵ ┻┻</div>你要求太多了吧！<br>沒找到想要的字體嗎？歡迎到 <a href=https://github.com/emfont/emfont/issues/new/choose>GitHub</a> 推薦給我們！</div>`;
+		const githubLink = `<a href=https://github.com/emfont/emfont/issues/new/choose>GitHub</a>`;
+		container.innerHTML = `<div class="no-result"><div class="╯°□°╯">(╯°□°)╯︵ ┻┻</div>${i18n("publicJs.noResults")}<br>${i18n("publicJs.recommendFont", { githubLink })}</div>`;
 	} else {
 		setTimeout(() => {
 			addClassToVisibleElements();
@@ -231,7 +234,7 @@ const initSearch = async () => {
 	document
 		.querySelectorAll(".search-container input, .search-container select")
 		.forEach(input => {
-			input.addEventListener("change", () => updateFontDisplay()); // 要用箭頭不然 e 會進去壞掉
+			input.addEventListener("change", () => updateFontDisplay());
 		});
 
 	let debounceTimer;
@@ -242,9 +245,6 @@ const initSearch = async () => {
 		}, 400);
 	});
 };
-initSearch();
-// 綁定 input 事件
-
 function isElementInViewport(el) {
 	const rect = el.getBoundingClientRect();
 	return rect.bottom < -200 || rect.top > window.innerHeight + 200;
@@ -292,15 +292,15 @@ const loadFontInfo = async fontId => {
 	weightContainer.innerHTML = `<div class="font-item loading">
             <div class="font-title"><div class="weight">Regular 400</div></div>
             <div class="font-preview"></div></div>`;
-	container.innerHTML = `<div class=loading><a class="navigation" href="/fonts"> <img src="/assets/img/larr.svg" alt="">字型</a>
-            <h1>字字字字字</h1><p>字字字字字</p>
+	container.innerHTML = `<div class=loading><a class="navigation" href="/fonts"> <img src="/assets/img/larr.svg" alt="">${i18n("publicJs.fontBack")}</a>
+            <h1>Loading</h1><p>Loading</p>
             <div class="font-tags"><a class="tag">AA</a></div>
             <div class="font-actions">
                 <div class="font-class">A</div>
                 <img src="" alt="GitHub">
                 <img src="" alt="GitHub">
             </div>
-            <p class="font-description">字字字字字字字字字字字字字字字字字字字字字字字字字字字字</p></div>`;
+            <p class="font-description">Loading</p></div>`;
 	const res = await fetch(`/info/${fontId}`);
 	const font = await res.json();
 	if (font == { status: "failed", message: "Font not found" }) {
@@ -314,7 +314,7 @@ const loadFontInfo = async fontId => {
 	font.download =
 		sourceUrl +
 		(sourceUrl.startsWith("https://github.com/") ? "/releases/latest" : "");
-	container.innerHTML = `<a class="navigation" href="/fonts"> <img src="/assets/img/larr.svg" alt="">字型 </a>
+	container.innerHTML = `<a class="navigation" href="/fonts"> <img src="/assets/img/larr.svg" alt="">${i18n("publicJs.fontBack")} </a>
     <h1>${font.name.original}</h1>
     <p>${font.name.zh}</p>
     <div class="font-tags">
@@ -334,33 +334,33 @@ const loadFontInfo = async fontId => {
     </div>
     <p class="font-description">${font.description}</p>
     <p class="font-info">
-        字型家族：<a href="/fonts?family=${font.family}">${font.family}</a><br>
-        作者：<a href="/fonts?q=${font.author}">${font.author}</a><br>
-        版本：${font.version}<br>
-        版權：${font.license}
+        ${i18n("publicJs.fontFamily")}：<a href="/fonts?family=${font.family}">${font.family}</a><br>
+        ${i18n("publicJs.author")}：<a href="/fonts?q=${font.author}">${font.author}</a><br>
+        ${i18n("publicJs.version")}：${font.version}<br>
+        ${i18n("publicJs.license")}：${font.license}
     </p>
     <div class="font-coverage" style="display: none;">
-        <label for="coverage-tc">繁體字 (90%)</label>
+        <label for="coverage-tc">${i18n("publicJs.traditionalCoverage")}</label>
         <div class="coverage-bar" id="coverage-tc" style="--percent: 90%"></div>
-        <label for="coverage-sc">簡體字 (40%)</label>
+        <label for="coverage-sc">${i18n("publicJs.simplifiedCoverage")}</label>
         <div class="coverage-bar" id="coverage-sc" style="--percent: 40%"></div>
-        <label for="coverage-en">英文 (100%)</label>
+        <label for="coverage-en">${i18n("publicJs.englishCoverage")}</label>
         <div class="coverage-bar" id="coverage-en" style="--percent: 100%"></div>
-        <label for="coverage-jp">日文 (20%)</label>
+        <label for="coverage-jp">${i18n("publicJs.japaneseCoverage")}</label>
         <div class="coverage-bar" id="coverage-jp" style="--percent: 20%"></div>
-        <label for="coverage-ko">韓文 (30%)</label>
+        <label for="coverage-ko">${i18n("publicJs.koreanCoverage")}</label>
         <div class="coverage-bar" id="coverage-ko" style="--percent: 30%"></div>
     </div>`;
 	const min = searchText.value ? "" : "-min";
 	await demoContentPromise;
-	const default_text = demo_content[font.sid] || "字型展示文字";
+	const default_text = demo_content[font.sid] || i18n("publicJs.fontDemoText");
 	const inputText = searchText.value || default_text;
 	weightContainer.innerHTML = "";
 	font.weight.map(weight => {
 		const weightDiv = document.createElement("div");
 		weightDiv.innerHTML = `<div class="font-item">
             <div class="font-title">
-                <div class="weight">${weightChart[weight] ? weightChart[weight][1] : "未知字重"} ${weight}</div>
+                <div class="weight">${weightChart[weight] ? weightChart[weight][1] : i18n("publicJs.unknownWeight")} ${weight}</div>
                 <div>
                 <a href="https://font.emtech.cc/file/original-fonts/${fontId}/${weight}.${font.format}">
                     <img src="/assets/img/download.svg" alt="original-Download-link-from-emfont">
@@ -392,7 +392,7 @@ const loadFontInfo = async fontId => {
 			});
 	});
 	if (!weightContainer.innerHTML)
-		weightContainer.innerHTML = `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>這個字體暫時無法使用。</div>`;
+		weightContainer.innerHTML = `<div class="no-result"><div class="╯°□°╯">¯\_(ツ)_/¯</div>${i18n("publicJs.fontUnavailable")}</div>`;
 
 	container.querySelector(".font-class").onclick = e => {
 		navigator.clipboard.writeText(e.currentTarget.innerText).then(() => {
@@ -430,7 +430,7 @@ const updateMain = (path = window.location.pathname) => {
 				document.querySelector("main").classList = "home";
 				marqueeSet();
 			}, delay);
-			document.title = "emfont - 免費中文字體 Webfont 服務";
+			document.title = i18n("meta.homeTitle");
 			break;
 		case "fonts":
 			if (urlParts.length > 2 && urlParts[2].length > 0) {
@@ -443,7 +443,7 @@ const updateMain = (path = window.location.pathname) => {
 			} else {
 				document.querySelector("main").classList = "fonts";
 				addClassToVisibleElements();
-				document.title = "字體 - emfont";
+				document.title = i18n("meta.fontsTitle");
 			}
 			if (fontList) {
 				paramFromUrl();
@@ -452,11 +452,11 @@ const updateMain = (path = window.location.pathname) => {
 			break;
 		default:
 			if (mainClass == "notFound") {
-				document.title = "找不到頁面 - emfont";
+				document.title = i18n("meta.pageNotFoundTitle");
 			} else if (mainClass == "login") {
-				document.title = "登入 - emfont";
+				document.title = i18n("meta.loginTitle");
 			} else if (mainClass == "about") {
-				document.title = "關於 - emfont";
+				document.title = i18n("meta.aboutTitle");
 			} else {
 				document.title = `${mainClass} - emfont`;
 			}
@@ -464,7 +464,12 @@ const updateMain = (path = window.location.pathname) => {
 			break;
 	}
 };
-updateMain();
+const startApp = () => {
+	initSearch();
+	updateMain();
+};
+
+(window.i18nReady || Promise.resolve()).then(startApp);
 
 // listen when press back button and forward button
 window.addEventListener("popstate", () => {
