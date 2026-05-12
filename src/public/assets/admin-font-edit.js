@@ -13,6 +13,7 @@ const deleteButton = document.getElementById("font-delete-button");
 let fontList = [];
 let demoSentences = [];
 let selectedFontId = "";
+let currentAdmin = null;
 
 function setStatus(message, className = "") {
 	statusEl.textContent = message;
@@ -26,6 +27,18 @@ function setSentenceStatus(message, className = "") {
 
 function headers() {
 	return { "content-type": "application/json" };
+}
+
+function isSuperAdmin() {
+	return currentAdmin?.role === "super_admin";
+}
+
+function applyRoleVisibility() {
+	document.querySelectorAll("[data-super-admin-only]").forEach(element => {
+		element.hidden = !isSuperAdmin();
+	});
+	deleteButton.hidden = !isSuperAdmin();
+	if (!isSuperAdmin()) deleteButton.disabled = true;
 }
 
 function redirectIfUnauthorized(res) {
@@ -110,7 +123,7 @@ function fillForm(font) {
 	renderDemoSentences(font.demoContentId || 1);
 	previewLink.href = font.fontUrl;
 	editForm.hidden = false;
-	deleteButton.disabled = false;
+	deleteButton.disabled = !isSuperAdmin();
 	renderFontList();
 }
 
@@ -175,6 +188,15 @@ async function loadFontList() {
 	fontList.sort((a, b) => a.id.localeCompare(b.id));
 	renderCategoryFilter();
 	renderFontList();
+}
+
+async function loadAdminConfig() {
+	const res = await fetch("/api/admin/config", { headers: headers() });
+	if (redirectIfUnauthorized(res)) return;
+	const data = await res.json();
+	if (!res.ok) throw new Error(data.message || "Failed to load admin config");
+	currentAdmin = data.user;
+	applyRoleVisibility();
 }
 
 async function refreshAfterDelete(fontId) {
@@ -300,7 +322,7 @@ deleteButton.addEventListener("click", async () => {
 		await refreshAfterDelete(fontId);
 	} catch (error) {
 		setStatus(error.message, "failed");
-		deleteButton.disabled = false;
+		deleteButton.disabled = !isSuperAdmin();
 	}
 });
 
@@ -333,9 +355,11 @@ sentenceCreateForm.addEventListener("submit", async event => {
 	}
 });
 
-Promise.all([loadFontList(), loadDemoSentences()]).catch(error => {
-	setStatus(error.message, "failed");
-});
+Promise.all([loadAdminConfig(), loadFontList(), loadDemoSentences()]).catch(
+	error => {
+		setStatus(error.message, "failed");
+	},
+);
 
 logoutButton.addEventListener("click", async () => {
 	await fetch("/api/admin/logout", { method: "POST" });

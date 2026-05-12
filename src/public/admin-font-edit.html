@@ -18,7 +18,8 @@
 					<h1>編輯字型資訊</h1>
 				</div>
 				<nav class="admin-nav" aria-label="管理頁面">
-					<a href="/admin/fonts">新增字型</a>
+					<a href="/admin/fonts" data-super-admin-only hidden>新增字型</a>
+					<a href="/admin/console" data-super-admin-only hidden>管理操控台</a>
 					<button id="admin-logout" class="link-button" type="button">
 						登出
 					</button>
@@ -53,6 +54,7 @@
 							class="danger-button"
 							type="button"
 							disabled
+							hidden
 						>
 							刪除字型
 						</button>
@@ -120,7 +122,7 @@
 									<option value="otf">otf</option>
 								</select>
 							</label>
-							<label>
+							<label data-super-admin-only hidden>
 								<span>重新上傳字重</span>
 								<input
 									name="replacementWeight"
@@ -130,7 +132,7 @@
 									placeholder="400"
 								/>
 							</label>
-							<label class="wide file-drop">
+							<label class="wide file-drop" data-super-admin-only hidden>
 								<span>重新上傳原始字型檔</span>
 								<input
 									name="fontFile"

@@ -21,6 +21,7 @@ const uploadJobs = new Map();
 const scrypt = promisify(crypto.scrypt);
 const adminSessionCookie = "emfont_admin_session";
 const adminSessionMaxAgeSeconds = 60 * 60 * 24 * 3;
+const adminRoles = new Set(["admin", "super_admin"]);
 
 const originalFontsDir = path.resolve("src/_data/original-fonts");
 const generatedFontsDir = path.resolve("src/_data/_generated");
@@ -98,6 +99,53 @@ function requireAdminApi(req, res) {
 	return null;
 }
 
+async function getAdminUser(userId) {
+	if (!userId) return null;
+	const { rows } = await db.query(
+		`
+		SELECT user_id, role, last_login, created_at, updated_at
+		FROM admin_users
+		WHERE user_id = $1
+		`,
+		[userId],
+	);
+	return rows[0] || null;
+}
+
+function serializeAdminUser(user) {
+	return {
+		userId: user.user_id,
+		role: user.role,
+		lastLogin: user.last_login,
+		createdAt: user.created_at,
+		updatedAt: user.updated_at,
+	};
+}
+
+async function requireSuperAdminApi(req, res) {
+	const userId = requireAdminApi(req, res);
+	if (!userId) return null;
+	const user = await getAdminUser(userId);
+	if (user?.role === "super_admin") return user;
+	res.status(403).send({
+		status: "failed",
+		message: "Super admin permission required",
+	});
+	return null;
+}
+
+async function requireSuperAdminPage(req, res) {
+	const userId = readSessionUser(req);
+	if (!userId) {
+		res.redirect("/admin/login");
+		return null;
+	}
+	const user = await getAdminUser(userId);
+	if (user?.role === "super_admin") return user;
+	res.status(403).send("Super admin permission required");
+	return null;
+}
+
 async function hashPassword(password) {
 	const salt = crypto.randomBytes(16).toString("base64url");
 	const derived = await scrypt(password, salt, 64);
@@ -123,10 +171,10 @@ async function initBootstrapAdminUser() {
 	const passwordHash = await hashPassword(password);
 	await db.query(
 		`
-		INSERT INTO admin_users (user_id, password_hash)
-		VALUES ($1, $2)
+		INSERT INTO admin_users (user_id, password_hash, role)
+		VALUES ($1, $2, 'super_admin')
 		ON CONFLICT (user_id)
-		DO NOTHING
+		DO UPDATE SET role = 'super_admin', updated_at = CURRENT_TIMESTAMP
 		`,
 		[userId, passwordHash],
 	);
@@ -135,14 +183,14 @@ async function initBootstrapAdminUser() {
 async function loginAdminUser(userId, password) {
 	const { rows } = await db.query(
 		`
-		SELECT user_id, password_hash
+		SELECT user_id, password_hash, role, last_login, created_at, updated_at
 		FROM admin_users
 		WHERE user_id = $1
 		`,
 		[userId],
 	);
-	if (rows.length === 0) return false;
-	if (!(await verifyPassword(password, rows[0].password_hash))) return false;
+	if (rows.length === 0) return null;
+	if (!(await verifyPassword(password, rows[0].password_hash))) return null;
 	await db.query(
 		`
 		UPDATE admin_users
@@ -151,7 +199,7 @@ async function loginAdminUser(userId, password) {
 		`,
 		[userId],
 	);
-	return true;
+	return serializeAdminUser(rows[0]);
 }
 
 async function verifyAdminUserPassword(userId, password) {
@@ -166,6 +214,73 @@ async function verifyAdminUserPassword(userId, password) {
 	);
 	if (rows.length === 0) return false;
 	return verifyPassword(password, rows[0].password_hash);
+}
+
+function normalizeAdminRole(role) {
+	const normalizedRole = String(role || "admin").trim();
+	if (!adminRoles.has(normalizedRole)) throw new Error("Invalid admin role");
+	return normalizedRole;
+}
+
+async function listAdminUsers() {
+	const { rows } = await db.query(
+		`
+		SELECT user_id, role, last_login, created_at, updated_at
+		FROM admin_users
+		ORDER BY role DESC, user_id
+		`,
+	);
+	return rows.map(serializeAdminUser);
+}
+
+async function createAdminUser(body) {
+	const userId = body?.userId?.trim();
+	const password = body?.password || "";
+	const role = normalizeAdminRole(body?.role);
+	if (!userId) throw new Error("Admin user ID is required");
+	if (!password || password.length < 8) {
+		throw new Error("Admin password must be at least 8 characters");
+	}
+	const passwordHash = await hashPassword(password);
+	const { rows } = await db.query(
+		`
+		INSERT INTO admin_users (user_id, password_hash, role)
+		VALUES ($1, $2, $3)
+		RETURNING user_id, role, last_login, created_at, updated_at
+		`,
+		[userId, passwordHash, role],
+	);
+	return serializeAdminUser(rows[0]);
+}
+
+async function updateAdminUserRole(userId, role) {
+	const normalizedRole = normalizeAdminRole(role);
+	if (normalizedRole === "admin") {
+		const { rows } = await db.query(
+			`
+			SELECT role, (
+				SELECT COUNT(*)::int FROM admin_users WHERE role = 'super_admin'
+			) AS super_admin_count
+			FROM admin_users
+			WHERE user_id = $1
+			`,
+			[userId],
+		);
+		if (rows[0]?.role === "super_admin" && rows[0].super_admin_count <= 1) {
+			throw new Error("At least one super admin is required");
+		}
+	}
+	const { rows } = await db.query(
+		`
+		UPDATE admin_users
+		SET role = $2, updated_at = CURRENT_TIMESTAMP
+		WHERE user_id = $1
+		RETURNING user_id, role, last_login, created_at, updated_at
+		`,
+		[userId, normalizedRole],
+	);
+	if (rows.length === 0) throw new Error("Admin user not found");
+	return serializeAdminUser(rows[0]);
 }
 
 async function syncOriginalFontToMinio({ id, weight, extension, buffer }) {
@@ -776,13 +891,14 @@ export default async function registerAdmin(app, state) {
 				.status(400)
 				.send({ status: "failed", message: "Missing credentials" });
 		}
-		if (!(await loginAdminUser(userId, password))) {
+		const user = await loginAdminUser(userId, password);
+		if (!user) {
 			return res
 				.status(401)
 				.send({ status: "failed", message: "Invalid credentials" });
 		}
 		setAdminSession(res, userId);
-		res.send({ status: "success", message: "Logged in" });
+		res.send({ status: "success", message: "Logged in", user });
 	});
 
 	app.post("/api/admin/logout", async (_req, res) => {
@@ -791,7 +907,7 @@ export default async function registerAdmin(app, state) {
 	});
 
 	app.get("/admin/fonts", async (req, res) => {
-		if (!requireAdminPage(req, res)) return;
+		if (!(await requireSuperAdminPage(req, res))) return;
 		return res.sendFile("admin-font-upload.html");
 	});
 
@@ -800,9 +916,56 @@ export default async function registerAdmin(app, state) {
 		return res.sendFile("admin-font-edit.html");
 	});
 
+	app.get("/admin/console", async (req, res) => {
+		if (!(await requireSuperAdminPage(req, res))) return;
+		return res.sendFile("admin-console.html");
+	});
+
 	app.get("/api/admin/config", async (req, res) => {
-		if (!requireAdminApi(req, res)) return;
-		res.send({ baseURL: state.baseURL });
+		const userId = requireAdminApi(req, res);
+		if (!userId) return;
+		const user = await getAdminUser(userId);
+		if (!user) {
+			clearAdminSession(res);
+			return res
+				.status(401)
+				.send({ status: "failed", message: "Login required" });
+		}
+		res.send({ baseURL: state.baseURL, user: serializeAdminUser(user) });
+	});
+
+	app.get("/api/admin/users", async (req, res) => {
+		if (!(await requireSuperAdminApi(req, res))) return;
+		res.send(await listAdminUsers());
+	});
+
+	app.post("/api/admin/users", async (req, res) => {
+		if (!(await requireSuperAdminApi(req, res))) return;
+		try {
+			const user = await createAdminUser(req.body);
+			res.status(201).send({
+				status: "success",
+				message: "Admin user created",
+				user,
+			});
+		} catch (error) {
+			const statusCode = error.code === "23505" ? 409 : 400;
+			res.status(statusCode).send({ status: "failed", message: error.message });
+		}
+	});
+
+	app.patch("/api/admin/users/:userId/role", async (req, res) => {
+		if (!(await requireSuperAdminApi(req, res))) return;
+		try {
+			const user = await updateAdminUserRole(req.params.userId, req.body?.role);
+			res.send({
+				status: "success",
+				message: "Admin role updated",
+				user,
+			});
+		} catch (error) {
+			res.status(400).send({ status: "failed", message: error.message });
+		}
 	});
 
 	app.get("/api/admin/demo-sentences", async (req, res) => {
@@ -854,7 +1017,15 @@ export default async function registerAdmin(app, state) {
 	});
 
 	app.put("/api/admin/fonts/:fontId", async (req, res) => {
-		if (!requireAdminApi(req, res)) return;
+		const userId = requireAdminApi(req, res);
+		if (!userId) return;
+		const user = await getAdminUser(userId);
+		if (req.body?.fileBase64 && user?.role !== "super_admin") {
+			return res.status(403).send({
+				status: "failed",
+				message: "Super admin permission required to replace font files",
+			});
+		}
 		try {
 			const exists = await getFontRecord(req.params.fontId);
 			if (!exists) {
@@ -893,8 +1064,8 @@ export default async function registerAdmin(app, state) {
 	});
 
 	app.delete("/api/admin/fonts/:fontId", async (req, res) => {
-		const userId = requireAdminApi(req, res);
-		if (!userId) return;
+		const user = await requireSuperAdminApi(req, res);
+		if (!user) return;
 		try {
 			const font = await getFontRecord(req.params.fontId);
 			if (!font) {
@@ -908,7 +1079,7 @@ export default async function registerAdmin(app, state) {
 					message: "Font ID confirmation does not match",
 				});
 			}
-			if (!(await verifyAdminUserPassword(userId, req.body?.password))) {
+			if (!(await verifyAdminUserPassword(user.user_id, req.body?.password))) {
 				return res
 					.status(403)
 					.send({ status: "failed", message: "Invalid password" });
@@ -945,7 +1116,7 @@ export default async function registerAdmin(app, state) {
 	});
 
 	app.post("/api/admin/fonts", async (req, res) => {
-		if (!requireAdminApi(req, res)) return;
+		if (!(await requireSuperAdminApi(req, res))) return;
 		try {
 			assertUploadPayload(req.body);
 			const font = await saveFontRecord(req.body);

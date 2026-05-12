@@ -21,7 +21,8 @@ form.addEventListener("submit", async event => {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Login failed");
 		setStatus("登入成功", "completed");
-		window.location.href = "/admin/fonts";
+		window.location.href =
+			data.user?.role === "super_admin" ? "/admin/fonts" : "/admin/fonts/edit";
 	} catch (error) {
 		setStatus(error.message, "failed");
 	} finally {

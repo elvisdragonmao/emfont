@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>管理操控台 - emfont 管理</title>
+		<link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
+		<link rel="stylesheet" href="/assets/admin-font-upload.css" />
+	</head>
+	<body>
+		<main class="admin-shell admin-shell-wide">
+			<header>
+				<a href="/" aria-label="回到首頁">
+					<img src="/assets/img/logo/emfont-logo-light.svg" alt="emfont" />
+				</a>
+				<div>
+					<p>Super admin</p>
+					<h1>管理操控台</h1>
+				</div>
+				<nav class="admin-nav" aria-label="管理頁面">
+					<a href="/admin/fonts">新增字型</a>
+					<a href="/admin/fonts/edit">編輯字型資訊</a>
+					<button id="admin-logout" class="link-button" type="button">
+						登出
+					</button>
+				</nav>
+			</header>
+
+			<section class="workspace" aria-label="新增管理員">
+				<form id="admin-create-form">
+					<div class="form-grid compact-form-grid">
+						<label>
+							<span>帳號</span>
+							<input name="userId" required autocomplete="username" />
+						</label>
+						<label>
+							<span>密碼</span>
+							<input
+								name="password"
+								type="password"
+								required
+								minlength="8"
+								autocomplete="new-password"
+							/>
+						</label>
+						<label>
+							<span>角色</span>
+							<select name="role">
+								<option value="admin">一般管理員</option>
+								<option value="super_admin">Super admin</option>
+							</select>
+						</label>
+					</div>
+					<div class="actions">
+						<button type="submit">建立管理員</button>
+						<p id="admin-create-status" role="status" aria-live="polite"></p>
+					</div>
+				</form>
+			</section>
+
+			<section class="workspace" aria-label="管理員列表">
+				<div class="panel-heading">
+					<strong>管理員列表</strong>
+				</div>
+				<div id="admin-user-list" class="admin-user-list"></div>
+				<p id="admin-list-status" role="status" aria-live="polite"></p>
+			</section>
+		</main>
+		<script src="/assets/admin-console.js"></script>
+	</body>
+</html>

@@ -187,6 +187,40 @@ h1 {
 	gap: 18px;
 }
 
+.compact-form-grid {
+	align-items: end;
+}
+
+.admin-user-list {
+	display: grid;
+	gap: 12px;
+}
+
+.admin-user-item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(180px, 0.3fr);
+	align-items: center;
+	gap: 16px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: #0f172a;
+	padding: 16px;
+}
+
+.admin-user-item div {
+	display: grid;
+	gap: 6px;
+}
+
+.admin-user-item strong {
+	font-size: 1.05rem;
+}
+
+.admin-user-item span {
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+
 label {
 	display: grid;
 	gap: 8px;
@@ -267,20 +301,26 @@ button.danger-button:not(:disabled):hover {
 #upload-status.failed,
 #login-status.failed,
 #edit-status.failed,
-#sentence-status.failed {
+#sentence-status.failed,
+#admin-create-status.failed,
+#admin-list-status.failed {
 	color: var(--danger);
 }
 
 #upload-status.completed,
 #login-status.completed,
 #edit-status.completed,
-#sentence-status.completed {
+#sentence-status.completed,
+#admin-create-status.completed,
+#admin-list-status.completed {
 	color: var(--accent);
 }
 
 #login-status,
 #edit-status,
-#sentence-status {
+#sentence-status,
+#admin-create-status,
+#admin-list-status {
 	margin: 16px 0 0;
 	color: var(--muted);
 }
@@ -306,7 +346,8 @@ button.danger-button:not(:disabled):hover {
 
 	.toolbar-grid,
 	.admin-editor-layout,
-	.sentence-form {
+	.sentence-form,
+	.admin-user-item {
 		grid-template-columns: 1fr;
 	}
 
