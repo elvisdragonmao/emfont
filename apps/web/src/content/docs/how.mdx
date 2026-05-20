@@ -1,0 +1,73 @@
+---
+title: 背後原理
+description: emfont 的運行原理。
+icon: Cpu
+---
+
+import { Callout } from "../../components/docs/mdx";
+
+<Callout type="info">
+這裡有一些功能未完成開發，內容也沒有即時更新，這裡的內容僅供參考。
+</Callout>
+
+
+當你 clone 下專案，執行 `pnpm i`、`pnpm dev:web` 和 `pnpm start:server` 之後 emfont 會做這些事：
+
+## 初始化
+
+### 基本設定和套件引入
+
+先讓網站跑得起來，但還在載入中無法提供服務。可以先用 console 狀態，之後可以在網頁顯示 loading 之類的。
+
+- 引入 Fastify, EJS, JWT, Cookie 等
+- 中間件註冊
+- 路由註冊
+- 連結 Redis, PostgreSQL, MinIO, R2
+
+### 處裡字體檔案
+
+這些事除了開機時以外也會自己定期檢查或是手動按鈕檢查。
+
+* 從 Database 抓取字體資料列表
+* 從 minIO 抓取檔案列表
+* 從 R2 抓取檔案列表
+
+都抓到之後互相比較：
+
+1. 列出所有 Database 有的字體
+2. **檔案在不在 MinIO** - 沒有的話跳警告，在 Database 標記忽略字體
+3. **檔案在不在 local** - 要比較 hash，沒有或是錯誤的話從 minIO 下載
+3. **有沒有突然出現在 minIO 但 Database 不認識的字體** - 跳警告，先不要用，也先不要自動生成資料庫
+4. **有沒有超過定期重切時間** - 有的話全部重切。
+5. **檢查 R2 有沒有切好的字體** - *沒有的話新鮮現切然後丟 R2*
+6. **檢查字體是否有更新** - 自動去 GitHub Release 抓，其他的手動。有的話通知 (有一個頁面或著是 Webhook)
+7. **檢查 R2 的極致壓縮是否都有紀錄在 Database** - R2, Database 任意一個有少都直接刪除，反正重新生成也很快。
+8. **檢查 R2 有沒有每一個純 CSS 載入字體的 CSS** - 沒有的話重新生成 (就字串組合) 然後丟去 R2。
+
+## 執行
+
+當上面的初始話處裡好的之後就可以開始提供 Webfont 服務：
+
+### 文檔
+
+`/_next`, `/docs`
+
+Caddy 會自動 reverse proxy 去 Next.js 的靜態網頁。
+
+### 字體服務
+
+記得要紀錄每次請求情況。
+
+### 載入整個字體
+
+重新導向去 Cloudflare R2。
+
+### 載入指定文字 (極致壓縮 / 切好的字體)
+
+API 請求要那些字體跟文字回傳 JSON 或是 CSS
+
+- https://font.emtech.cc/css/ 會回傳 CSS
+- https://font.emtech.cc/g/ 會回傳 JSON
+ 
+- 靜態: 固定切好得檔案
+- 動態: 單獨生成指定文字的檔案

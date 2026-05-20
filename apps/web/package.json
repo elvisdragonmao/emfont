@@ -11,6 +11,7 @@
     "start": "node ./dist/server/entry.mjs"
   },
   "dependencies": {
+    "@astrojs/mdx": "^5.0.6",
     "@astrojs/node": "^9.5.0",
     "@lucide/astro": "^1.14.0",
     "astro": "^5.16.5"

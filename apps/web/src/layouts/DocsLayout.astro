@@ -1,0 +1,212 @@
+---
+import { Code2, Home, Menu, Moon, Search, Send, Sun, X } from "@lucide/astro";
+import type { DocNavItem, DocNavSection } from "../lib/docs";
+import { isActiveDoc } from "../lib/docs";
+import "../styles/docs.css";
+
+interface SearchItem {
+  title: string;
+  description: string;
+  url: string;
+}
+
+interface Props {
+  title: string;
+  description?: string;
+  route: string;
+  navSections: DocNavSection[];
+  toc: { depth: number; slug: string; text: string }[];
+  previous?: DocNavItem;
+  next?: DocNavItem;
+  searchItems: SearchItem[];
+  editPath: string;
+}
+
+const { title, description = "免費開源的 webfont 服務", route, navSections, toc, previous, next, searchItems, editPath } = Astro.props;
+const pageTitle = route ? `${title} - emfont 文件` : "emfont 官方文件";
+const tocItems = toc.filter((heading) => heading.depth > 1 && heading.depth < 4);
+const githubEditUrl = `https://github.com/emfont/emfont/edit/main/${editPath}`;
+---
+
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="emfont" />
+    <meta property="og:locale" content="zh-TW" />
+    <meta property="og:image" content="/assets/img/og.webp" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="icon" type="image/svg+xml" href="/assets/img/logo/favicon.svg" />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">跳到主要內容</a>
+    <input type="checkbox" id="docs-theme-toggle" class="docs-toggle" />
+    <input type="checkbox" id="docs-nav-toggle" class="docs-toggle" />
+
+    <header class="docs-topbar">
+      <a class="docs-brand" href="/docs" aria-label="emfont 文件首頁">
+        <img src="/assets/img/logo/emfont-logo-light.svg" alt="emfont" />
+        <span>文件</span>
+      </a>
+      <div class="docs-topbar-actions">
+        <label class="icon-button" for="docs-theme-toggle" aria-label="切換色彩模式">
+          <Moon class="theme-moon" aria-hidden="true" />
+          <Sun class="theme-sun" aria-hidden="true" />
+        </label>
+        <label class="icon-button menu-button" for="docs-nav-toggle" aria-label="開啟文件導覽">
+          <Menu class="menu-open" aria-hidden="true" />
+          <X class="menu-close" aria-hidden="true" />
+        </label>
+      </div>
+    </header>
+
+    <div class="docs-shell">
+      <aside class="docs-sidebar" aria-label="文件導覽">
+        <div class="docs-sidebar-inner">
+          <a class="docs-sidebar-brand" href="/docs" aria-label="emfont 文件首頁">
+            <img src="/assets/img/logo/emfont-logo-light.svg" alt="emfont" />
+            <span>官方文件</span>
+          </a>
+
+          <label class="docs-search">
+            <Search aria-hidden="true" />
+            <input type="search" placeholder="搜尋文件" data-doc-search />
+          </label>
+          <div class="docs-search-results" data-doc-search-results hidden></div>
+
+          <nav class="docs-nav">
+            <a class:list={["docs-home-link", route === "" && "is-active"]} href="/docs">
+              <Home aria-hidden="true" />
+              文件首頁
+            </a>
+
+            {navSections.map((section) => (
+              <section class="docs-nav-section">
+                {section.title && <h2>{section.title}</h2>}
+                <ul>
+                  {section.items.map((item) => (
+                    <li data-doc-link-item>
+                      <a class:list={[isActiveDoc(item, route) && "is-active"]} href={item.url}>{item.title}</a>
+                      {item.children.length > 0 && (
+                        <ul>
+                          {item.children.map((child) => (
+                            <li data-doc-link-item>
+                              <a class:list={[isActiveDoc(child, route) && "is-active"]} href={child.url}>{child.title}</a>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </nav>
+
+          <div class="docs-sidebar-links">
+            <a href="/" aria-label="回到 emfont 首頁"><Home aria-hidden="true" /></a>
+            <a href="https://github.com/emfont/emfont" target="_blank" rel="noopener" aria-label="GitHub"><Code2 aria-hidden="true" /></a>
+            <a href="https://t.me/emfont" target="_blank" rel="noopener" aria-label="Telegram"><Send aria-hidden="true" /></a>
+            <label for="docs-theme-toggle" aria-label="切換色彩模式">
+              <Moon class="theme-moon" aria-hidden="true" />
+              <Sun class="theme-sun" aria-hidden="true" />
+            </label>
+          </div>
+        </div>
+      </aside>
+
+      <main id="main-content" class="docs-main">
+        <article class="docs-article">
+          <nav class="docs-breadcrumbs" aria-label="階層導覽">
+            <a href="/docs">文件</a>
+            {route && <span>{title}</span>}
+          </nav>
+
+          <header class="docs-article-header">
+            <h1>{title}</h1>
+            {description && <p>{description}</p>}
+          </header>
+
+          <div class="docs-content">
+            <slot />
+          </div>
+
+          <footer class="docs-footer">
+            <a class="docs-edit-link" href={githubEditUrl} target="_blank" rel="noopener">在 GitHub 編輯此頁</a>
+            <div class="docs-pagination">
+              {previous ? (
+                <a class="docs-page-link" href={previous.url}>
+                  <span>上一篇</span>
+                  <strong>{previous.title}</strong>
+                </a>
+              ) : <span></span>}
+              {next && (
+                <a class="docs-page-link docs-page-link-next" href={next.url}>
+                  <span>下一篇</span>
+                  <strong>{next.title}</strong>
+                </a>
+              )}
+            </div>
+          </footer>
+        </article>
+
+        {tocItems.length > 0 && (
+          <aside class="docs-toc" aria-label="本頁目錄">
+            <h2>本頁內容</h2>
+            <ul>
+              {tocItems.map((heading) => (
+                <li class={`toc-depth-${heading.depth}`}>
+                  <a href={`#${heading.slug}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
+      </main>
+    </div>
+
+    <label class="docs-nav-backdrop" for="docs-nav-toggle" aria-label="關閉文件導覽"></label>
+
+    <script define:vars={{ searchItems }}>
+      const searchInput = document.querySelector("[data-doc-search]");
+      const searchResults = document.querySelector("[data-doc-search-results]");
+      const navItems = [...document.querySelectorAll("[data-doc-link-item]")];
+
+      searchInput?.addEventListener("input", () => {
+        const query = searchInput.value.trim().toLowerCase();
+
+        for (const item of navItems) {
+          item.hidden = query.length > 0 && !item.textContent.toLowerCase().includes(query);
+        }
+
+        if (!searchResults) return;
+
+        if (!query) {
+          searchResults.hidden = true;
+          searchResults.replaceChildren();
+          return;
+        }
+
+        const matches = searchItems
+          .filter((item) => `${item.title} ${item.description}`.toLowerCase().includes(query))
+          .slice(0, 6);
+
+        searchResults.replaceChildren(
+          ...matches.map((item) => {
+            const link = document.createElement("a");
+            link.href = item.url;
+            link.innerHTML = `<strong>${item.title}</strong><span>${item.description}</span>`;
+            return link;
+          })
+        );
+        searchResults.hidden = matches.length === 0;
+      });
+    </script>
+  </body>
+</html>

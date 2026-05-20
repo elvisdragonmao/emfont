@@ -1,0 +1,43 @@
+---
+title: Astro
+description: 如何在 Astro 中使用 emfont。
+icon: Box
+---
+
+## 靜態使用
+
+Astro 預設是 SSR，通常載入一次就夠。
+
+```astro
+<p class="emfont-jfopenhuninn">Hello emfont</p>
+
+<script type="module">
+    import "https://font.emtech.cc/emfont.js";
+    emfont.init();
+</script>
+```
+
+## 動態追蹤
+
+## React/Vue 子元件
+
+如果是使用像 React/Vue 子元件，可以用它們各自的方法。
+
+## SPA 網頁
+
+使用 Astro 可以輕鬆地建立 SPA 網頁。你可以在 `Layout` 或是任何地方先載入一次 emfont.js：
+
+```astro
+<head>
+    <script src="https://font.emtech.cc/emfont.js" is:inline></script>
+</head>
+```
+
+然後在頁面文字載入後使用 `emfont.init()`：
+
+```astro
+<script type="module">
+    // 文字載入後
+    emfont.init();
+</script>
+```

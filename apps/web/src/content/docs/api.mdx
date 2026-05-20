@@ -1,0 +1,129 @@
+---
+title: API
+description: A piece of information.
+icon: Server
+---
+
+import { Callout } from "../../components/docs/mdx";
+
+<Callout title="注意" type="info">
+    **一般情況下你不應該使用 emfont API。** emfont 的 API
+    可能會在未來有更新，但固定不變的是你只需要引入這個幾十 KB 的
+    JavaScript，就會自動完成所有操作。但如果你知道你在做什麼，如想要在應用程式中使用，這裡是
+    emfont 在做的事。
+</Callout>
+
+## emfont 字體列表
+
+**GET** `https://font.emtech.cc/list`
+
+會列出所有 emfont 支援的字體，以及其字體名稱、ID、字體粗細、授權條款、以及版本。
+
+回覆範例：
+
+```json
+[{
+    "id": "Cubic11",
+    "name": "俐方體11號",
+    "weight": [400],
+    "author": "ACh",
+    "name_zh": "俐方體11號",
+    "name_en": "Cubic11",
+    "category": "fantasy",
+    "tags": ["像素"],
+    "family": "M⁺ gothic 12r"
+}
+...
+]
+```
+
+你可以添加參數 `q` 來過濾字體：
+
+範例：
+
+```sh
+curl -v -X GET https://font.emtech.cc/list?q=GenJyuuGothicP
+```
+
+## 查詢字體詳細資訊
+
+**GET** `https://font.emtech.cc/info/:font:`
+
+會回傳字體的詳細資訊，包含字體名稱、ID、字體粗細、授權條款、版本、來源網址、作者、描述等。
+
+範例：
+
+```sh
+curl -v -X GET https://font.emtech.cc/info/genjyuu-gothic-p
+```
+
+```json
+{
+    "name": {
+        "original": "源柔ゴシック",
+        "zh": "思源柔黑體 P",
+        "en": "Gen Jyuu Gothic P"
+    },
+    "category": "sans-serif",
+    "weight": [200, 300, 350, 400, 500, 700, 900],
+    "tag": ["圓體", "調合字"],
+    "family": "Noto",
+    "version": "v2.01",
+    "license": "OFL-1.1",
+    "source": "http://jikasei.me/font/genjyuu/",
+    "author": "自家製フォント工房",
+    "description": "源柔ゴシック (げんじゅうゴシック) は、フリーの OpenType フォントである「源ノ角ゴシック (Noto Sans CJK / Source Han Sans の日本語部分)」を TrueType 形式に変換し、角を丸める加工を行い丸ゴシック風にした派生フォントです。"
+}
+```
+
+## 查詢 / 生成字體檔
+
+**POST** `https://font.emtech.cc/g/:font:`
+
+範例：
+
+```sh
+curl -v -X POST https://font.emtech.cc/g/jfOpenHuninn \
+-H 'Content-Type: application/json' \
+-d '{
+    "words": "神乎其技，原其事理。",
+    "weight": 400,
+    "min": true,
+    "format": "woff2"
+}'
+```
+
+-   `word`: 要顯示的文字 （必填）
+-   `weight`: 字體粗細（預設 `400`）
+-   `min`: 是否要極致壓縮（預設 `false`，不建議於內文使用）
+-   `format`: 字體檔案格式（預設 `woff2`）
+
+回覆：
+
+```json
+{
+    "status": "success",
+    "message": "",
+    "name": "朱雀仿宋",
+    "location": [
+        "https://cdn.font.emtech.cc/fonts/LD7FS.woff2",
+        "https://cdn.font.emtech.cc/fonts/8CO4S.woff2"
+    ]
+}
+```
+
+`location` 內的連結為所有需要載入的字體檔案。可使用 CSS 或 JavaScript 載入，這裡以 CSS 為例。
+
+```css
+@font-face {
+    font-family: '朱雀仿宋';
+    src: url('https://cdn.font.emtech.cc/fonts/1CD4S.woff2') format('woff2');
+}
+.emfont-ZhuQueFangSong {
+    font-family: '朱雀仿宋', sans-serif;
+}
+```
+
+## CSS 載入字體
+
+請見 [CSS 載入字體](/docs/css)。

@@ -1,0 +1,58 @@
+---
+import { getCollection, render } from "astro:content";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import * as mdxComponents from "../../components/docs/mdx";
+import {
+  buildDocsNavigation,
+  findDocEntry,
+  flattenDocsNavigation,
+  getAdjacentDocs,
+  getAllDocSearchItems,
+  routeFromEntryId,
+  routeFromSlug
+} from "../../lib/docs";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+
+  return entries.map((entry) => {
+    const route = routeFromEntryId(entry.id);
+    return {
+      params: { slug: route || undefined },
+      props: { entry }
+    };
+  });
+}
+
+const entries = await getCollection("docs");
+const route = routeFromSlug(Astro.params.slug ? Astro.params.slug.split("/") : undefined);
+const entry = Astro.props.entry ?? findDocEntry(entries, route);
+
+if (!entry) {
+  return Astro.redirect("/404", 302);
+}
+
+const entryRoute = routeFromEntryId(entry.id);
+const { Content, headings } = await render(entry);
+const navSections = buildDocsNavigation(entries);
+const flatNavigation = flattenDocsNavigation(navSections);
+const { previous, next } = getAdjacentDocs(flatNavigation, entryRoute);
+const searchItems = getAllDocSearchItems(entries);
+const editPath = `apps/web/src/content/docs/${entry.id}.mdx`;
+---
+
+<DocsLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  route={entryRoute}
+  navSections={navSections}
+  toc={headings}
+  previous={previous}
+  next={next}
+  searchItems={searchItems}
+  editPath={editPath}
+>
+  <Content components={mdxComponents} />
+</DocsLayout>

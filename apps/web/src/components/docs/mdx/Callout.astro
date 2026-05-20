@@ -1,0 +1,22 @@
+---
+import { Info, Lightbulb, TriangleAlert } from "@lucide/astro";
+
+interface Props {
+  title?: string;
+  type?: string;
+}
+
+const { title, type = "info" } = Astro.props;
+const kind = type.trim() || "note";
+const fallbackTitle = kind === "warning" || kind === "danger" ? "注意" : kind === "tip" ? "提示" : "補充";
+---
+
+<aside class:list={["doc-callout", `doc-callout-${kind}`]}>
+  <div class="doc-callout-icon" aria-hidden="true">
+    {kind === "warning" || kind === "danger" ? <TriangleAlert /> : kind === "tip" ? <Lightbulb /> : <Info />}
+  </div>
+  <div class="doc-callout-content">
+    <strong>{title || fallbackTitle}</strong>
+    <slot />
+  </div>
+</aside>

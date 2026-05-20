@@ -1,4 +1,5 @@
 import node from "@astrojs/node";
+import mdx from "@astrojs/mdx";
 import { defineConfig } from "astro/config";
 
 const apiProxyTarget = process.env.EMFONT_API_PROXY ?? "http://localhost:3000";
@@ -6,6 +7,7 @@ const proxiedApiPaths = ["/api", "/g", "/css", "/file", "/_generated", "/list", 
 
 export default defineConfig({
   output: "server",
+  integrations: [mdx()],
   adapter: node({
     mode: "standalone"
   }),
