@@ -2,7 +2,7 @@
 //依照字頻表分裝檔案 (開機時重切)
 import { db } from "../utils/database.js";
 import { logger } from "../utils/logger.js";
-import { readFontBuffer } from "../utils/read-font-file/readFontBuffer.js";
+import { getSupportedChars } from "../utils/read-font-file/readFontBuffer.js";
 import { Worker } from "worker_threads";
 import { Redis } from "ioredis";
 import dotenv from "dotenv";
@@ -176,17 +176,12 @@ async function regenerateAllStaticFont(
 				fontName: ff_name, // 字型名稱（資料夾名稱）
 				weight: support_weights, // 字型的 weight（檔案名稱中的數字）
 			};
-			//讀字型檔案，取出所有支援的字型
-			const readFile_res = await readFontBuffer(ff_name, support_weights, true);
-			if (readFile_res.success == false) {
+			// union of every split file of this weight
+			const charArray = getSupportedChars(ff_name, support_weights);
+			if (charArray === null) {
 				logger.warn(`讀取字型檔案失敗！${ff_name} ${support_weights}`);
 				continue;
 			}
-			const fontfile = readFile_res.fontfile;
-			const supportedCodePoints = Array.from(fontfile.characterSet);
-			const charArray = supportedCodePoints
-				.map(cp => String.fromCodePoint(cp))
-				.filter(char => char !== "\x00");
 			logger.info(
 				`╔ ${ff_name} ${support_weights} 有 ${charArray.length} 個字`,
 			);

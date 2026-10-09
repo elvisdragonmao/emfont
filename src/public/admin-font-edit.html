@@ -122,24 +122,29 @@
 									<option value="otf">otf</option>
 								</select>
 							</label>
-							<label data-super-admin-only hidden>
-								<span>重新上傳字重</span>
-								<input
-									name="replacementWeight"
-									type="number"
-									min="1"
-									max="1000"
-									placeholder="400"
-								/>
-							</label>
-							<label class="wide file-drop" data-super-admin-only hidden>
-								<span>重新上傳原始字型檔</span>
-								<input
-									name="fontFile"
-									type="file"
-									accept=".ttf,.otf,font/ttf,font/otf"
-								/>
-							</label>
+							<section class="wide original-files" data-super-admin-only hidden>
+								<div class="panel-heading">
+									<strong>原始字型檔</strong>
+									<button id="original-files-refresh" type="button">
+										重新整理
+									</button>
+								</div>
+								<div id="original-files-list" class="original-files-list">
+									<p class="empty-state">尚未載入原始檔案。</p>
+								</div>
+								<label class="file-drop">
+									<span>批次上傳原始字型檔（檔名須為 400.ttf、400-1.ttf）</span>
+									<input
+										id="original-files-input"
+										type="file"
+										multiple
+										accept=".ttf,.otf,font/ttf,font/otf"
+									/>
+								</label>
+								<button id="original-files-upload" type="button">
+									儲存檔案並切割
+								</button>
+							</section>
 							<label class="wide">
 								<span>展示句</span>
 								<select name="demoContentId" id="demo-sentence-select"></select>

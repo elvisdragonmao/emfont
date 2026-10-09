@@ -10,6 +10,7 @@ import { generateSitemap } from "../website/api.js";
 import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
 import { generateCSSMap } from "../website/generateCSSMap.js";
 import { logger } from "../utils/logger.js";
+import { parseFontFileName } from "../utils/read-font-file/readFontBuffer.js";
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
@@ -74,12 +75,12 @@ async function insertFontTypes() {
 			// 讀取該資料夾內的所有檔案
 			const fontFiles = await readdir(itemPath);
 			for (const fontFile of fontFiles) {
-				if (!/^\d+\.(ttf|otf)$/i.test(fontFile)) {
+				const parsed = parseFontFileName(fontFile);
+				if (!parsed) {
 					skipped.push(fontFile);
 					continue; // 不符合就跳過
 				}
-				const match_groups = fontFile.match(/^(\d+)\.(ttf|otf)$/i);
-				const weight = match_groups[1]; // 取得數字部分作為 weight
+				const weight = String(parsed.weight);
 				// 將資料夾名（font_name）和提取的 weight 存入 fontData
 				if (!fontWeightsMap.has(one_font_family)) {
 					//first time discover font family will enter this if
@@ -91,7 +92,7 @@ async function insertFontTypes() {
 					});
 				}
 				fontWeightsMap.get(one_font_family).add(parseInt(weight));
-				file_count++;
+				if (parsed.part === 0) file_count++;
 			}
 		}
 

@@ -43,6 +43,9 @@ importers:
       fastify-metrics:
         specifier: ^12.1.0
         version: 12.1.0(fastify@5.7.4)
+      fonteditor-core:
+        specifier: ^2.6.3
+        version: 2.6.3
       fontkit:
         specifier: ^2.0.4
         version: 2.0.4
@@ -912,6 +915,13 @@ packages:
         integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==,
       }
 
+  "@xmldom/xmldom@0.8.15":
+    resolution:
+      {
+        integrity: sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==,
+      }
+    engines: { node: ">=10.0.0" }
+
   abstract-logging@2.0.1:
     resolution:
       {
@@ -1422,6 +1432,12 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+
+  fonteditor-core@2.6.3:
+    resolution:
+      {
+        integrity: sha512-YUryIKjkenjZ41E7JvM3V+02Ak4mTHDDTwBWgs9KBzypzHqLZHuua1UDRevZNTKawmnq1dbBAa70Jddl2+F4FQ==,
+      }
 
   fontkit@2.0.4:
     resolution:
@@ -3383,6 +3399,8 @@ snapshots:
 
   "@types/uuid@9.0.8": {}
 
+  "@xmldom/xmldom@0.8.15": {}
+
   abstract-logging@2.0.1: {}
 
   acorn@8.15.0: {}
@@ -3647,6 +3665,10 @@ snapshots:
       safe-regex2: 5.0.0
 
   follow-redirects@1.15.9: {}
+
+  fonteditor-core@2.6.3:
+    dependencies:
+      "@xmldom/xmldom": 0.8.15
 
   fontkit@2.0.4:
     dependencies:

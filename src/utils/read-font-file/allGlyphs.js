@@ -1,13 +1,10 @@
-import { readFontBuffer } from "./readFontBuffer.js";
+import { getSupportedChars } from "./readFontBuffer.js";
 async function get_glyphs(ff_name, weights)
 {
-    const readFile_res = await readFontBuffer(ff_name, weights, true);
-    if (readFile_res.success == false) {
-        console.warn("讀取字型檔案失敗！");
+    const charArray = getSupportedChars(ff_name, weights);
+    if (charArray === null) {
+        throw new Error(`讀取字型檔案失敗！${ff_name} ${weights}`);
     }
-    const fontfile = readFile_res.fontfile;
-    const supportedCodePoints = Array.from(fontfile.characterSet);
-    const charArray = supportedCodePoints.map(cp => String.fromCodePoint(cp)).filter(char => char !== "\x00");
     return charArray;
 }
 

@@ -4,6 +4,7 @@ import { Redis } from "ioredis";
 import {
 	DeleteObjectsCommand,
 	DeleteObjectCommand,
+	HeadObjectCommand,
 	ListObjectsV2Command,
 	PutObjectCommand,
 	S3Client,
@@ -15,6 +16,10 @@ import { logger } from "../utils/logger.js";
 import { analyseFontsInBatches } from "../utils/read-font-file/analyseFonts.js";
 import { get_bullet, get_generated_static_floders } from "../bootstrap/init.js";
 import { regenerateAllStaticFont } from "../bootstrap/fontNoMin.js";
+import {
+	fontFileName,
+	listFontPartFiles,
+} from "../utils/read-font-file/readFontBuffer.js";
 import { generateCSSMap } from "./generateCSSMap.js";
 
 const redis = new Redis(process.env.REDIS_URL);
@@ -284,29 +289,43 @@ async function updateAdminUserRole(userId, role) {
 	return serializeAdminUser(rows[0]);
 }
 
-async function syncOriginalFontToMinio({ id, weight, extension, buffer }) {
+async function syncOriginalFontToMinio({
+	id,
+	weight,
+	part = 0,
+	extension,
+	buffer,
+}) {
 	if (process.env.SYNC_WITH_MINIO !== "true") return;
 	if (!isMinioConfigured()) {
 		throw new Error("SYNC_WITH_MINIO=true, but MinIO is not configured");
 	}
 
 	const minioClient = createMinioClient();
-	const key = `original-fonts/${id}/${weight}.${extension}`;
+	const key = `original-fonts/${id}/${fontFileName(weight, part, extension)}`;
 	await minioClient.send(
 		new PutObjectCommand({
 			Bucket: process.env.MINIO_BUCKET,
 			Key: key,
 			Body: buffer,
 			ContentType: extension === "otf" ? "font/otf" : "font/ttf",
+			Metadata: {
+				sha256: crypto.createHash("sha256").update(buffer).digest("hex"),
+			},
 		}),
 	);
 	logger.info(`Synced original font to MinIO: ${key}`);
 }
 
-async function deleteOriginalFontFromMinio({ id, weight, extension }) {
+async function deleteOriginalFontFromMinio({
+	id,
+	weight,
+	part = 0,
+	extension,
+}) {
 	if (process.env.SYNC_WITH_MINIO !== "true" || !isMinioConfigured()) return;
 	const minioClient = createMinioClient();
-	const key = `original-fonts/${id}/${weight}.${extension}`;
+	const key = `original-fonts/${id}/${fontFileName(weight, part, extension)}`;
 	await minioClient.send(
 		new DeleteObjectCommand({
 			Bucket: process.env.MINIO_BUCKET,
@@ -475,24 +494,165 @@ async function syncCssToMinio({ id, weight, css }) {
 	logger.info(`Synced CSS to MinIO: ${key}`);
 }
 
-async function saveOriginalFontFile({ id, weight, extension, fileBase64 }) {
+async function saveOriginalFontFile({
+	id,
+	weight,
+	part = 0,
+	extension,
+	fileBase64,
+	resetParts = true,
+}) {
 	if (process.env.SYNC_WITH_MINIO === "true" && !isMinioConfigured()) {
 		throw new Error("SYNC_WITH_MINIO=true, but MinIO is not configured");
 	}
 	const fontDir = path.join(originalFontsDir, id);
 	const fontBuffer = Buffer.from(fileBase64, "base64");
-
-	await syncOriginalFontToMinio({ id, weight, extension, buffer: fontBuffer });
-	await mkdir(fontDir, { recursive: true });
-	await writeFile(path.join(fontDir, `${weight}.${extension}`), fontBuffer);
-
-	for (const oldExtension of fontExtensions) {
-		if (oldExtension === extension) continue;
-		await rm(path.join(fontDir, `${weight}.${oldExtension}`), {
-			force: true,
-		});
-		await deleteOriginalFontFromMinio({ id, weight, extension: oldExtension });
+	const existingParts = listFontPartFiles(id, weight);
+	if (part > 0 && !existingParts.some(file => file.part === 0)) {
+		throw new Error(
+			`Upload the primary file ${fontFileName(weight, 0, extension)} before part ${part}`,
+		);
 	}
+
+	await syncOriginalFontToMinio({
+		id,
+		weight,
+		part,
+		extension,
+		buffer: fontBuffer,
+	});
+	await mkdir(fontDir, { recursive: true });
+	await writeFile(
+		path.join(fontDir, fontFileName(weight, part, extension)),
+		fontBuffer,
+	);
+
+	// Uploading a primary file resets the weight, so stale split parts from a previous upload must go too.
+	const stale = [];
+	for (const oldExtension of fontExtensions) {
+		if (oldExtension !== extension)
+			stale.push({ part, extension: oldExtension });
+	}
+	if (part === 0 && resetParts) {
+		for (const file of existingParts) {
+			if (file.part > 0) stale.push({ part: file.part, extension: file.type });
+		}
+	}
+	for (const file of stale) {
+		await rm(
+			path.join(fontDir, fontFileName(weight, file.part, file.extension)),
+			{
+				force: true,
+			},
+		);
+		await deleteOriginalFontFromMinio({
+			id,
+			weight,
+			part: file.part,
+			extension: file.extension,
+		});
+	}
+}
+
+function parseOriginalUploadName(name) {
+	const match = String(name || "").match(/^(\d+)(?:-([1-9]\d*))?\.(ttf|otf)$/i);
+	if (!match) throw new Error(`Invalid font filename: ${name}`);
+	return {
+		weight: Number(match[1]),
+		part: match[2] ? Number(match[2]) : 0,
+		extension: match[3].toLowerCase(),
+	};
+}
+
+async function listOriginalFontFiles(id) {
+	const localFiles = new Map();
+	const weights = await db.query(
+		"SELECT weights FROM font_family WHERE id = $1",
+		[id],
+	);
+	for (const weight of weights.rows[0]?.weights || []) {
+		for (const file of listFontPartFiles(id, weight)) {
+			localFiles.set(path.basename(file.fullPath), file);
+		}
+	}
+
+	const remoteFiles = new Map();
+	if (process.env.SYNC_WITH_MINIO === "true" && isMinioConfigured()) {
+		const minioClient = createMinioClient();
+		let continuationToken;
+		do {
+			const listed = await minioClient.send(
+				new ListObjectsV2Command({
+					Bucket: process.env.MINIO_BUCKET,
+					Prefix: `original-fonts/${id}/`,
+					ContinuationToken: continuationToken,
+				}),
+			);
+			for (const object of listed.Contents || []) {
+				const name = object.Key.split("/").pop();
+				try {
+					parseOriginalUploadName(name);
+				} catch {
+					continue;
+				}
+				const metadata = await minioClient.send(
+					new HeadObjectCommand({
+						Bucket: process.env.MINIO_BUCKET,
+						Key: object.Key,
+					}),
+				);
+				remoteFiles.set(name, {
+					key: object.Key,
+					size: object.Size,
+					lastModified: object.LastModified,
+					sha256: metadata.Metadata?.sha256 || null,
+				});
+			}
+			continuationToken = listed.NextContinuationToken;
+		} while (continuationToken);
+	}
+
+	const names = new Set([...localFiles.keys(), ...remoteFiles.keys()]);
+	return Promise.all(
+		Array.from(names).map(async name => {
+			const parsed = parseOriginalUploadName(name);
+			const local = localFiles.get(name);
+			const remote = remoteFiles.get(name);
+			const sha256 =
+				remote?.sha256 ||
+				(local
+					? crypto
+							.createHash("sha256")
+							.update(await readFile(local.fullPath))
+							.digest("hex")
+					: null);
+			return {
+				filename: name,
+				weight: parsed.weight,
+				part: parsed.part,
+				sha256,
+				minioExists: Boolean(remote),
+				localExists: Boolean(local),
+				key: remote?.key || `original-fonts/${id}/${name}`,
+				size:
+					remote?.size ||
+					(local ? (await readFile(local.fullPath)).length : null),
+				lastModified: remote?.lastModified || null,
+				status:
+					remote && local ? "ready" : remote ? "minio-only" : "local-only",
+			};
+		}),
+	).then(files => files.sort((a, b) => a.weight - b.weight || a.part - b.part));
+}
+
+// Split-file index: empty/0 means the primary `<weight>.<ext>`, n >= 1 means `<weight>-<n>.<ext>`.
+function normalizeFontPart(value) {
+	if (value === undefined || value === null || value === "") return 0;
+	const part = Number(value);
+	if (!Number.isInteger(part) || part < 0 || part > 99) {
+		throw new Error("Part must be an integer between 0 and 99");
+	}
+	return part;
 }
 
 function normalizeTextArray(value) {
@@ -588,7 +748,8 @@ function normalizeReplacementFont(body) {
 	if (!fontExtensions.includes(extension)) {
 		throw new Error("Only ttf and otf fonts are supported");
 	}
-	return { weight, extension, fileBase64: body.fileBase64 };
+	const part = normalizeFontPart(body.replacementPart);
+	return { weight, part, extension, fileBase64: body.fileBase64 };
 }
 
 function assertDemoSentencePayload(body) {
@@ -600,10 +761,12 @@ function assertDemoSentencePayload(body) {
 async function saveFontRecord(body) {
 	const id = body.id.trim();
 	const weight = Number(body.weight);
+	const part = normalizeFontPart(body.part);
 	const extension = normalizeFontExtension(body.extension);
 	await saveOriginalFontFile({
 		id,
 		weight,
+		part,
 		extension,
 		fileBase64: body.fileBase64,
 	});
@@ -635,7 +798,7 @@ async function saveFontRecord(body) {
 			repo_url = EXCLUDED.repo_url,
 			authors = EXCLUDED.authors,
 			demo_content_id = EXCLUDED.demo_content_id,
-			format = EXCLUDED.format
+			format = CASE WHEN $16::boolean THEN EXCLUDED.format ELSE font_family.format END
 		`,
 		[
 			id,
@@ -653,10 +816,51 @@ async function saveFontRecord(body) {
 			normalizeTextArray(body.authors),
 			Number(body.demoContentId || 1),
 			extension,
+			part === 0,
 		],
 	);
 
 	return { id, weight, extension };
+}
+
+async function saveOriginalFontBatch(id, files) {
+	if (!Array.isArray(files) || files.length === 0) {
+		throw new Error("At least one font file is required");
+	}
+	const uploads = files.map(file => ({
+		...parseOriginalUploadName(file.name),
+		fileBase64: file.fileBase64,
+	}));
+	const names = new Set();
+	for (const file of uploads) {
+		if (!file.fileBase64) throw new Error(`Missing file content: ${file.name}`);
+		const name = fontFileName(file.weight, file.part, file.extension);
+		if (names.has(name)) throw new Error(`Duplicate file: ${name}`);
+		names.add(name);
+	}
+	const primaryWeights = new Set(
+		uploads.filter(file => file.part === 0).map(file => file.weight),
+	);
+	for (const file of uploads) {
+		if (file.part === 0 || primaryWeights.has(file.weight)) continue;
+		if (!listFontPartFiles(id, file.weight).some(part => part.part === 0)) {
+			throw new Error(
+				`Upload the primary file ${fontFileName(file.weight, 0, file.extension)} before part ${file.part}`,
+			);
+		}
+		primaryWeights.add(file.weight);
+	}
+	uploads.sort((a, b) => a.weight - b.weight || a.part - b.part);
+	for (const file of uploads) {
+		await saveOriginalFontFile({
+			id,
+			...file,
+			resetParts: false,
+		});
+	}
+	return Array.from(new Set(uploads.map(file => file.weight))).sort(
+		(a, b) => a - b,
+	);
 }
 
 async function getFontRecord(id) {
@@ -679,7 +883,8 @@ async function updateFontRecord(id, body) {
 			id,
 			...replacementFont,
 		});
-		body.format = replacementFont.extension;
+		// Split parts may differ in extension; the download link follows the primary file.
+		if (replacementFont.part === 0) body.format = replacementFont.extension;
 	}
 
 	await db.query(
@@ -1042,6 +1247,63 @@ export default async function registerAdmin(app, state) {
 			format: font.format,
 			fontUrl: fontInfoUrl(state, font.id),
 		});
+	});
+
+	app.get("/api/admin/fonts/:fontId/original-files", async (req, res) => {
+		// admin API. For list
+		if (!requireAdminApi(req, res)) return;
+		try {
+			const font = await getFontRecord(req.params.fontId);
+			if (!font) {
+				return res.status(404).send({
+					status: "failed",
+					message: "Font not found",
+				});
+			}
+			res.send({ files: await listOriginalFontFiles(req.params.fontId) });
+		} catch (error) {
+			res.status(500).send({ status: "failed", message: error.message });
+		}
+	});
+
+	app.post("/api/admin/fonts/:fontId/original-files", async (req, res) => {
+		if (!(await requireSuperAdminApi(req, res))) return;
+		try {
+			const font = await getFontRecord(req.params.fontId);
+			if (!font) {
+				return res.status(404).send({
+					status: "failed",
+					message: "Font not found",
+				});
+			}
+			const weights = await saveOriginalFontBatch(
+				req.params.fontId,
+				req.body?.files,
+			);
+			await db.query(
+				`UPDATE font_family
+				 SET weights = ARRAY(
+					 SELECT DISTINCT unnest(COALESCE(weights, ARRAY[]::smallint[]) || $2::smallint[])
+					 ORDER BY 1
+				 )
+				 WHERE id = $1`,
+				[font.id, weights],
+			);
+			await redis.del(`fontinfo:${font.id}`);
+			const jobId = queueStaticGenerationJob({
+				state,
+				font: { id: font.id, weights },
+				queuedMessage: "原始字型已儲存，等待重新切割靜態字型",
+			});
+			res.status(202).send({
+				status: "accepted",
+				message: "Font files uploaded. Static generation started.",
+				jobId,
+				fontId: font.id,
+			});
+		} catch (error) {
+			res.status(400).send({ status: "failed", message: error.message });
+		}
 	});
 
 	app.put("/api/admin/fonts/:fontId", async (req, res) => {

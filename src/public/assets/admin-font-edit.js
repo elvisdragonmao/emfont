@@ -10,6 +10,10 @@ const sentenceCreateForm = document.getElementById("sentence-create-form");
 const logoutButton = document.getElementById("admin-logout");
 const deleteButton = document.getElementById("font-delete-button");
 const regenerateButton = document.getElementById("font-regenerate-button");
+const originalFilesList = document.getElementById("original-files-list");
+const originalFilesInput = document.getElementById("original-files-input");
+const originalFilesUpload = document.getElementById("original-files-upload");
+const originalFilesRefresh = document.getElementById("original-files-refresh");
 
 let fontList = [];
 let demoSentences = [];
@@ -119,14 +123,64 @@ function fillForm(font) {
 	editForm.elements.repoUrl.value = font.repoUrl || "";
 	editForm.elements.authors.value = arrayToText(font.authors);
 	editForm.elements.format.value = font.format || "ttf";
-	editForm.elements.replacementWeight.value = font.weights?.[0] || "";
-	editForm.elements.fontFile.value = "";
 	renderDemoSentences(font.demoContentId || 1);
 	previewLink.href = font.fontUrl;
 	editForm.hidden = false;
 	deleteButton.disabled = !isSuperAdmin();
 	regenerateButton.disabled = !isSuperAdmin();
 	renderFontList();
+}
+
+function renderOriginalFiles(files) {
+	if (files.length === 0) {
+		originalFilesList.innerHTML = `<p class="empty-state">找不到原始字型檔。</p>`;
+		return;
+	}
+	const hashCounts = new Map();
+	for (const file of files) {
+		if (file.sha256)
+			hashCounts.set(file.sha256, (hashCounts.get(file.sha256) || 0) + 1);
+	}
+	originalFilesList.innerHTML = `<table class="original-files-table">
+		<thead><tr><th>檔案</th><th>SHA-256</th><th>內容</th><th>MinIO</th><th>本地</th></tr></thead>
+		<tbody>${files
+			.map(
+				file => `<tr>
+			<td>${escapeHtml(file.filename)}</td>
+			<td><code title="${escapeHtml(file.sha256 || "尚未計算")}">${escapeHtml(file.sha256 || "尚未計算")}</code></td>
+			<td>${file.sha256 ? (hashCounts.get(file.sha256) > 1 ? "與其他檔案相同" : "唯一") : "未知"}</td>
+			<td>${file.minioExists ? "存在" : "缺少"}</td>
+			<td>${file.localExists ? "存在" : "缺少"}</td>
+		</tr>`,
+			)
+			.join("")}</tbody>
+	</table>`;
+}
+
+async function loadOriginalFiles(fontId = selectedFontId) {
+	if (!fontId || !originalFilesList) return;
+	originalFilesList.innerHTML = `<p class="empty-state">正在檢查原始檔案...</p>`;
+	const res = await fetch(
+		`/api/admin/fonts/${encodeURIComponent(fontId)}/original-files`,
+		{
+			headers: headers(),
+		},
+	);
+	if (redirectIfUnauthorized(res)) return;
+	const data = await res.json();
+	if (!res.ok) throw new Error(data.message || "Failed to load original files");
+	renderOriginalFiles(data.files || []);
+}
+
+function parseOriginalFileName(name) {
+	const match = name.match(/^(\d+)(?:-([1-9]\d*))?\.(ttf|otf)$/i);
+	if (!match) throw new Error(`${name}：檔名須為 400.ttf 或 400-1.ttf`);
+	return {
+		name,
+		weight: Number(match[1]),
+		part: match[2] ? Number(match[2]) : 0,
+		extension: match[3].toLowerCase(),
+	};
 }
 
 function renderCategoryFilter() {
@@ -234,6 +288,7 @@ async function loadFont(fontId) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.message || "Load failed");
 		fillForm(data);
+		await loadOriginalFiles(fontId);
 		setStatus("已載入", "completed");
 	} catch (error) {
 		setStatus(error.message, "failed");
@@ -256,20 +311,8 @@ editForm.addEventListener("submit", async event => {
 	setStatus("正在儲存");
 	try {
 		const formData = new FormData(editForm);
-		const file = formData.get("fontFile");
 		const payload = Object.fromEntries(formData.entries());
 		delete payload.id;
-		delete payload.fontFile;
-
-		if (file && file.size > 0) {
-			const extension = file.name.split(".").pop().toLowerCase();
-			editForm.elements.format.value = extension;
-			payload.extension = extension;
-			payload.format = extension;
-			payload.fileBase64 = await fileToBase64(file);
-		} else {
-			delete payload.replacementWeight;
-		}
 
 		const res = await fetch(`/api/admin/fonts/${encodeURIComponent(fontId)}`, {
 			method: "PUT",
@@ -285,7 +328,6 @@ editForm.addEventListener("submit", async event => {
 			if (job?.status === "failed")
 				throw new Error(job.error || "Static generation failed");
 			setStatus("字型檔已更新，靜態字型也切好了", "completed");
-			editForm.elements.fontFile.value = "";
 		} else {
 			setStatus("已儲存", "completed");
 		}
@@ -294,6 +336,62 @@ editForm.addEventListener("submit", async event => {
 		setStatus(error.message, "failed");
 	} finally {
 		submit.disabled = false;
+	}
+});
+
+originalFilesRefresh.addEventListener("click", async () => {
+	try {
+		await loadOriginalFiles();
+	} catch (error) {
+		setStatus(error.message, "failed");
+	}
+});
+originalFilesUpload.addEventListener("click", async () => {
+	const fontId = selectedFontId;
+	const files = Array.from(originalFilesInput.files || []);
+	if (files.length === 0)
+		return setStatus("請選擇至少一個原始字型檔", "failed");
+	originalFilesUpload.disabled = true;
+	try {
+		const uploads = files.map(file => ({
+			...parseOriginalFileName(file.name),
+			file,
+		}));
+		const names = new Set();
+		for (const upload of uploads) {
+			if (names.has(upload.name)) throw new Error(`檔案重複：${upload.name}`);
+			names.add(upload.name);
+		}
+		setStatus("正在讀取原始字型檔");
+		const payload = await Promise.all(
+			uploads.map(async upload => ({
+				name: upload.name,
+				fileBase64: await fileToBase64(upload.file),
+			})),
+		);
+		const res = await fetch(
+			`/api/admin/fonts/${encodeURIComponent(fontId)}/original-files`,
+			{
+				method: "POST",
+				headers: headers(),
+				body: JSON.stringify({ files: payload }),
+			},
+		);
+		if (redirectIfUnauthorized(res)) return;
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.message || "Upload failed");
+		setStatus("檔案已儲存，正在重新切割");
+		const job = await pollJob(data.jobId);
+		if (job?.status === "failed")
+			throw new Error(job.error || "Static generation failed");
+		originalFilesInput.value = "";
+		// 如果目前頁籤已經跳到別頁，就不會刷新。否則就會進 if 重新載入這頁。理想中跳出檔案已儲存，正在重新切割就可以關閉頁面
+		if (selectedFontId === fontId) await loadOriginalFiles(fontId);
+		setStatus("原始檔案已更新，靜態字型也切好了", "completed");
+	} catch (error) {
+		setStatus(error.message, "failed");
+	} finally {
+		originalFilesUpload.disabled = false;
 	}
 });
 

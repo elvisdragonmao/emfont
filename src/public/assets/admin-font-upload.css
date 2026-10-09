@@ -255,6 +255,38 @@ textarea {
 	padding: 16px;
 }
 
+.original-files-list {
+	overflow-x: auto;
+	margin-bottom: 16px;
+}
+
+.original-files-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+
+.original-files-table th,
+.original-files-table td {
+	border-bottom: 1px solid var(--line);
+	padding: 9px 10px;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.original-files-table th {
+	color: var(--muted);
+	font-weight: 700;
+}
+
+.original-files-table code {
+	max-width: 280px;
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: bottom;
+}
+
 .actions {
 	display: flex;
 	align-items: center;
