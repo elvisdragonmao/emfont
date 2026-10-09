@@ -19,9 +19,11 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends ca-certificates curl unzip; \
     rm -rf /var/lib/apt/lists/*; \
-    curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc; \
-    chmod +x /usr/local/bin/mc; \
-    mc --version
+    curl -fsSL https://github.com/rustfs/cli/releases/download/v0.1.36/rustfs-cli-linux-amd64-v0.1.36.tar.gz -o /tmp/rc.tar.gz; \
+    tar -xzf /tmp/rc.tar.gz -C /tmp; \
+    install -m 0755 /tmp/rc /usr/local/bin/rc; \
+    rm -f /tmp/rc /tmp/rc.tar.gz; \
+    rc --version
 RUN corepack enable
 
 COPY --from=deps /app/node_modules ./node_modules
