@@ -6,7 +6,7 @@ echo "Try to connect to MinIO server at ${MINIO_ENDPOINT} ..."
 # Defaults (allow env override)
 : "${SYNC_WITH_MINIO:=false}"
 : "${NEED_EXAMPLE_FONTS:=false}"
-# : "${MC_CONFIG_DIR:=/root/.mc/}"
+# : "${MC_CONFIG_DIR:=/root/.rc/}"
 # export MC_CONFIG_DIR
 
 # If required env missing -> skip
@@ -19,8 +19,8 @@ if [ -z "${MINIO_USERNAME-}" ] || \
 fi
 
 # Set alias
-mc alias set emfont "$MINIO_ENDPOINT" "$MINIO_USERNAME" "$MINIO_PASSWORD"
-mc mb --ignore-existing emfont/${MINIO_BUCKET}
+rc alias set emfont "$MINIO_ENDPOINT" "$MINIO_USERNAME" "$MINIO_PASSWORD"
+rc mb --ignore-existing emfont/${MINIO_BUCKET}
 
 # Handle example fonts request
 if [ "$NEED_EXAMPLE_FONTS" = "true" ]; then
@@ -35,7 +35,7 @@ if [ "$NEED_EXAMPLE_FONTS" = "true" ]; then
   mv /tmp/Cubic11-repo/fonts/ttf/Cubic_11.ttf /app/src/_data/original-fonts/Cubic11/400.ttf
   rm -rf /tmp/Cubic11.zip /tmp/Cubic11-repo
   # 把檔案同步上傳到 MinIO
-  mc mirror --overwrite --remove /app/src/_data/original-fonts/Cubic11 emfont/${MINIO_BUCKET}/original-fonts/Cubic11/
+  rc mirror --overwrite --remove /app/src/_data/original-fonts/Cubic11 emfont/${MINIO_BUCKET}/original-fonts/Cubic11/
 else
   echo "User did not request example fonts, skip."
 fi
@@ -47,7 +47,7 @@ else
   : "${ORIGINAL_FONTS_MOUNTPOINT:=/app/src/_data/original-fonts}"
   echo "Downloading fonts from MinIO to $ORIGINAL_FONTS_MOUNTPOINT ..."
   mkdir -p "$ORIGINAL_FONTS_MOUNTPOINT"
-  mc mirror --overwrite --remove "emfont/${MINIO_BUCKET}/original-fonts/" "$ORIGINAL_FONTS_MOUNTPOINT"
+  rc mirror --overwrite --remove "emfont/${MINIO_BUCKET}/original-fonts/" "$ORIGINAL_FONTS_MOUNTPOINT"
   echo "✅ Downloaded fonts from MinIO successfully."
 fi
 echo "✅ MinIO entrypoint done."
