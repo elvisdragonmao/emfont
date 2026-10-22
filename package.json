@@ -7,6 +7,9 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"dev": "nodemon src/app.js --ignore public/*",
+		"dev:go": "just server-dev",
+		"build:go": "cd server && go build -o bin/server ./cmd/server",
+		"test:go": "cd server && go test ./...",
 		"test_f": "node src/r2.js",
 		"start": "node src/app.js",
 		"db:migrate": "node ./scripts/migrate.js",

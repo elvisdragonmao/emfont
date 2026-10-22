@@ -62,3 +62,20 @@ services:
         condition: service_started
       minio:
         condition: service_healthy
+
+  go-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      HTTP_ADDR: ":3000"
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      FONTINFO_CACHE_TTL_SECONDS: ${FONTINFO_CACHE_TTL_SECONDS:-3600}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
