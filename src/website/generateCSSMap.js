@@ -47,6 +47,7 @@ async function writeCssFile(font_id, weight, cssBlocks) {
 		logger.info(`✅ 已產生 CSS 檔案: ${fileName}`);
 	} catch (err) {
 		logger.error("❌ CSS 寫檔失敗:", err);
+		throw err;
 	}
 }
 async function generateCSSMap(font_id, weight, state) {
