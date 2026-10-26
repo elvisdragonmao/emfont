@@ -322,8 +322,8 @@ const loadFontInfo = async fontId => {
     </div>
     <div class="font-actions">
         <div class="font-class">
-            <div>${fontId}</div>
-            <div id="copyClass"></div>
+			<div>${document.documentElement.dataset.baseUrl}/css/${fontId}/</div>
+			<div id="copyClass"></div>
         </div>
         <a href="${font.source}" target="_blank">
             <img src="/assets/img/GitHub-400.svg" alt="GitHub">

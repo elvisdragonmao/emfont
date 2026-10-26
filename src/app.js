@@ -77,7 +77,7 @@ app.register(cors, {
 });
 app.register(cookie);
 
-await registerPages(app);
+await registerPages(app, state);
 await registerApi(app, state);
 await registerAdmin(app, state);
 await registerStatic(app);

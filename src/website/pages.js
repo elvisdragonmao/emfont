@@ -5,13 +5,14 @@ import { logger } from "../utils/logger.js";
 //prometheus
 // Read the HTML file in the same directory
 
-export default async app => {
+export default async (app, state) => {
 	const template = readFileSync(`${import.meta.dirname}/website.html`, "utf8");
 
 	const metaMap = {
 		title: "emfont - 免費中文字體 Webfont 服務",
 		description: "免費中文字體 Webfont 服務",
 		page: "home",
+		baseURL: state.baseURL,
 	};
 
 	const renderSite = (res, data, status = 200) => {
