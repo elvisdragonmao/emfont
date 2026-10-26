@@ -2,6 +2,40 @@ import { db } from "../utils/database.js";
 import path from "path";
 import { promises as fs } from "fs";
 import { logger } from "../utils/logger.js";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+
+async function syncCssToMinio(font_id, weight, css) {
+	if (process.env.SYNC_WITH_MINIO !== "true") return;
+	if (
+		!process.env.MINIO_ENDPOINT ||
+		!process.env.MINIO_USERNAME ||
+		!process.env.MINIO_PASSWORD ||
+		!process.env.MINIO_BUCKET
+	) {
+		throw new Error("SYNC_WITH_MINIO=true, but MinIO is not configured");
+	}
+
+	const minioClient = new S3Client({
+		region: "auto",
+		endpoint: process.env.MINIO_ENDPOINT,
+		forcePathStyle: true,
+		credentials: {
+			accessKeyId: process.env.MINIO_USERNAME,
+			secretAccessKey: process.env.MINIO_PASSWORD,
+		},
+	});
+	const key = `css/${font_id}/${weight}.css`;
+	await minioClient.send(
+		new PutObjectCommand({
+			Bucket: process.env.MINIO_BUCKET,
+			Key: key,
+			Body: css,
+			ContentType: "text/css; charset=utf-8",
+		}),
+	);
+	logger.info(`Synced CSS to MinIO: ${key}`);
+}
+
 async function writeCssFile(font_id, weight, cssBlocks) {
 	const __dirname = import.meta.dirname;
 	const put_folder = `../_data/css/${font_id}`;
@@ -67,6 +101,7 @@ async function generateCSSMap(font_id, weight, state) {
 
 	const joinedCss = cssBlocks.join("");
 	await writeCssFile(font_id, weight, joinedCss);
+	await syncCssToMinio(font_id, weight, joinedCss);
 	return joinedCss;
 }
 

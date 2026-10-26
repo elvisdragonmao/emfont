@@ -476,24 +476,6 @@ async function syncGeneratedStaticFontToMinio({ id, weight, version }) {
 	);
 }
 
-async function syncCssToMinio({ id, weight, css }) {
-	if (process.env.SYNC_WITH_MINIO !== "true") return;
-	if (!isMinioConfigured()) {
-		throw new Error("SYNC_WITH_MINIO=true, but MinIO is not configured");
-	}
-	const minioClient = createMinioClient();
-	const key = `css/${id}/${weight}.css`;
-	await minioClient.send(
-		new PutObjectCommand({
-			Bucket: process.env.MINIO_BUCKET,
-			Key: key,
-			Body: css,
-			ContentType: "text/css; charset=utf-8",
-		}),
-	);
-	logger.info(`Synced CSS to MinIO: ${key}`);
-}
-
 async function saveOriginalFontFile({
 	id,
 	weight,
@@ -1057,8 +1039,7 @@ async function generateStaticForUploadedFont(job, font) {
 	}
 	job.message = "正在生成並上傳 CSS";
 	for (const weight of weights) {
-		const css = await generateCSSMap(font.id, weight, job.state);
-		await syncCssToMinio({ id: font.id, weight, css });
+		await generateCSSMap(font.id, weight, job.state);
 	}
 	await redis.del(`fontinfo:${font.id}`);
 	job.status = "completed";
