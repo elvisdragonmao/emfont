@@ -309,14 +309,13 @@ async function regenerateAllStaticFont(
 					}
 				}
 			}
-
-			return true;
 		}
+		logger.info("✨ 所有靜態字體生成完成！");
+		return true;
 	} catch (err) {
 		logger.error("生成靜態字體時發生錯誤:", err);
 		return false;
 	}
-	logger.info("✨ 所有靜態字體生成完成！");
 }
 // /**
 //  * 給定文字集合，找會用到的靜態字型 pack number
